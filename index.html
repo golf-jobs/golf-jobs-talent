@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golf Jobs - Premium Talent Pools</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --augusta-green: #004d26;
+            --fairway-green: #2d5f3f;
+            --masters-green: #3a7858;
+            --club-gold: #c9a961;
+            --trophy-gold: #f4d03f;
+            --morning-mist: #f8f9fa;
+            --pro-shop-navy: #1a2332;
+            --rough-gray: #6c757d;
+            --hazard-red: #c9302c;
+        }
+        body {
+            font-family: 'Open Sans', -apple-system, sans-serif;
+            line-height: 1.6;
+            color: var(--pro-shop-navy);
+            background: linear-gradient(180deg, #f8f9fa 0%, #e8efe8 100%);
+            min-height: 100vh;
+        }
+        h1, h2, h3 { font-family: 'Poppins', sans-serif; font-weight: 600; }
+        
+        /* Login Screen */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--augusta-green);
+        }
+        .login-box {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 450px;
+            animation: slideUp 0.5s ease;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .login-title {
+            text-align: center;
+            color: var(--augusta-green);
+            margin-bottom: 0.5rem;
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e1e8e4;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--masters-green);
+            box-shadow: 0 0 0 3px rgba(58, 120, 88, 0.1);
+        }
+        .btn-login {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--augusta-green) 0%, var(--masters-green) 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 77, 38, 0.3);
+        }
+        .login-error {
+            background: #fee;
+            color: var(--hazard-red);
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+            display: none;
+        }
+        
+        /* Main App */
+        .main-app { display: none; }
+        .main-app.active { display: block; }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--augusta-green) 0%, var(--fairway-green) 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+        }
+        .logo img { height: 60px; }
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .nav-tab {
+            padding: 0.625rem 1.25rem;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .nav-tab:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+        .nav-tab.active {
+            background: var(--club-gold);
+            color: var(--augusta-green);
+            font-weight: 600;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(0,0,0,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+        }
+        .credits-badge {
+            background: linear-gradient(135deg, var(--club-gold) 0%, var(--trophy-gold) 100%);
+            color: var(--augusta-green);
+            padding: 0.375rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+        .btn-logout {
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        /* View Sections */
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Pools Grid */
+        .pools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        .pool-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .pool-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        .pool-header {
+            background: linear-gradient(135deg, var(--fairway-green) 0%, var(--masters-green) 100%);
+            padding: 2rem;
+            color: white;
+            position: relative;
+        }
+        .pool-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .pool-stats {
+            padding: 2rem;
+        }
+        .pool-stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .pool-stat:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        /* Candidates Grid */
+        .candidates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 1.75rem;
+            margin-bottom: 2rem;
+        }
+        .candidate-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.75rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+        .candidate-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            border-color: var(--masters-green);
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(26, 35, 50, 0.95);
+            overflow-y: auto;
+        }
+        .modal.active { display: block; }
+        .modal-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .modal-card {
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease;
+        }
+        .modal-header {
+            background: linear-gradient(135deg, var(--augusta-green) 0%, var(--fairway-green) 100%);
+            padding: 2.5rem;
+            color: white;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .modal-body { padding: 2.5rem; }
+        .modal-section { margin-bottom: 2rem; }
+        .modal-section h3 { color: var(--augusta-green); margin-bottom: 1rem; }
+        .modal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .modal-info-item {
+            background: var(--morning-mist);
+            padding: 1rem;
+            border-radius: 12px;
+        }
+        .modal-footer {
+            background: var(--morning-mist);
+            padding: 2rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        /* Utilities */
+        .btn {
+            padding: 0.875rem 1.75rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--augusta-green) 0%, var(--masters-green) 100%);
+            color: white;
+        }
+        .btn-secondary {
+            background: white;
+            color: var(--augusta-green);
+            border: 2px solid var(--augusta-green);
+        }
+        .section-box {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            color: var(--rough-gray);
+        }
+        .breadcrumb a {
+            color: var(--masters-green);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .shortlist-badge {
+            background: rgba(255,255,255,0.3);
+            padding: 0.125rem 0.375rem;
+            border-radius: 10px;
+            margin-left: 0.25rem;
+            font-size: 0.875rem;
+            display: none;
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--rough-gray);
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <img src="https://ik.imagekit.io/golfjobs/Golf%20Jobs%20logo%20white.png?updatedAt=1758280288759" alt="Golf Jobs" style="width: 200px;">
+            </div>
+            <h1 class="login-title">Talent Pool Access</h1>
+            <p style="text-align: center; color: var(--rough-gray); margin-bottom: 2rem;">Exclusive recruitment platform</p>
+            
+            <div id="loginError" class="login-error">Invalid credentials. Please try again.</div>
+            
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Email Address</label>
+                    <input type="email" class="form-input" id="loginEmail" required placeholder="your@company.com">
+                </div>
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Password</label>
+                    <input type="password" class="form-input" id="loginPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-login">Sign In</button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e1e8e4;">
+                <p style="color: var(--rough-gray); font-size: 0.85rem;">© 2024 Golf Jobs. Professional recruitment excellence.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="main-app">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo" onclick="goHome()">
+                    <img src="https://ik.imagekit.io/golfjobs/Golf%20Jobs%20logo%20white.png?updatedAt=1758280288759" alt="Golf Jobs">
+                </div>
+                <nav class="nav-tabs">
+                    <button class="nav-tab active" onclick="switchView('pools')">Talent Pools</button>
+                    <button class="nav-tab" onclick="switchView('shortlist')">
+                        Shortlist <span id="shortlistBadge" class="shortlist-badge">0</span>
+                    </button>
+                    <button class="nav-tab" onclick="switchView('account')">My Account</button>
+                </nav>
+                <div class="user-info">
+                    <span id="userName" style="font-weight: 500;">Welcome</span>
+                    <div class="credits-badge">Credits: <span id="creditsCount">0</span></div>
+                    <button class="btn-logout" onclick="handleLogout()">Sign Out</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- Pools View -->
+            <div id="poolsView" class="view-section active">
+                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Your Talent Pools</h1>
+                <p style="color: var(--rough-gray); margin-bottom: 2rem; font-size: 1.1rem;">Select a talent pool to browse candidates</p>
+                <div class="pools-grid" id="poolsGrid">
+                    <div class="loading">Loading talent pools...</div>
+                </div>
+            </div>
+
+            <!-- Pool Detail View -->
+            <div id="poolDetailView" class="view-section">
+                <div class="breadcrumb">
+                    <a href="#" onclick="switchView('pools')">Talent Pools</a>
+                    <span>→</span>
+                    <span id="currentPoolName">Pool Name</span>
+                </div>
+                <div class="section-box">
+                    <input type="text" id="searchInput" placeholder="Search by role, skills, or location..." 
+                           style="width: 100%; padding: 0.875rem; border: 2px solid #e1e8e4; border-radius: 12px; font-size: 1rem;">
+                </div>
+                <div class="candidates-grid" id="candidatesGrid">
+                    <div class="loading">Loading candidates...</div>
+                </div>
+            </div>
+
+            <!-- Shortlist View -->
+            <div id="shortlistView" class="view-section">
+                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">Your Shortlist</h1>
+                <div id="shortlistContent"></div>
+            </div>
+
+            <!-- Account View -->
+            <div id="accountView" class="view-section">
+                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">My Account</h1>
+                <div class="section-box">
+                    <h2>Account Overview</h2>
+                    <p>Credits: <strong id="accountCredits">0</strong></p>
+                    <p>Total Requests: <strong id="totalRequests">0</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Candidate Modal -->
+    <div id="candidateModal" class="modal">
+        <div class="modal-container">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <button class="modal-close" onclick="closeModal()">×</button>
+                    <h1 id="modalTitle">Candidate Name</h1>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-section">
+                        <h3>Professional Summary</h3>
+                        <p id="modalSummary"></p>
+                    </div>
+                    <div class="modal-section">
+                        <h3>Key Information</h3>
+                        <div class="modal-grid">
+                            <div class="modal-info-item">
+                                <div style="font-size: 0.8rem; color: var(--rough-gray); margin-bottom: 0.25rem;">Current Position</div>
+                                <div id="modalPosition" style="font-weight: 600;">-</div>
+                            </div>
+                            <div class="modal-info-item">
+                                <div style="font-size: 0.8rem; color: var(--rough-gray); margin-bottom: 0.25rem;">Notice Period</div>
+                                <div id="modalNotice" style="font-weight: 600;">-</div>
+                            </div>
+                            <div class="modal-info-item">
+                                <div style="font-size: 0.8rem; color: var(--rough-gray); margin-bottom: 0.25rem;">Salary Expectations</div>
+                                <div id="modalSalary" style="font-weight: 600;">-</div>
+                            </div>
+                            <div class="modal-info-item">
+                                <div style="font-size: 0.8rem; color: var(--rough-gray); margin-bottom: 0.25rem;">Location</div>
+                                <div id="modalLocation" style="font-weight: 600;">-</div>
+                            </div>
+                            <div class="modal-info-item">
+                                <div style="font-size: 0.8rem; color: var(--rough-gray); margin-bottom: 0.25rem;">Actively Looking</div>
+                                <div id="modalActivelyLooking" style="font-weight: 600;">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-section">
+                        <h3>Skills & Expertise</h3>
+                        <div id="modalSkills"></div>
+                    </div>
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 1rem; margin-top: 2rem;">
+                        <p style="color: var(--hazard-red); font-weight: 600; text-align: center;">
+                            Contact details and introduction available upon request (1 credit)
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <span id="modalId" style="color: var(--rough-gray);">ID: -</span>
+                    <div>
+                        <button class="btn btn-secondary" onclick="saveToShortlist()">Save Profile</button>
+                        <button class="btn btn-primary" onclick="requestFullDetails()">Request Full Details (1 Credit)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Supabase
+        const SUPABASE_URL = 'https://kbadedwbcjetxiertztv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiYWRlZHdiY2pldHhpZXJ0enR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzMDAyNDMsImV4cCI6MjA3Mzg3NjI0M30.igm3XjM8l1OXfilQaAHtmJyCDe9eXILV_P9B3_sUzwg';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // State
+        let currentUser = null;
+        let currentPool = null;
+        let currentCandidate = null;
+        let shortlist = [];
+        let allPools = [];
+        let allCandidates = [];
+
+        // Authentication
+        async function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const { data, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('email', email)
+                .eq('password', password)
+                .single();
+            
+            if (data) {
+                currentUser = data;
+                localStorage.setItem('currentUser', JSON.stringify(data));
+                await loadUserData();
+                showApp();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('loginError').style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('currentUser');
+            currentUser = null;
+            location.reload();
+        }
+
+        async function loadUserData() {
+            // Load shortlist
+            const { data: shortlistData } = await supabase
+                .from('shortlists')
+                .select('*, candidates(*)')
+                .eq('user_id', currentUser.id);
+            
+            if (shortlistData) {
+                shortlist = shortlistData.map(s => s.candidates);
+            }
+        }
+
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainApp').classList.add('active');
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('creditsCount').textContent = currentUser.credits;
+            updateShortlistBadge();
+            loadPools();
+        }
+
+        // Load talent pools
+        async function loadPools() {
+            const { data: poolsData } = await supabase
+                .from('talent_pools')
+                .select('*');
+            
+            const { data: userAccess } = await supabase
+                .from('user_pool_access')
+                .select('pool_id')
+                .eq('user_id', currentUser.id);
+            
+            const userPools = userAccess ? userAccess.map(a => a.pool_id) : [];
+            allPools = poolsData || [];
+            
+            const poolsGrid = document.getElementById('poolsGrid');
+            poolsGrid.innerHTML = allPools.map(pool => {
+                const hasAccess = userPools.includes(pool.id);
+                return `
+                    <div class="pool-card" ${hasAccess ? `onclick="enterPool('${pool.id}')"` : ''} style="${!hasAccess ? 'opacity: 0.6; cursor: not-allowed;' : ''}">
+                        <div class="pool-header">
+                            <div class="pool-title">${pool.name}</div>
+                            <div style="opacity: 0.9;">${pool.region}</div>
+                        </div>
+                        <div class="pool-stats">
+                            <div class="pool-stat">
+                                <span>Total Candidates</span>
+                                <span style="font-weight: 700;">${pool.total_candidates}</span>
+                            </div>
+                            <div class="pool-stat">
+                                <span>Currently Active</span>
+                                <span style="font-weight: 700;">${pool.active_candidates}</span>
+                            </div>
+                            <div class="pool-stat">
+                                <span>New This Week</span>
+                                <span style="font-weight: 700;">${pool.new_this_week}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Enter pool and load candidates
+        async function enterPool(poolId) {
+            currentPool = poolId;
+            const pool = allPools.find(p => p.id === poolId);
+            document.getElementById('currentPoolName').textContent = pool.name;
+            
+            // Load candidates from database
+            const { data: candidates } = await supabase
+                .from('candidates')
+                .select('*')
+                .eq('pool_id', poolId)
+                .limit(20);
+            
+            allCandidates = candidates || [];
+            displayCandidates(allCandidates);
+            switchView('poolDetail');
+        }
+
+        function displayCandidates(candidates) {
+            const grid = document.getElementById('candidatesGrid');
+            
+            if (candidates.length === 0) {
+                grid.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No candidates available</p>';
+                return;
+            }
+            
+            grid.innerHTML = candidates.map(c => {
+                const location = c['Location'] || `${c['Town/City']}, ${c['Country']}`;
+                const skills = (c['Your Skills'] || '').split(',').slice(0, 4);
+                
+                return `
+                    <div class="candidate-card" onclick='openCandidate(${JSON.stringify(c).replace(/'/g, "&apos;")})'>
+                        <h3 style="color: var(--augusta-green); margin-bottom: 0.5rem;">${c['Current Job Title'] || 'Position'}</h3>
+                        <p style="color: var(--rough-gray); margin-bottom: 1rem;">${location}</p>
+                        <p style="margin-bottom: 1rem;">${(c['About You'] || '').substring(0, 150)}...</p>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+                            ${skills.map(skill => 
+                                `<span style="background: rgba(45, 95, 63, 0.1); color: var(--fairway-green); padding: 0.25rem 0.5rem; border-radius: 8px; font-size: 0.875rem;">${skill.trim()}</span>`
+                            ).join('')}
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                            <span style="color: var(--rough-gray); font-size: 0.9rem;">
+                                ${formatSalary(c['What are your salary expectations?'])} • ${formatNoticePeriod(c['Notice Period'])}
+                            </span>
+                            <span style="color: var(--masters-green); font-weight: 600;">View →</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Open candidate modal
+        function openCandidate(candidate) {
+            currentCandidate = candidate;
+            document.getElementById('modalTitle').textContent = candidate['Current Job Title'] || 'Position';
+            document.getElementById('modalId').textContent = `ID: GJ-${candidate.ID || candidate.id || 'Unknown'}`;
+            document.getElementById('modalSummary').textContent = candidate['About You'] || '';
+            document.getElementById('modalPosition').textContent = candidate['Current Job Title'] || 'Not specified';
+            document.getElementById('modalNotice').textContent = formatNoticePeriod(candidate['Notice Period']);
+            document.getElementById('modalSalary').textContent = formatSalary(candidate['What are your salary expectations?']);
+            document.getElementById('modalLocation').textContent = candidate['Location'] || `${candidate['Town/City']}, ${candidate['Country']}`;
+            document.getElementById('modalActivelyLooking').textContent = candidate['Actively looking for work'] || 'Not specified';
+            
+            const skills = (candidate['Your Skills'] || '').split(',').map(skill => skill.trim()).filter(s => s);
+            document.getElementById('modalSkills').innerHTML = skills.map(skill =>
+                `<span style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: var(--augusta-green); padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; border: 1px solid #6b9080; display: inline-block; margin: 0.25rem;">${skill}</span>`
+            ).join('');
+            
+            document.getElementById('candidateModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('candidateModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Shortlist management
+        async function saveToShortlist() {
+            if (!currentCandidate) return;
+            
+            const exists = shortlist.find(c => c.id === currentCandidate.id);
+            if (exists) {
+                alert('This candidate is already in your shortlist!');
+                return;
+            }
+            
+            const { error } = await supabase
+                .from('shortlists')
+                .insert({
+                    user_id: currentUser.id,
+                    candidate_id: currentCandidate.ID || currentCandidate.id,
+                    saved_from: allPools.find(p => p.id === currentPool)?.name
+                });
+            
+            if (!error) {
+                shortlist.push(currentCandidate);
+                updateShortlistBadge();
+                alert('✅ Candidate saved to shortlist!');
+                closeModal();
+            }
+        }
+
+        function updateShortlistBadge() {
+            const badge = document.getElementById('shortlistBadge');
+            if (shortlist.length > 0) {
+                badge.style.display = 'inline';
+                badge.textContent = shortlist.length;
+            }
+        }
+
+        async function requestFullDetails() {
+            if (currentUser.credits < 1) {
+                alert('Insufficient credits!');
+                return;
+            }
+            
+            // Update credits
+            const newCredits = currentUser.credits - 1;
+            await supabase
+                .from('users')
+                .update({ credits: newCredits })
+                .eq('id', currentUser.id);
+            
+            // Add request
+            await supabase
+                .from('requests')
+                .insert({
+                    user_id: currentUser.id,
+                    candidate_id: currentCandidate.ID || currentCandidate.id
+                });
+            
+            currentUser.credits = newCredits;
+            document.getElementById('creditsCount').textContent = newCredits;
+            alert('Request submitted! Full details will be sent within 24 hours.');
+            closeModal();
+        }
+
+        // Navigation
+        function goHome() {
+            switchView('pools');
+        }
+
+        function switchView(view) {
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.view-section').forEach(section => section.classList.remove('active'));
+            
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+            
+            document.getElementById(view + 'View').classList.add('active');
+            
+            if (view === 'shortlist') loadShortlist();
+            else if (view === 'account') loadAccount();
+        }
+
+        async function loadShortlist() {
+            await loadUserData();
+            const content = document.getElementById('shortlistContent');
+            
+            if (shortlist.length === 0) {
+                content.innerHTML = '<div class="section-box" style="text-align: center;"><p>No candidates saved yet</p></div>';
+            } else {
+                content.innerHTML = `
+                    <div class="candidates-grid">
+                        ${shortlist.map(c => {
+                            const location = c['Location'] || `${c['Town/City']}, ${c['Country']}`;
+                            return `
+                                <div class="candidate-card" onclick='openCandidate(${JSON.stringify(c).replace(/'/g, "&apos;")})'>
+                                    <h3 style="color: var(--augusta-green);">${c['Current Job Title']}</h3>
+                                    <p style="color: var(--rough-gray);">${location}</p>
+                                    <p>${(c['About You'] || '').substring(0, 150)}...</p>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        async function loadAccount() {
+            const { data: requests } = await supabase
+                .from('requests')
+                .select('*')
+                .eq('user_id', currentUser.id);
+            
+            document.getElementById('accountCredits').textContent = currentUser.credits;
+            document.getElementById('totalRequests').textContent = requests ? requests.length : 0;
+        }
+
+        // Search functionality
+        document.getElementById('searchInput')?.addEventListener('keyup', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const filtered = allCandidates.filter(c => 
+                (c['Current Job Title'] || '').toLowerCase().includes(searchTerm) ||
+                (c['About You'] || '').toLowerCase().includes(searchTerm) ||
+                (c['Your Skills'] || '').toLowerCase().includes(searchTerm) ||
+                (c['Location'] || '').toLowerCase().includes(searchTerm)
+            );
+            displayCandidates(filtered);
+        });
+
+        // Utility functions
+        function formatSalary(salary) {
+            if (!salary) return 'Negotiable';
+            const num = parseFloat(salary);
+            if (num < 30000) return '£20-30k';
+            if (num < 40000) return '£30-40k';
+            if (num < 50000) return '£40-50k';
+            if (num < 60000) return '£50-60k';
+            if (num < 70000) return '£60-70k';
+            if (num < 80000) return '£70-80k';
+            if (num < 100000) return '£80-100k';
+            return '£100k+';
+        }
+
+        function formatNoticePeriod(notice) {
+            if (!notice) return 'Not specified';
+            const lower = notice.toLowerCase();
+            if (lower.includes('immediately')) return 'Available immediately';
+            if (lower.includes('1 month')) return '1 month notice';
+            if (lower.includes('2 month')) return '2 months notice';
+            if (lower.includes('3 month')) return '3 months notice';
+            return notice;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            const saved = localStorage.getItem('currentUser');
+            if (saved) {
+                currentUser = JSON.parse(saved);
+                loadUserData().then(showApp);
+            }
+        });
+    </script>
+</body>
+</html>

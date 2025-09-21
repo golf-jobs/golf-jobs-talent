@@ -13,6 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <style>
+        /* Copy ALL the styles from your prototype - they're perfect */
         * {
             margin: 0;
             padding: 0;
@@ -452,6 +453,20 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             margin-bottom: 2rem;
         }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            color: var(--rough-gray);
+        }
+
+        .breadcrumb a {
+            color: var(--masters-green);
+            text-decoration: none;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -497,7 +512,9 @@
                     <button class="nav-tab" onclick="switchView('shortlist')">
                         Shortlist <span id="shortlistBadge" class="shortlist-badge" style="display: none;">0</span>
                     </button>
+                    <button class="nav-tab" onclick="switchView('account')">My Account</button>
                     <button class="nav-tab" onclick="switchView('requests')">My Requests</button>
+                    <button id="adminTab" class="nav-tab" onclick="switchView('admin')" style="display:none;">Admin</button>
                 </nav>
                 <div class="user-info">
                     <span id="userName">Welcome</span>
@@ -515,12 +532,27 @@
                 <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Your Talent Pools</h1>
                 <p style="color: var(--rough-gray); margin-bottom: 2rem; font-size: 1.1rem;">Select a talent pool to browse candidates</p>
                 <div class="pools-grid" id="poolsGrid"></div>
+                
+                <div class="section-box">
+                    <h2 style="font-size: 1.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Unlock More Talent Pools</h2>
+                    <p style="color: var(--rough-gray); margin-bottom: 1.5rem;">Expand your recruitment reach with access to additional regions</p>
+                    <button class="btn btn-primary" onclick="alert('Contact talent@golf-jobs.com for access to additional pools')">Request Access</button>
+                </div>
             </div>
 
-            <!-- Candidates View -->
-            <div id="candidatesView" class="view-section">
-                <button onclick="switchView('pools')" class="btn" style="margin-bottom: 2rem;">← Back to Pools</button>
-                <h1 id="poolTitle" style="font-size: 2rem; color: var(--augusta-green); margin-bottom: 1rem;">Pool Name</h1>
+            <!-- Pool Detail View -->
+            <div id="poolDetailView" class="view-section">
+                <div class="breadcrumb">
+                    <a href="#" onclick="switchView('pools')">Talent Pools</a>
+                    <span>→</span>
+                    <span id="currentPoolName">Pool Name</span>
+                </div>
+                
+                <div class="section-box">
+                    <input type="text" id="searchInput" placeholder="Search by name, skills, or location..." 
+                           style="width: 100%; padding: 0.875rem; border: 2px solid #e1e8e4; border-radius: 12px; font-size: 1rem;">
+                </div>
+                
                 <div class="candidates-grid" id="candidatesGrid"></div>
             </div>
 
@@ -530,10 +562,39 @@
                 <div id="shortlistContent"></div>
             </div>
 
+            <!-- Account View -->
+            <div id="accountView" class="view-section">
+                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">My Account</h1>
+                <div class="section-box">
+                    <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">Account Overview</h2>
+                    <p style="margin-bottom: 1rem;"><strong>Name:</strong> <span id="accountName">-</span></p>
+                    <p style="margin-bottom: 1rem;"><strong>Email:</strong> <span id="accountEmail">-</span></p>
+                    <p style="margin-bottom: 1rem;"><strong>Credits Balance:</strong> <span id="accountCredits">0</span></p>
+                    <p><strong>Total Requests:</strong> <span id="totalRequests">0</span></p>
+                </div>
+            </div>
+
             <!-- Requests View -->
             <div id="requestsView" class="view-section">
-                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 1rem;">My Requests</h1>
-                <div id="requestsContent"></div>
+                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">My Requests</h1>
+                <div class="section-box">
+                    <div id="requestsList"></div>
+                </div>
+            </div>
+
+            <!-- Admin View -->
+            <div id="adminView" class="view-section">
+                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">Admin Panel</h1>
+                
+                <div class="section-box">
+                    <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">All Users</h2>
+                    <div id="adminUsersList"></div>
+                </div>
+                
+                <div class="section-box">
+                    <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">All Requests</h2>
+                    <div id="adminRequestsList"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -544,9 +605,9 @@
             <button class="modal-close" onclick="closeModal()">×</button>
             <h2 id="modalTitle"></h2>
             <div id="modalBody"></div>
-            <div style="margin-top: 2rem; display: flex; gap: 1rem;">
-                <button class="btn btn-primary" onclick="addToShortlist()">Add to Shortlist</button>
-                <button class="btn btn-primary" onclick="requestContact()">Request Contact (1 Credit)</button>
+            <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
+                <button class="btn" style="background: white; color: var(--augusta-green); border: 2px solid var(--augusta-green);" onclick="addToShortlist()">Save to Shortlist</button>
+                <button class="btn btn-primary" onclick="requestContact()">Request Contact Details (1 Credit)</button>
             </div>
         </div>
     </div>
@@ -564,6 +625,7 @@
         let userProfile = null;
         let userPools = [];
         let shortlist = [];
+        let allCandidates = [];
 
         // Check authentication on load
         window.onload = async function() {
@@ -598,29 +660,29 @@
             }
         }
 
-        // Load user data
-       async function loadUserData(user) {
-    currentUser = user;
-    
-    // Get user profile - fixed query
-    const { data: profile, error } = await supabase
-        .from('users')  
-        .select('*')
-        .eq('id', user.id)
-        .single();
-    
-    console.log('Profile loaded:', profile);  // Debug line
-    console.log('Error:', error);  // Debug line
-    
-    if (profile) {
-        userProfile = profile;
-        document.getElementById('userName').textContent = profile.name || user.email;
-        document.getElementById('creditsCount').textContent = profile.credits || 0;
-    } else {
-        // If no profile found, show email at least
-        document.getElementById('userName').textContent = user.email;
-        document.getElementById('creditsCount').textContent = 0;
-    }
+        // Load user data with better error handling
+        async function loadUserData(user) {
+            currentUser = user;
+            
+            // Get user profile from users table
+            const { data: profile, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+            
+            console.log('Loading user profile:', profile, error);
+            
+            if (profile) {
+                userProfile = profile;
+                document.getElementById('userName').textContent = profile.name || user.email;
+                document.getElementById('creditsCount').textContent = profile.credits || 0;
+                
+                // Show admin tab if admin
+                if (profile.role === 'admin') {
+                    document.getElementById('adminTab').style.display = 'block';
+                }
+            }
             
             // Get user's pool access
             const { data: poolAccess } = await supabase
@@ -632,7 +694,7 @@
             
             // Get user's shortlist
             const { data: shortlistData } = await supabase
-                .from('shortlist')
+                .from('shortlists')
                 .select('*, candidates(*)')
                 .eq('user_id', user.id);
             
@@ -663,11 +725,13 @@
             });
             
             document.getElementById(view + 'View').classList.add('active');
-            event.target.classList.add('active');
+            if (event && event.target) event.target.classList.add('active');
             
             if (view === 'pools') loadPools();
             else if (view === 'shortlist') loadShortlist();
+            else if (view === 'account') loadAccount();
             else if (view === 'requests') loadRequests();
+            else if (view === 'admin' && userProfile?.role === 'admin') loadAdmin();
         }
 
         // Load talent pools
@@ -675,6 +739,17 @@
             const { data: pools } = await supabase
                 .from('talent_pools')
                 .select('*');
+            
+            // Count candidates per pool
+            for (let pool of pools) {
+                const { count } = await supabase
+                    .from('candidates')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('pool_id', pool.id);
+                
+                pool.total_candidates = count || 0;
+                pool.active_candidates = count || 0; // For now, same as total
+            }
             
             const poolsGrid = document.getElementById('poolsGrid');
             poolsGrid.innerHTML = '';
@@ -692,11 +767,11 @@
                     <div class="pool-stats">
                         <div class="pool-stat">
                             <span>Total Candidates</span>
-                            <span>${pool.total_candidates || 0}</span>
+                            <span>${pool.total_candidates}</span>
                         </div>
                         <div class="pool-stat">
                             <span>Active</span>
-                            <span>${pool.active_candidates || 0}</span>
+                            <span>${pool.active_candidates}</span>
                         </div>
                     </div>
                 `;
@@ -709,51 +784,80 @@
             }
         }
 
-        // Open a pool
+        // Open a pool and show candidates
         async function openPool(pool) {
             currentPool = pool;
-            document.getElementById('poolTitle').textContent = pool.name;
+            document.getElementById('currentPoolName').textContent = pool.name;
             
-            // Load candidates for this pool
-            const { data: candidates } = await supabase
+            // Load ALL candidates for this pool
+            const { data: candidates, error } = await supabase
                 .from('candidates')
                 .select('*')
-                .eq('pool_id', pool.id)
-                .eq('Status', 'Active')
-                .limit(50);
+                .eq('pool_id', pool.id);
             
+            console.log(`Loading candidates for ${pool.id}:`, candidates?.length, error);
+            
+            allCandidates = candidates || [];
+            displayCandidates(allCandidates);
+            
+            // Switch to pool detail view
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('poolDetailView').classList.add('active');
+        }
+
+        // Display candidates in grid
+        function displayCandidates(candidates) {
             const candidatesGrid = document.getElementById('candidatesGrid');
-            candidatesGrid.innerHTML = '';
             
-            if (candidates && candidates.length > 0) {
-                candidates.forEach(candidate => {
-                    const card = document.createElement('div');
-                    card.className = 'candidate-card';
-                    card.innerHTML = `
-                        <h3 style="color: var(--augusta-green); margin-bottom: 0.5rem;">${candidate.Name || 'Candidate'}</h3>
-                        <p style="color: var(--rough-gray);">${candidate['Town/City'] || ''}, ${candidate.Country || ''}</p>
-                        <p style="margin-top: 1rem;">LinkedIn: ${candidate.LinkedIn || 'Not provided'}</p>
-                    `;
-                    card.onclick = () => openCandidate(candidate);
-                    candidatesGrid.appendChild(card);
-                });
-            } else {
-                candidatesGrid.innerHTML = '<p>No candidates available in this pool.</p>';
+            if (!candidates || candidates.length === 0) {
+                candidatesGrid.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No candidates available in this pool.</p>';
+                return;
             }
             
-            switchView('candidates');
+            candidatesGrid.innerHTML = candidates.map(candidate => `
+                <div class="candidate-card" onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'>
+                    <h3 style="color: var(--augusta-green); margin-bottom: 0.5rem;">
+                        ${candidate.Name || 'Candidate #' + candidate.ID}
+                    </h3>
+                    <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 1rem;">
+                        ${candidate['Town/City'] || 'Location not specified'}, ${candidate.Country || ''}
+                    </p>
+                    <p style="margin-bottom: 1rem;">
+                        <strong>Status:</strong> ${candidate.Status || 'Active'}
+                    </p>
+                    ${candidate.LinkedIn ? `<p style="color: var(--masters-green);">LinkedIn Available</p>` : ''}
+                </div>
+            `).join('');
         }
+
+        // Search functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const filtered = allCandidates.filter(c => 
+                        (c.Name || '').toLowerCase().includes(searchTerm) ||
+                        (c['Town/City'] || '').toLowerCase().includes(searchTerm) ||
+                        (c.Country || '').toLowerCase().includes(searchTerm) ||
+                        (c.Email || '').toLowerCase().includes(searchTerm)
+                    );
+                    displayCandidates(filtered);
+                });
+            }
+        });
 
         // Open candidate modal
         function openCandidate(candidate) {
             currentCandidate = candidate;
-            document.getElementById('modalTitle').textContent = candidate.Name || 'Candidate';
+            document.getElementById('modalTitle').textContent = candidate.Name || `Candidate #${candidate.ID}`;
             document.getElementById('modalBody').innerHTML = `
                 <p><strong>Location:</strong> ${candidate['Town/City'] || 'Unknown'}, ${candidate.Country || ''}</p>
-                <p><strong>Email:</strong> Hidden (1 credit required)</p>
-                <p><strong>LinkedIn:</strong> ${candidate.LinkedIn || 'Not provided'}</p>
-                <p><strong>GitHub:</strong> ${candidate.GitHub || 'Not provided'}</p>
                 <p><strong>Status:</strong> ${candidate.Status || 'Unknown'}</p>
+                <p style="margin-top: 1rem; padding: 1rem; background: #fee; border-radius: 8px;">
+                    <strong>Note:</strong> Full contact details (Email, LinkedIn, GitHub) are hidden. 
+                    Request access using 1 credit to reveal.
+                </p>
             `;
             document.getElementById('candidateModal').classList.add('active');
         }
@@ -768,7 +872,7 @@
             if (!currentCandidate) return;
             
             const { error } = await supabase
-                .from('shortlist')
+                .from('shortlists')
                 .insert({
                     user_id: currentUser.id,
                     candidate_id: currentCandidate.ID,
@@ -783,7 +887,7 @@
                 
                 // Reload shortlist
                 const { data: shortlistData } = await supabase
-                    .from('shortlist')
+                    .from('shortlists')
                     .select('*, candidates(*)')
                     .eq('user_id', currentUser.id);
                 
@@ -797,33 +901,35 @@
             if (!currentCandidate) return;
             
             if (userProfile.credits < 1) {
-                alert('Insufficient credits!');
+                alert('Insufficient credits! Contact talent@golf-jobs.com to purchase more.');
                 return;
             }
             
             // Deduct credit
             const { error: profileError } = await supabase
-                .from('profiles')
+                .from('users')
                 .update({ credits: userProfile.credits - 1 })
                 .eq('id', currentUser.id);
             
             // Record request
             const { error: requestError } = await supabase
-                .from('candidate_requests')
+                .from('requests')
                 .insert({
                     user_id: currentUser.id,
-                    candidate_id: currentCandidate.ID
+                    candidate_id: currentCandidate.ID,
+                    credits_used: 1
                 });
             
             if (!profileError && !requestError) {
                 userProfile.credits--;
                 document.getElementById('creditsCount').textContent = userProfile.credits;
                 
-                // Show contact details
+                // Show full details
                 document.getElementById('modalBody').innerHTML += `
                     <div style="margin-top: 1rem; padding: 1rem; background: #d4edda; border-radius: 8px;">
                         <p><strong>Email:</strong> ${currentCandidate.Email || 'Not provided'}</p>
-                        <p><strong>Phone:</strong> ${currentCandidate['Phone Number'] || 'Not provided'}</p>
+                        <p><strong>LinkedIn:</strong> ${currentCandidate.LinkedIn || 'Not provided'}</p>
+                        <p><strong>GitHub:</strong> ${currentCandidate.GitHub || 'Not provided'}</p>
                     </div>
                 `;
                 
@@ -835,38 +941,49 @@
         async function loadShortlist() {
             const content = document.getElementById('shortlistContent');
             
-            if (shortlist.length === 0) {
-                content.innerHTML = '<p>No candidates saved yet.</p>';
+            if (!shortlist || shortlist.length === 0) {
+                content.innerHTML = `
+                    <div class="section-box" style="text-align: center;">
+                        <h2>No candidates saved yet</h2>
+                        <p>Browse talent pools and save candidates you're interested in.</p>
+                    </div>
+                `;
             } else {
                 content.innerHTML = '<div class="candidates-grid" id="shortlistGrid"></div>';
                 const grid = document.getElementById('shortlistGrid');
                 
-                shortlist.forEach(item => {
-                    if (item.candidates) {
-                        const card = document.createElement('div');
-                        card.className = 'candidate-card';
-                        card.innerHTML = `
-                            <h3>${item.candidates.Name || 'Candidate'}</h3>
-                            <p>${item.candidates['Town/City'] || ''}, ${item.candidates.Country || ''}</p>
-                            <button class="btn" onclick="removeFromShortlist(${item.id})">Remove</button>
-                        `;
-                        grid.appendChild(card);
-                    }
-                });
+                grid.innerHTML = shortlist.map(item => {
+                    const candidate = item.candidates;
+                    if (!candidate) return '';
+                    
+                    return `
+                        <div class="candidate-card">
+                            <button onclick="removeFromShortlist(${item.id})" 
+                                    style="position: absolute; top: 1rem; right: 1rem; 
+                                           background: #fee; color: var(--hazard-red); 
+                                           border: none; padding: 0.5rem 1rem; 
+                                           border-radius: 8px; cursor: pointer;">
+                                Remove
+                            </button>
+                            <h3>${candidate.Name || 'Candidate'}</h3>
+                            <p>${candidate['Town/City'] || ''}, ${candidate.Country || ''}</p>
+                        </div>
+                    `;
+                }).join('');
             }
         }
 
         // Remove from shortlist
         async function removeFromShortlist(shortlistId) {
             const { error } = await supabase
-                .from('shortlist')
+                .from('shortlists')
                 .delete()
                 .eq('id', shortlistId);
             
             if (!error) {
                 // Reload shortlist
                 const { data: shortlistData } = await supabase
-                    .from('shortlist')
+                    .from('shortlists')
                     .select('*, candidates(*)')
                     .eq('user_id', currentUser.id);
                 
@@ -876,32 +993,127 @@
             }
         }
 
+        // Load account page
+        function loadAccount() {
+            document.getElementById('accountName').textContent = userProfile?.name || '-';
+            document.getElementById('accountEmail').textContent = currentUser?.email || '-';
+            document.getElementById('accountCredits').textContent = userProfile?.credits || 0;
+            
+            // Count requests
+            supabase
+                .from('requests')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', currentUser.id)
+                .then(({ count }) => {
+                    document.getElementById('totalRequests').textContent = count || 0;
+                });
+        }
+
         // Load requests
         async function loadRequests() {
             const { data: requests } = await supabase
-                .from('candidate_requests')
+                .from('requests')
                 .select('*, candidates(*)')
-                .eq('user_id', currentUser.id);
+                .eq('user_id', currentUser.id)
+                .order('request_date', { ascending: false });
             
-            const content = document.getElementById('requestsContent');
+            const content = document.getElementById('requestsList');
             
             if (!requests || requests.length === 0) {
                 content.innerHTML = '<p>No requests made yet.</p>';
             } else {
-                let html = '<div style="background: white; padding: 1rem; border-radius: 8px;">';
-                requests.forEach(req => {
-                    html += `
-                        <div style="padding: 1rem; border-bottom: 1px solid #eee;">
-                            <p><strong>${req.candidates?.Name || 'Candidate'}</strong></p>
-                            <p>Email: ${req.candidates?.Email || 'Not provided'}</p>
-                            <p style="font-size: 0.9rem; color: var(--rough-gray);">
-                                Requested: ${new Date(req.request_date).toLocaleDateString()}
-                            </p>
-                        </div>
-                    `;
-                });
-                html += '</div>';
-                content.innerHTML = html;
+                content.innerHTML = `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f9fafb;">
+                                <th style="padding: 1rem; text-align: left;">Date</th>
+                                <th style="padding: 1rem; text-align: left;">Candidate</th>
+                                <th style="padding: 1rem; text-align: left;">Credits Used</th>
+                                <th style="padding: 1rem; text-align: left;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${requests.map(req => `
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 1rem;">${new Date(req.request_date).toLocaleDateString()}</td>
+                                    <td style="padding: 1rem;">${req.candidates?.Name || 'Candidate #' + req.candidate_id}</td>
+                                    <td style="padding: 1rem;">${req.credits_used || 1}</td>
+                                    <td style="padding: 1rem; color: var(--masters-green);">Complete</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+        }
+
+        // Load admin panel
+        async function loadAdmin() {
+            // Load all users
+            const { data: allUsers } = await supabase
+                .from('users')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            const usersList = document.getElementById('adminUsersList');
+            if (allUsers && allUsers.length > 0) {
+                usersList.innerHTML = `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f9fafb;">
+                                <th style="padding: 1rem; text-align: left;">Name</th>
+                                <th style="padding: 1rem; text-align: left;">Email</th>
+                                <th style="padding: 1rem; text-align: left;">Role</th>
+                                <th style="padding: 1rem; text-align: left;">Credits</th>
+                                <th style="padding: 1rem; text-align: left;">Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${allUsers.map(user => `
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 1rem;">${user.name || 'Not set'}</td>
+                                    <td style="padding: 1rem;">${user.email}</td>
+                                    <td style="padding: 1rem;">${user.role || 'viewer'}</td>
+                                    <td style="padding: 1rem;">${user.credits || 0}</td>
+                                    <td style="padding: 1rem;">${new Date(user.created_at).toLocaleDateString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+            
+            // Load all requests
+            const { data: allRequests } = await supabase
+                .from('requests')
+                .select('*, users(name, email), candidates(Name)')
+                .order('request_date', { ascending: false })
+                .limit(50);
+            
+            const requestsList = document.getElementById('adminRequestsList');
+            if (allRequests && allRequests.length > 0) {
+                requestsList.innerHTML = `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f9fafb;">
+                                <th style="padding: 1rem; text-align: left;">Date</th>
+                                <th style="padding: 1rem; text-align: left;">User</th>
+                                <th style="padding: 1rem; text-align: left;">Candidate</th>
+                                <th style="padding: 1rem; text-align: left;">Credits</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${allRequests.map(req => `
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 1rem;">${new Date(req.request_date).toLocaleDateString()}</td>
+                                    <td style="padding: 1rem;">${req.users?.name || req.users?.email || 'Unknown'}</td>
+                                    <td style="padding: 1rem;">${req.candidates?.Name || 'Candidate #' + req.candidate_id}</td>
+                                    <td style="padding: 1rem;">${req.credits_used || 1}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
             }
         }
 
@@ -920,6 +1132,11 @@
         function goHome() {
             switchView('pools');
         }
+
+        // Close modal on escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
     </script>
 </body>
 </html>

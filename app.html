@@ -599,21 +599,28 @@
         }
 
         // Load user data
-        async function loadUserData(user) {
-            currentUser = user;
-            
-            // Get user profile
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', user.id)
-                .single();
-            
-            if (profile) {
-                userProfile = profile;
-                document.getElementById('userName').textContent = profile.name || user.email;
-                document.getElementById('creditsCount').textContent = profile.credits || 0;
-            }
+       async function loadUserData(user) {
+    currentUser = user;
+    
+    // Get user profile - fixed query
+    const { data: profile, error } = await supabase
+        .from('users')  
+        .select('*')
+        .eq('id', user.id)
+        .single();
+    
+    console.log('Profile loaded:', profile);  // Debug line
+    console.log('Error:', error);  // Debug line
+    
+    if (profile) {
+        userProfile = profile;
+        document.getElementById('userName').textContent = profile.name || user.email;
+        document.getElementById('creditsCount').textContent = profile.credits || 0;
+    } else {
+        // If no profile found, show email at least
+        document.getElementById('userName').textContent = user.email;
+        document.getElementById('creditsCount').textContent = 0;
+    }
             
             // Get user's pool access
             const { data: poolAccess } = await supabase

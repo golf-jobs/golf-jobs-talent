@@ -494,6 +494,13 @@
             color: var(--augusta-green);
         }
 
+        .skills-text {
+            color: var(--rough-gray);
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 1rem;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .pools-grid, .candidates-grid {
@@ -596,7 +603,7 @@
                            style="width: 100%; padding: 0.875rem; border: 2px solid #e1e8e4; border-radius: 12px; font-size: 1rem; margin-bottom: 1rem;">
                     
                     <!-- Filters -->
-                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start;">
                         <select id="salaryFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
                             <option value="">All Salaries</option>
                             <option value="0-30000">£20-30k</option>
@@ -617,10 +624,60 @@
                         </select>
                         
                         <select id="lookingFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
-                            <option value="">All Candidates</option>
+                            <option value="">Active/Passive</option>
                             <option value="YES">Actively Looking</option>
                             <option value="NO">Not Actively Looking</option>
                         </select>
+                        
+                        <select id="categoryFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
+                            <option value="">All Categories</option>
+                            <option value="greenkeeping">Greenkeeping</option>
+                            <option value="management">Management</option>
+                            <option value="sales">Sales & Business Dev</option>
+                            <option value="marketing">Marketing & PR</option>
+                            <option value="fandB">F&B / Hospitality</option>
+                            <option value="professional">Golf Professional</option>
+                            <option value="operations">Operations</option>
+                            <option value="retail">Retail & Pro Shop</option>
+                            <option value="maintenance">Maintenance & Facilities</option>
+                            <option value="admin">Admin & Support</option>
+                            <option value="other">Other</option>
+                        </select>
+                        
+                        <!-- Location Filter Dropdown -->
+                        <div style="position: relative;">
+                            <button onclick="toggleLocationDropdown()" 
+                                    style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; 
+                                           font-size: 0.95rem; background: white; cursor: pointer; 
+                                           min-width: 150px; text-align: left; display: flex; 
+                                           justify-content: space-between; align-items: center;">
+                                <span id="locationFilterText">All Locations</span>
+                                <span style="font-size: 0.8rem;">▼</span>
+                            </button>
+                            <div id="locationDropdown" style="display: none; position: absolute; top: 100%; 
+                                                              left: 0; right: 0; background: white; 
+                                                              border: 2px solid #e1e8e4; border-radius: 8px; 
+                                                              margin-top: 0.25rem; max-height: 300px; 
+                                                              overflow-y: auto; z-index: 1000; min-width: 200px;">
+                                <div style="padding: 0.5rem; border-bottom: 1px solid #e1e8e4;">
+                                    <button onclick="selectAllLocations()" 
+                                            style="margin-right: 0.5rem; padding: 0.25rem 0.5rem; 
+                                                   border: 1px solid #e1e8e4; border-radius: 4px; 
+                                                   background: white; cursor: pointer; font-size: 0.85rem;">
+                                        Select All
+                                    </button>
+                                    <button onclick="clearAllLocations()" 
+                                            style="padding: 0.25rem 0.5rem; border: 1px solid #e1e8e4; 
+                                                   border-radius: 4px; background: white; cursor: pointer; 
+                                                   font-size: 0.85rem;">
+                                        Clear All
+                                    </button>
+                                </div>
+                                <div id="locationCheckboxes" style="padding: 0.5rem;">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                        </div>
                         
                         <button onclick="applyFilters()" class="btn" style="padding: 0.5rem 1.25rem; background: var(--masters-green); color: white; font-size: 0.9rem;">
                             Apply Filters
@@ -705,47 +762,80 @@
         let userPools = [];
         let shortlist = [];
         let allCandidates = [];
+        let selectedLocations = new Set();
+        let availableLocations = new Set();
 
         // Utility functions
         function toTitleCase(str) {
             if (!str) return str;
-            return str.toLowerCase().split(' ').map(word => 
-                word.charAt(0).toUpperCase() + word.slice(1)
-            ).join(' ');
+            // Fix common patterns first
+            str = str.replace(/\bUk\b/gi, 'UK');
+            str = str.replace(/\busa\b/gi, 'USA');
+            
+            return str.toLowerCase().split(' ').map(word => {
+                // Keep acronyms uppercase
+                if (word.toUpperCase() === 'UK' || word.toUpperCase() === 'USA' || word.toUpperCase() === 'CEO' || 
+                    word.toUpperCase() === 'CFO' || word.toUpperCase() === 'COO' || word.toUpperCase() === 'PGA') {
+                    return word.toUpperCase();
+                }
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            }).join(' ');
         }
 
-        function formatLocation(townCity, country) {
-            const excludeTerms = ['England', 'United Kingdom', 'UK', 'Scotland', 'Wales', 'Northern Ireland', 'Great Britain', 'GB'];
+        function cleanAndFormatLocation(townCity, country) {
+            const excludeTerms = ['England', 'United Kingdom', 'UK', 'Scotland', 'Wales', 'Northern Ireland', 
+                                 'Great Britain', 'GB', 'Uk', 'england', 'united kingdom'];
             
-            let location = '';
+            // Clean up the town/city field
+            let cleanedTown = townCity ? townCity.trim() : '';
             
-            if (townCity && !excludeTerms.includes(townCity)) {
-                location = townCity;
+            // Remove any duplicates or extra info like "Bishop's Stortford, Hertfordshire, England, United Kingdom"
+            if (cleanedTown.includes(',')) {
+                // Take just the first part (usually the town/city name)
+                cleanedTown = cleanedTown.split(',')[0].trim();
             }
             
-            if (country && !excludeTerms.includes(country)) {
-                if (!location && country.length < 30) {
-                    location = country;
-                } else if (location && country !== townCity && !excludeTerms.includes(country)) {
-                    location = `${location}, ${country}`;
+            // Check if country field contains useful non-excluded info
+            let cleanedCountry = country ? country.trim() : '';
+            
+            // If country is in exclude list, ignore it
+            if (excludeTerms.some(term => cleanedCountry.toLowerCase() === term.toLowerCase())) {
+                cleanedCountry = '';
+            }
+            
+            // If country contains a comma, it might have town info
+            if (cleanedCountry && cleanedCountry.includes(',')) {
+                const parts = cleanedCountry.split(',');
+                const firstPart = parts[0].trim();
+                // If first part isn't in exclude list, it might be a town
+                if (!excludeTerms.some(term => firstPart.toLowerCase() === term.toLowerCase())) {
+                    if (!cleanedTown) {
+                        cleanedTown = firstPart;
+                    }
+                    cleanedCountry = '';
                 }
             }
             
-            return location || 'Location not specified';
+            // Handle all caps
+            if (cleanedTown === cleanedTown.toUpperCase() && cleanedTown.length > 2) {
+                cleanedTown = toTitleCase(cleanedTown);
+            } else {
+                cleanedTown = toTitleCase(cleanedTown);
+            }
+            
+            // Final location
+            if (cleanedTown) {
+                return cleanedTown;
+            }
+            
+            return 'Location Not Specified';
         }
 
-        function formatSalary(salary) {
+        function formatSalaryExact(salary) {
             if (!salary) return 'Salary Negotiable';
             const num = parseFloat(salary);
             if (isNaN(num)) return 'Salary Negotiable';
-            if (num < 30000) return '£20-30k';
-            if (num < 40000) return '£30-40k';
-            if (num < 50000) return '£40-50k';
-            if (num < 60000) return '£50-60k';
-            if (num < 70000) return '£60-70k';
-            if (num < 80000) return '£70-80k';
-            if (num < 100000) return '£80-100k';
-            return '£100k+';
+            return `£${num.toLocaleString()}`;
         }
 
         function formatNoticePeriod(notice) {
@@ -760,17 +850,66 @@
             return notice + ' notice';
         }
 
-        function formatSummary(text, maxLength = 1000) {
+        function generateSummaryPreview(text, maxLength = 120) {
             if (!text) return '';
             
-            // Add line breaks after sentences for better readability
-            let formatted = text.replace(/\. /g, '.\n\n');
+            // Extract the most informative first sentence or key points
+            const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
             
-            // If text is very long, reduce font size
-            const fontSize = text.length > 800 ? '0.9rem' : '1rem';
-            const lineHeight = text.length > 800 ? '1.5' : '1.6';
+            if (sentences.length === 0) return text.substring(0, maxLength) + '...';
             
-            return { text: formatted, fontSize, lineHeight };
+            // Look for key phrases that indicate important info
+            const keyPhrases = ['years experience', 'specializing in', 'expertise in', 'responsible for', 
+                               'passionate about', 'skilled in', 'background in', 'focused on'];
+            
+            // Find the most relevant sentence
+            let bestSentence = sentences[0];
+            for (let sentence of sentences) {
+                if (keyPhrases.some(phrase => sentence.toLowerCase().includes(phrase))) {
+                    bestSentence = sentence;
+                    break;
+                }
+            }
+            
+            const summary = bestSentence.trim();
+            if (summary.length > maxLength) {
+                return summary.substring(0, maxLength) + '...';
+            }
+            return summary;
+        }
+
+        function formatSkillsDisplay(skillsString) {
+            if (!skillsString) return '';
+            
+            // Check if it's paragraph-style text
+            if (skillsString.length > 200 && !skillsString.includes(',') && !skillsString.includes('•')) {
+                // Return first 100 chars as plain text
+                return `<p class="skills-text">${skillsString.substring(0, 100)}...</p>`;
+            }
+            
+            // Check for bullet points
+            let skills = [];
+            if (skillsString.includes('•') || skillsString.includes('–')) {
+                skills = skillsString.split(/[•–-]/).map(s => s.trim()).filter(s => s && s.length > 3);
+            } else if (skillsString.includes(',')) {
+                skills = skillsString.split(',').map(s => s.trim()).filter(s => s);
+            } else {
+                // Treat as single skill or short text
+                return `<p class="skills-text">${skillsString}</p>`;
+            }
+            
+            // Return as tags only if we have clear skills
+            if (skills.length > 0 && skills.length < 10) {
+                return skills.slice(0, 3).map(skill => 
+                    `<span style="background: rgba(45, 95, 63, 0.1); color: var(--fairway-green); 
+                           padding: 0.25rem 0.5rem; border-radius: 8px; font-size: 0.875rem; 
+                           display: inline-block; margin-right: 0.5rem; margin-bottom: 0.5rem;">
+                        ${skill.substring(0, 30)}${skill.length > 30 ? '...' : ''}
+                    </span>`
+                ).join('');
+            }
+            
+            return `<p class="skills-text">${skillsString.substring(0, 100)}...</p>`;
         }
 
         function calculateCompleteness(candidate) {
@@ -788,6 +927,156 @@
             });
             
             return score;
+        }
+
+        function detectJobCategory(jobTitle) {
+            if (!jobTitle) return 'other';
+            
+            const title = jobTitle.toLowerCase();
+            
+            // Greenkeeping
+            if (title.includes('greenkeep') || title.includes('green keep') || 
+                title.includes('course manager') || title.includes('turf') || 
+                title.includes('agronomist') || title.includes('superintendent')) {
+                return 'greenkeeping';
+            }
+            
+            // Management
+            if (title.includes('director') || title.includes('manager') || 
+                title.includes('head of') || title.includes('chief') || 
+                title.includes('ceo') || title.includes('coo') || title.includes('cfo')) {
+                return 'management';
+            }
+            
+            // Sales & Business Development
+            if (title.includes('sales') || title.includes('business development') || 
+                title.includes('account manager') || title.includes('commercial')) {
+                return 'sales';
+            }
+            
+            // Marketing & PR
+            if (title.includes('marketing') || title.includes('pr ') || 
+                title.includes('public relations') || title.includes('communications') || 
+                title.includes('social media') || title.includes('brand')) {
+                return 'marketing';
+            }
+            
+            // F&B / Hospitality
+            if (title.includes('chef') || title.includes('food') || title.includes('beverage') || 
+                title.includes('f&b') || title.includes('restaurant') || title.includes('bar') || 
+                title.includes('catering') || title.includes('hospitality')) {
+                return 'fandB';
+            }
+            
+            // Golf Professional
+            if (title.includes('golf professional') || title.includes('pga') || 
+                title.includes('teaching pro') || title.includes('head pro') || 
+                title.includes('assistant pro') || title.includes('golf coach')) {
+                return 'professional';
+            }
+            
+            // Operations
+            if (title.includes('operations') || title.includes('coordinator')) {
+                return 'operations';
+            }
+            
+            // Retail & Pro Shop
+            if (title.includes('retail') || title.includes('pro shop') || 
+                title.includes('shop') || title.includes('merchandis')) {
+                return 'retail';
+            }
+            
+            // Maintenance & Facilities
+            if (title.includes('maintenance') || title.includes('mechanic') || 
+                title.includes('facilities') || title.includes('technician')) {
+                return 'maintenance';
+            }
+            
+            // Admin & Support
+            if (title.includes('admin') || title.includes('assistant') || 
+                title.includes('reception') || title.includes('secretary')) {
+                return 'admin';
+            }
+            
+            return 'other';
+        }
+
+        // Location filter functions
+        function populateLocationFilter(candidates) {
+            availableLocations.clear();
+            
+            candidates.forEach(candidate => {
+                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+                if (location && location !== 'Location Not Specified') {
+                    availableLocations.add(location);
+                }
+            });
+            
+            const sortedLocations = Array.from(availableLocations).sort();
+            const checkboxesDiv = document.getElementById('locationCheckboxes');
+            
+            checkboxesDiv.innerHTML = sortedLocations.map(location => `
+                <div style="margin-bottom: 0.5rem;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" value="${location}" 
+                               onchange="updateLocationSelection(this)" 
+                               style="margin-right: 0.5rem;">
+                        <span style="font-size: 0.9rem;">${location}</span>
+                    </label>
+                </div>
+            `).join('');
+        }
+
+        function toggleLocationDropdown() {
+            const dropdown = document.getElementById('locationDropdown');
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('locationDropdown');
+            const button = e.target.closest('button');
+            if (dropdown && !dropdown.contains(e.target) && 
+                (!button || button.getAttribute('onclick') !== 'toggleLocationDropdown()')) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        function updateLocationSelection(checkbox) {
+            if (checkbox.checked) {
+                selectedLocations.add(checkbox.value);
+            } else {
+                selectedLocations.delete(checkbox.value);
+            }
+            updateLocationFilterText();
+        }
+
+        function updateLocationFilterText() {
+            const text = document.getElementById('locationFilterText');
+            if (selectedLocations.size === 0) {
+                text.textContent = 'All Locations';
+            } else if (selectedLocations.size === 1) {
+                text.textContent = Array.from(selectedLocations)[0];
+            } else {
+                text.textContent = `${selectedLocations.size} locations selected`;
+            }
+        }
+
+        function selectAllLocations() {
+            const checkboxes = document.querySelectorAll('#locationCheckboxes input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = true;
+                selectedLocations.add(cb.value);
+            });
+            updateLocationFilterText();
+        }
+
+        function clearAllLocations() {
+            const checkboxes = document.querySelectorAll('#locationCheckboxes input[type="checkbox"]');
+            checkboxes.forEach(cb => {
+                cb.checked = false;
+            });
+            selectedLocations.clear();
+            updateLocationFilterText();
         }
 
         // Check authentication on load
@@ -832,8 +1121,6 @@
                 .select('*')
                 .eq('id', user.id)
                 .single();
-            
-            console.log('Loading user profile:', profile, error);
             
             if (profile) {
                 userProfile = profile;
@@ -954,6 +1241,9 @@
                 return calculateCompleteness(b) - calculateCompleteness(a);
             });
             
+            // Populate location filter
+            populateLocationFilter(allCandidates);
+            
             displayCandidates(allCandidates);
             updateCandidateCount(allCandidates.length);
             
@@ -961,7 +1251,7 @@
             document.getElementById('poolDetailView').classList.add('active');
         }
 
-        // Display candidates in grid with proper preview cards
+        // Display candidates in grid
         function displayCandidates(candidates) {
             const candidatesGrid = document.getElementById('candidatesGrid');
             
@@ -979,31 +1269,17 @@
                                candidate.Name || 
                                `Candidate #${candidate.ID}`);
                 
-                const location = formatLocation(candidate["Town/City"], candidate.Country);
-                
-                const salaryRaw = candidate["What are your salary expectations?"] || candidate["Salary Expectations"];
-                const salary = salaryRaw ? formatSalary(salaryRaw) : 'Salary Negotiable';
-                
+                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+                const salary = formatSalaryExact(candidate["What are your salary expectations?"] || 
+                                               candidate["Salary Expectations"]);
                 const noticeRaw = candidate["Notice Period"];
                 const notice = noticeRaw ? formatNoticePeriod(noticeRaw) : 'Unknown Notice Period';
-                
                 const activelyLooking = (candidate["Actively looking for work"] || '').toUpperCase() === 'YES';
                 
                 const about = candidate["About You"] || candidate.Summary || '';
-                const shortAbout = about.substring(0, 150) + (about.length > 150 ? '...' : '');
+                const summary = generateSummaryPreview(about);
                 
-                const skillsString = candidate["Your Skills"] || candidate.Skills || '';
-                let skills = [];
-                
-                if (skillsString.includes('•') || skillsString.includes('–')) {
-                    skills = skillsString.split(/[•–-]/).map(s => s.trim()).filter(s => s && s.length > 3);
-                } else if (skillsString.length > 100 && !skillsString.includes(',')) {
-                    skills = [];
-                } else {
-                    skills = skillsString.split(',').map(s => s.trim()).filter(s => s);
-                }
-                
-                const previewSkills = skills.slice(0, 3);
+                const skillsDisplay = formatSkillsDisplay(candidate["Your Skills"] || candidate.Skills || '');
                 
                 return `
                     <div class="candidate-card" onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'>
@@ -1023,17 +1299,8 @@
                         <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 1rem;">
                             ${location}
                         </p>
-                        ${shortAbout ? `<p style="margin-bottom: 1rem; font-size: 0.95rem;">${shortAbout}</p>` : ''}
-                        ${previewSkills.length > 0 ? `
-                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
-                                ${previewSkills.map(skill => 
-                                    `<span style="background: rgba(45, 95, 63, 0.1); color: var(--fairway-green); 
-                                           padding: 0.25rem 0.5rem; border-radius: 8px; font-size: 0.875rem;">
-                                        ${skill.substring(0, 30)}${skill.length > 30 ? '...' : ''}
-                                    </span>`
-                                ).join('')}
-                            </div>
-                        ` : ''}
+                        ${summary ? `<p style="margin-bottom: 1rem; font-size: 0.95rem; color: var(--pro-shop-navy);">${summary}</p>` : ''}
+                        ${skillsDisplay ? `<div style="margin-bottom: 1rem;">${skillsDisplay}</div>` : ''}
                         <div style="display: flex; justify-content: space-between; align-items: center; 
                                     padding-top: 1rem; border-top: 1px solid #e5e7eb;">
                             <span style="color: var(--rough-gray); font-size: 0.9rem;">
@@ -1060,6 +1327,7 @@
             const salaryFilter = document.getElementById('salaryFilter').value;
             const noticeFilter = document.getElementById('noticeFilter').value;
             const lookingFilter = document.getElementById('lookingFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
             
             let filtered = [...allCandidates];
             
@@ -1095,6 +1363,20 @@
                 );
             }
             
+            if (categoryFilter) {
+                filtered = filtered.filter(c => {
+                    const jobTitle = c["Current Job Title"] || c["Job Title"] || '';
+                    return detectJobCategory(jobTitle) === categoryFilter;
+                });
+            }
+            
+            if (selectedLocations.size > 0) {
+                filtered = filtered.filter(c => {
+                    const location = cleanAndFormatLocation(c["Town/City"], c.Country);
+                    return selectedLocations.has(location);
+                });
+            }
+            
             displayCandidates(filtered);
         }
 
@@ -1104,6 +1386,8 @@
             document.getElementById('salaryFilter').value = '';
             document.getElementById('noticeFilter').value = '';
             document.getElementById('lookingFilter').value = '';
+            document.getElementById('categoryFilter').value = '';
+            clearAllLocations();
             displayCandidates(allCandidates);
         }
 
@@ -1117,7 +1401,7 @@
             }
         });
 
-        // Open candidate modal with full profile
+        // Open candidate modal
         function openCandidate(candidate) {
             currentCandidate = candidate;
             
@@ -1126,9 +1410,11 @@
                            candidate.Name || 
                            `Candidate #${candidate.ID}`);
             
-            const location = formatLocation(candidate["Town/City"], candidate.Country);
+            const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
             const aboutRaw = candidate["About You"] || candidate.Summary || 'No summary provided';
-            const { text: about, fontSize, lineHeight } = formatSummary(aboutRaw);
+            
+            // Format the about section with line breaks
+            const about = aboutRaw.replace(/\. /g, '.\n\n');
             
             const skillsString = candidate["Your Skills"] || candidate.Skills || '';
             let skillsHtml = '';
@@ -1151,7 +1437,7 @@
                             <p style="line-height: 1.6;">${skillsString}</p>
                         </div>
                     `;
-                } else {
+                } else if (skillsString.includes(',')) {
                     const skills = skillsString.split(',').map(s => s.trim()).filter(s => s);
                     if (skills.length > 0) {
                         skillsHtml = `
@@ -1170,22 +1456,27 @@
                             </div>
                         `;
                     }
+                } else if (skillsString) {
+                    skillsHtml = `
+                        <div style="margin-bottom: 2rem;">
+                            <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
+                            <p style="line-height: 1.6;">${skillsString}</p>
+                        </div>
+                    `;
                 }
             }
             
             const noticeRaw = candidate["Notice Period"];
             const notice = noticeRaw ? formatNoticePeriod(noticeRaw) : 'Unknown Notice Period';
-            
-            const salaryRaw = candidate["What are your salary expectations?"] || candidate["Salary Expectations"];
-            const salary = salaryRaw ? formatSalary(salaryRaw) : 'Salary Negotiable';
-            
+            const salary = formatSalaryExact(candidate["What are your salary expectations?"] || 
+                                           candidate["Salary Expectations"]);
             const activelyLooking = candidate["Actively looking for work"] || 'Not specified';
             
             document.getElementById('modalTitle').textContent = jobTitle;
             document.getElementById('modalBody').innerHTML = `
                 <div style="margin-bottom: 2rem;">
                     <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Professional Summary</h3>
-                    <p style="line-height: ${lineHeight}; font-size: ${fontSize}; white-space: pre-wrap;">${about}</p>
+                    <p style="line-height: 1.6; white-space: pre-wrap;">${about}</p>
                 </div>
                 
                 <div style="margin-bottom: 2rem;">
@@ -1308,7 +1599,7 @@
             }
         }
 
-        // Load shortlist
+        // Other view functions remain the same...
         async function loadShortlist() {
             const content = document.getElementById('shortlistContent');
             
@@ -1332,7 +1623,7 @@
                                    candidate["Job Title"] || 
                                    candidate.Name || 
                                    `Candidate #${candidate.ID}`);
-                    const location = formatLocation(candidate["Town/City"], candidate.Country);
+                    const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
                     
                     return `
                         <div class="candidate-card" style="position: relative;">
@@ -1353,7 +1644,6 @@
             }
         }
 
-        // Remove from shortlist
         async function removeFromShortlist(shortlistId) {
             if (!confirm('Remove this candidate from your shortlist?')) return;
             
@@ -1374,7 +1664,6 @@
             }
         }
 
-        // Update shortlist badge
         function updateShortlistBadge() {
             const badge = document.getElementById('shortlistBadge');
             if (shortlist.length > 0) {
@@ -1385,7 +1674,6 @@
             }
         }
 
-        // Load account page
         function loadAccount() {
             document.getElementById('accountName').textContent = userProfile?.name || '-';
             document.getElementById('accountEmail').textContent = currentUser?.email || '-';
@@ -1400,7 +1688,6 @@
                 });
         }
 
-        // Load requests
         async function loadRequests() {
             const { data: requests } = await supabase
                 .from('requests')
@@ -1441,7 +1728,6 @@
             }
         }
 
-        // Load admin panel
         async function loadAdmin() {
             const { data: allUsers } = await supabase
                 .from('users')
@@ -1518,17 +1804,14 @@
             }
         }
 
-        // Go home
         function goHome() {
             switchView('pools');
         }
 
-        // Close modal on escape
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') closeModal();
         });
 
-        // Click outside modal to close
         document.getElementById('candidateModal')?.addEventListener('click', function(e) {
             if (e.target === this) closeModal();
         });

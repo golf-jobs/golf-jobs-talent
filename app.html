@@ -707,10 +707,37 @@
         let allCandidates = [];
 
         // Utility functions
+        function toTitleCase(str) {
+            if (!str) return str;
+            return str.toLowerCase().split(' ').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        }
+
+        function formatLocation(townCity, country) {
+            const excludeTerms = ['England', 'United Kingdom', 'UK', 'Scotland', 'Wales', 'Northern Ireland', 'Great Britain', 'GB'];
+            
+            let location = '';
+            
+            if (townCity && !excludeTerms.includes(townCity)) {
+                location = townCity;
+            }
+            
+            if (country && !excludeTerms.includes(country)) {
+                if (!location && country.length < 30) {
+                    location = country;
+                } else if (location && country !== townCity && !excludeTerms.includes(country)) {
+                    location = `${location}, ${country}`;
+                }
+            }
+            
+            return location || 'Location not specified';
+        }
+
         function formatSalary(salary) {
-            if (!salary) return 'Negotiable';
+            if (!salary) return 'Salary Negotiable';
             const num = parseFloat(salary);
-            if (isNaN(num)) return 'Negotiable';
+            if (isNaN(num)) return 'Salary Negotiable';
             if (num < 30000) return '£20-30k';
             if (num < 40000) return '£30-40k';
             if (num < 50000) return '£40-50k';
@@ -722,15 +749,45 @@
         }
 
         function formatNoticePeriod(notice) {
-            if (!notice) return 'Not specified';
+            if (!notice) return 'Unknown Notice Period';
             const lowerNotice = notice.toLowerCase();
             if (lowerNotice.includes('immediately') || lowerNotice.includes('immediate')) return 'Available immediately';
-            if (lowerNotice.includes('1 week')) return '1 week';
-            if (lowerNotice.includes('2 week')) return '2 weeks';
-            if (lowerNotice.includes('1 month')) return '1 month';
-            if (lowerNotice.includes('2 month')) return '2 months';
-            if (lowerNotice.includes('3 month')) return '3 months';
-            return notice;
+            if (lowerNotice.includes('1 week')) return '1 week notice';
+            if (lowerNotice.includes('2 week')) return '2 weeks notice';
+            if (lowerNotice.includes('1 month')) return '1 month notice';
+            if (lowerNotice.includes('2 month')) return '2 months notice';
+            if (lowerNotice.includes('3 month')) return '3 months notice';
+            return notice + ' notice';
+        }
+
+        function formatSummary(text, maxLength = 1000) {
+            if (!text) return '';
+            
+            // Add line breaks after sentences for better readability
+            let formatted = text.replace(/\. /g, '.\n\n');
+            
+            // If text is very long, reduce font size
+            const fontSize = text.length > 800 ? '0.9rem' : '1rem';
+            const lineHeight = text.length > 800 ? '1.5' : '1.6';
+            
+            return { text: formatted, fontSize, lineHeight };
+        }
+
+        function calculateCompleteness(candidate) {
+            let score = 0;
+            const fields = [
+                'Name', 'Current Job Title', 'Job Title', 'Town/City', 'Country',
+                'About You', 'Your Skills', 'Notice Period', 'What are your salary expectations?',
+                'Salary Expectations', 'Email', 'LinkedIn', 'GitHub', 'Actively looking for work'
+            ];
+            
+            fields.forEach(field => {
+                if (candidate[field] && candidate[field].toString().trim()) {
+                    score++;
+                }
+            });
+            
+            return score;
         }
 
         // Check authentication on load
@@ -770,7 +827,6 @@
         async function loadUserData(user) {
             currentUser = user;
             
-            // Get user profile from users table
             const { data: profile, error } = await supabase
                 .from('users')
                 .select('*')
@@ -784,13 +840,11 @@
                 document.getElementById('userName').textContent = profile.name || user.email;
                 document.getElementById('creditsCount').textContent = profile.credits || 0;
                 
-                // Show admin tab if admin
                 if (profile.role === 'admin') {
                     document.getElementById('adminTab').style.display = 'block';
                 }
             }
             
-            // Get user's pool access
             const { data: poolAccess } = await supabase
                 .from('user_pool_access')
                 .select('pool_id')
@@ -798,7 +852,6 @@
             
             userPools = poolAccess ? poolAccess.map(p => p.pool_id) : [];
             
-            // Get user's shortlist
             const { data: shortlistData } = await supabase
                 .from('shortlists')
                 .select('*, candidates(*)')
@@ -846,7 +899,6 @@
                 .from('talent_pools')
                 .select('*');
             
-            // Count candidates per pool
             for (let pool of pools) {
                 const { count } = await supabase
                     .from('candidates')
@@ -890,7 +942,6 @@
             currentPool = pool;
             document.getElementById('currentPoolName').textContent = pool.name;
             
-            // Load ALL candidates for this pool
             const { data: candidates, error } = await supabase
                 .from('candidates')
                 .select('*')
@@ -898,11 +949,14 @@
             
             console.log(`Loading candidates for ${pool.id}:`, candidates?.length, error);
             
-            allCandidates = candidates || [];
+            // Sort candidates by completeness
+            allCandidates = (candidates || []).sort((a, b) => {
+                return calculateCompleteness(b) - calculateCompleteness(a);
+            });
+            
             displayCandidates(allCandidates);
             updateCandidateCount(allCandidates.length);
             
-            // Switch to pool detail view
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.getElementById('poolDetailView').classList.add('active');
         }
@@ -920,47 +974,62 @@
             updateCandidateCount(candidates.length);
             
             candidatesGrid.innerHTML = candidates.map(candidate => {
-                // Get the job title from various possible fields
-                const jobTitle = candidate["Current Job Title"] || 
+                const jobTitle = toTitleCase(candidate["Current Job Title"] || 
                                candidate["Job Title"] || 
                                candidate.Name || 
-                               `Candidate #${candidate.ID}`;
+                               `Candidate #${candidate.ID}`);
                 
-                // Get location
-                const location = candidate["Town/City"] ? 
-                    `${candidate["Town/City"]}, ${candidate.Country || ''}` : 
-                    'Location not specified';
+                const location = formatLocation(candidate["Town/City"], candidate.Country);
                 
-                // Get salary expectations
-                const salary = formatSalary(candidate["What are your salary expectations?"] || 
-                                           candidate["Salary Expectations"]);
+                const salaryRaw = candidate["What are your salary expectations?"] || candidate["Salary Expectations"];
+                const salary = salaryRaw ? formatSalary(salaryRaw) : 'Salary Negotiable';
                 
-                // Get notice period
-                const notice = formatNoticePeriod(candidate["Notice Period"]);
+                const noticeRaw = candidate["Notice Period"];
+                const notice = noticeRaw ? formatNoticePeriod(noticeRaw) : 'Unknown Notice Period';
                 
-                // Get summary/about
+                const activelyLooking = (candidate["Actively looking for work"] || '').toUpperCase() === 'YES';
+                
                 const about = candidate["About You"] || candidate.Summary || '';
                 const shortAbout = about.substring(0, 150) + (about.length > 150 ? '...' : '');
                 
-                // Get skills
                 const skillsString = candidate["Your Skills"] || candidate.Skills || '';
-                const skills = skillsString ? skillsString.split(',').slice(0, 3).map(s => s.trim()).filter(s => s) : [];
+                let skills = [];
+                
+                if (skillsString.includes('•') || skillsString.includes('–')) {
+                    skills = skillsString.split(/[•–-]/).map(s => s.trim()).filter(s => s && s.length > 3);
+                } else if (skillsString.length > 100 && !skillsString.includes(',')) {
+                    skills = [];
+                } else {
+                    skills = skillsString.split(',').map(s => s.trim()).filter(s => s);
+                }
+                
+                const previewSkills = skills.slice(0, 3);
                 
                 return `
                     <div class="candidate-card" onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'>
-                        <h3 style="color: var(--augusta-green); margin-bottom: 0.5rem;">
+                        ${activelyLooking ? `
+                            <div style="position: absolute; top: 1rem; right: 1rem; 
+                                       background: linear-gradient(135deg, var(--masters-green), var(--putting-green)); 
+                                       color: white; padding: 0.25rem 0.75rem; 
+                                       border-radius: 20px; font-size: 0.75rem; 
+                                       font-weight: 600; text-transform: uppercase;">
+                                Actively Looking
+                            </div>
+                        ` : ''}
+                        
+                        <h3 style="color: var(--augusta-green); margin-bottom: 0.5rem; ${activelyLooking ? 'padding-right: 120px;' : ''}">
                             ${jobTitle}
                         </h3>
                         <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 1rem;">
                             ${location}
                         </p>
                         ${shortAbout ? `<p style="margin-bottom: 1rem; font-size: 0.95rem;">${shortAbout}</p>` : ''}
-                        ${skills.length > 0 ? `
+                        ${previewSkills.length > 0 ? `
                             <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
-                                ${skills.map(skill => 
+                                ${previewSkills.map(skill => 
                                     `<span style="background: rgba(45, 95, 63, 0.1); color: var(--fairway-green); 
                                            padding: 0.25rem 0.5rem; border-radius: 8px; font-size: 0.875rem;">
-                                        ${skill}
+                                        ${skill.substring(0, 30)}${skill.length > 30 ? '...' : ''}
                                     </span>`
                                 ).join('')}
                             </div>
@@ -994,7 +1063,6 @@
             
             let filtered = [...allCandidates];
             
-            // Search filter
             if (searchTerm) {
                 filtered = filtered.filter(c => 
                     (c.Name || '').toLowerCase().includes(searchTerm) ||
@@ -1005,7 +1073,6 @@
                 );
             }
             
-            // Salary filter
             if (salaryFilter) {
                 filtered = filtered.filter(c => {
                     const salary = parseFloat(c["What are your salary expectations?"]) || 0;
@@ -1015,7 +1082,6 @@
                 });
             }
             
-            // Notice period filter
             if (noticeFilter) {
                 filtered = filtered.filter(c => {
                     const notice = (c["Notice Period"] || '').toLowerCase();
@@ -1023,7 +1089,6 @@
                 });
             }
             
-            // Actively looking filter
             if (lookingFilter) {
                 filtered = filtered.filter(c => 
                     (c["Actively looking for work"] || '').toUpperCase() === lookingFilter
@@ -1056,26 +1121,71 @@
         function openCandidate(candidate) {
             currentCandidate = candidate;
             
-            const jobTitle = candidate["Current Job Title"] || 
+            const jobTitle = toTitleCase(candidate["Current Job Title"] || 
                            candidate["Job Title"] || 
                            candidate.Name || 
-                           `Candidate #${candidate.ID}`;
-            const location = candidate["Town/City"] ? 
-                `${candidate["Town/City"]}, ${candidate.Country || ''}` : 
-                'Location not specified';
-            const about = candidate["About You"] || candidate.Summary || 'No summary provided';
+                           `Candidate #${candidate.ID}`);
+            
+            const location = formatLocation(candidate["Town/City"], candidate.Country);
+            const aboutRaw = candidate["About You"] || candidate.Summary || 'No summary provided';
+            const { text: about, fontSize, lineHeight } = formatSummary(aboutRaw);
+            
             const skillsString = candidate["Your Skills"] || candidate.Skills || '';
-            const skills = skillsString ? skillsString.split(',').map(s => s.trim()).filter(s => s) : [];
-            const notice = formatNoticePeriod(candidate["Notice Period"]);
-            const salary = formatSalary(candidate["What are your salary expectations?"] || 
-                                       candidate["Salary Expectations"]);
+            let skillsHtml = '';
+            
+            if (skillsString) {
+                if (skillsString.includes('•') || skillsString.includes('–')) {
+                    const bulletPoints = skillsString.split(/[•–-]/).map(s => s.trim()).filter(s => s && s.length > 3);
+                    skillsHtml = `
+                        <div style="margin-bottom: 2rem;">
+                            <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
+                            <ul style="margin-left: 1.5rem; line-height: 1.8;">
+                                ${bulletPoints.map(point => `<li>${point}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                } else if (skillsString.length > 150 && !skillsString.includes(',')) {
+                    skillsHtml = `
+                        <div style="margin-bottom: 2rem;">
+                            <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
+                            <p style="line-height: 1.6;">${skillsString}</p>
+                        </div>
+                    `;
+                } else {
+                    const skills = skillsString.split(',').map(s => s.trim()).filter(s => s);
+                    if (skills.length > 0) {
+                        skillsHtml = `
+                            <div style="margin-bottom: 2rem;">
+                                <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
+                                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                    ${skills.map(skill => 
+                                        `<span style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); 
+                                               color: var(--augusta-green); padding: 0.5rem 1rem; 
+                                               border-radius: 20px; font-weight: 600; 
+                                               border: 1px solid var(--putting-green);">
+                                            ${skill}
+                                        </span>`
+                                    ).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            }
+            
+            const noticeRaw = candidate["Notice Period"];
+            const notice = noticeRaw ? formatNoticePeriod(noticeRaw) : 'Unknown Notice Period';
+            
+            const salaryRaw = candidate["What are your salary expectations?"] || candidate["Salary Expectations"];
+            const salary = salaryRaw ? formatSalary(salaryRaw) : 'Salary Negotiable';
+            
             const activelyLooking = candidate["Actively looking for work"] || 'Not specified';
             
             document.getElementById('modalTitle').textContent = jobTitle;
             document.getElementById('modalBody').innerHTML = `
                 <div style="margin-bottom: 2rem;">
                     <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Professional Summary</h3>
-                    <p style="line-height: 1.6;">${about}</p>
+                    <p style="line-height: ${lineHeight}; font-size: ${fontSize}; white-space: pre-wrap;">${about}</p>
                 </div>
                 
                 <div style="margin-bottom: 2rem;">
@@ -1108,21 +1218,7 @@
                     </div>
                 </div>
                 
-                ${skills.length > 0 ? `
-                <div style="margin-bottom: 2rem;">
-                    <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
-                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                        ${skills.map(skill => 
-                            `<span style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); 
-                                   color: var(--augusta-green); padding: 0.5rem 1rem; 
-                                   border-radius: 20px; font-weight: 600; 
-                                   border: 1px solid var(--putting-green);">
-                                ${skill}
-                            </span>`
-                        ).join('')}
-                    </div>
-                </div>
-                ` : ''}
+                ${skillsHtml}
                 
                 <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 1rem; margin-top: 2rem;">
                     <p style="color: var(--hazard-red); font-weight: 600; text-align: center;">
@@ -1157,7 +1253,6 @@
                 alert('Added to shortlist!');
                 closeModal();
                 
-                // Reload shortlist
                 const { data: shortlistData } = await supabase
                     .from('shortlists')
                     .select('*, candidates(*)')
@@ -1177,13 +1272,11 @@
                 return;
             }
             
-            // Deduct credit
             const { error: profileError } = await supabase
                 .from('users')
                 .update({ credits: userProfile.credits - 1 })
                 .eq('id', currentUser.id);
             
-            // Record request
             const { error: requestError } = await supabase
                 .from('requests')
                 .insert({
@@ -1196,7 +1289,6 @@
                 userProfile.credits--;
                 document.getElementById('creditsCount').textContent = userProfile.credits;
                 
-                // Show full details
                 const currentModalBody = document.getElementById('modalBody').innerHTML;
                 const detailsHtml = `
                     <div style="margin-top: 1rem; padding: 1rem; background: #d4edda; border-radius: 8px;">
@@ -1207,7 +1299,6 @@
                     </div>
                 `;
                 
-                // Replace the request button area with the details
                 document.getElementById('modalBody').innerHTML = currentModalBody.replace(
                     /<div style="background: #fef2f2;.*?<\/div>/s,
                     detailsHtml
@@ -1237,13 +1328,11 @@
                     const candidate = item.candidates;
                     if (!candidate) return '';
                     
-                    const jobTitle = candidate["Current Job Title"] || 
+                    const jobTitle = toTitleCase(candidate["Current Job Title"] || 
                                    candidate["Job Title"] || 
                                    candidate.Name || 
-                                   `Candidate #${candidate.ID}`;
-                    const location = candidate["Town/City"] ? 
-                        `${candidate["Town/City"]}, ${candidate.Country || ''}` : 
-                        'Location not specified';
+                                   `Candidate #${candidate.ID}`);
+                    const location = formatLocation(candidate["Town/City"], candidate.Country);
                     
                     return `
                         <div class="candidate-card" style="position: relative;">
@@ -1274,7 +1363,6 @@
                 .eq('id', shortlistId);
             
             if (!error) {
-                // Reload shortlist
                 const { data: shortlistData } = await supabase
                     .from('shortlists')
                     .select('*, candidates(*)')
@@ -1303,7 +1391,6 @@
             document.getElementById('accountEmail').textContent = currentUser?.email || '-';
             document.getElementById('accountCredits').textContent = userProfile?.credits || 0;
             
-            // Count requests
             supabase
                 .from('requests')
                 .select('*', { count: 'exact', head: true })
@@ -1337,9 +1424,9 @@
                         </thead>
                         <tbody>
                             ${requests.map(req => {
-                                const jobTitle = req.candidates?.["Current Job Title"] || 
-                                               req.candidates?.Name || 
-                                               `Candidate #${req.candidate_id}`;
+                                const jobTitle = req.candidates ? toTitleCase(req.candidates["Current Job Title"] || 
+                                               req.candidates.Name || 
+                                               `Candidate #${req.candidate_id}`) : `Candidate #${req.candidate_id}`;
                                 return `
                                     <tr style="border-bottom: 1px solid #e5e7eb;">
                                         <td style="padding: 1rem;">${new Date(req.request_date).toLocaleDateString()}</td>
@@ -1356,7 +1443,6 @@
 
         // Load admin panel
         async function loadAdmin() {
-            // Load all users
             const { data: allUsers } = await supabase
                 .from('users')
                 .select('*')
@@ -1392,7 +1478,6 @@
                 usersList.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No users found.</p>';
             }
             
-            // Load all requests
             const { data: allRequests } = await supabase
                 .from('requests')
                 .select('*, users(name, email), candidates(*)')
@@ -1413,9 +1498,9 @@
                         </thead>
                         <tbody>
                             ${allRequests.map(req => {
-                                const jobTitle = req.candidates?.["Current Job Title"] || 
-                                               req.candidates?.Name || 
-                                               `Candidate #${req.candidate_id}`;
+                                const jobTitle = req.candidates ? toTitleCase(req.candidates["Current Job Title"] || 
+                                               req.candidates.Name || 
+                                               `Candidate #${req.candidate_id}`) : `Candidate #${req.candidate_id}`;
                                 return `
                                     <tr style="border-bottom: 1px solid #e5e7eb;">
                                         <td style="padding: 1rem;">${new Date(req.request_date).toLocaleDateString()}</td>

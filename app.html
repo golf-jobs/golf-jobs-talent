@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golf Jobs - Premium Talent Pools</title>
+    
+    <!-- Add Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --augusta-green: #004d26;
+            --fairway-green: #2d5f3f;
+            --masters-green: #3a7858;
+            --putting-green: #6b9080;
+            --club-gold: #c9a961;
+            --trophy-gold: #f4d03f;
+            --sand-bunker: #f5e6d3;
+            --morning-mist: #f8f9fa;
+            --pro-shop-navy: #1a2332;
+            --scorecard-white: #ffffff;
+            --rough-gray: #6c757d;
+            --hazard-red: #c9302c;
+            --water-hazard: #2c5aa0;
+        }
+
+        body {
+            font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--pro-shop-navy);
+            background: linear-gradient(180deg, #f8f9fa 0%, #e8efe8 100%);
+            min-height: 100vh;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        /* Login Screen */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--augusta-green);
+        }
+
+        .login-box {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 450px;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-title {
+            text-align: center;
+            color: var(--augusta-green);
+            margin-bottom: 0.5rem;
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .login-subtitle {
+            text-align: center;
+            color: var(--rough-gray);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--pro-shop-navy);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e1e8e4;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--masters-green);
+            box-shadow: 0 0 0 3px rgba(58, 120, 88, 0.1);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--augusta-green) 0%, var(--masters-green) 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 77, 38, 0.3);
+        }
+
+        .login-error {
+            background: #fee;
+            color: var(--hazard-red);
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            text-align: center;
+            display: none;
+        }
+
+        /* Main App */
+        .main-app {
+            display: none;
+        }
+
+        .main-app.active {
+            display: block;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--augusta-green) 0%, var(--fairway-green) 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+        }
+
+        .logo img {
+            height: 60px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-tab {
+            padding: 0.625rem 1.25rem;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border: none;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            font-weight: 500;
+            font-family: 'Poppins', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+        }
+
+        .nav-tab:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        .nav-tab.active {
+            background: var(--club-gold);
+            color: var(--augusta-green);
+            font-weight: 600;
+        }
+
+        .shortlist-badge {
+            background: rgba(255,255,255,0.3);
+            padding: 0.125rem 0.375rem;
+            border-radius: 10px;
+            margin-left: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(0,0,0,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+        }
+
+        .credits-badge {
+            background: linear-gradient(135deg, var(--club-gold) 0%, var(--trophy-gold) 100%);
+            color: var(--augusta-green);
+            padding: 0.375rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-logout {
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        /* View Sections */
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Pools Grid */
+        .pools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .pool-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .pool-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+
+        .pool-card.locked {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .pool-header {
+            background: linear-gradient(135deg, var(--fairway-green) 0%, var(--masters-green) 100%);
+            padding: 2rem;
+            color: white;
+            position: relative;
+        }
+
+        .pool-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .pool-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--club-gold);
+            color: var(--augusta-green);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 700;
+        }
+
+        .pool-stats {
+            padding: 2rem;
+        }
+
+        .pool-stat {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .candidates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 1.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .candidate-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.75rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .candidate-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--augusta-green), var(--masters-green), var(--club-gold));
+        }
+
+        .candidate-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            border-color: var(--masters-green);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(26, 35, 50, 0.95);
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: block;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 2rem;
+            width: 90%;
+            max-width: 600px;
+            border-radius: 20px;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 2rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: var(--rough-gray);
+        }
+
+        .btn {
+            padding: 0.875rem 1.75rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--augusta-green) 0%, var(--masters-green) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 77, 38, 0.3);
+        }
+
+        .section-box {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <img src="https://ik.imagekit.io/golfjobs/Golf%20Jobs%20logo%20white.png?updatedAt=1758280288759" alt="Golf Jobs" style="width: 200px;">
+            </div>
+            <h1 class="login-title">Talent Pool Access</h1>
+            <p class="login-subtitle">Exclusive recruitment platform</p>
+            
+            <div id="loginError" class="login-error">Invalid credentials. Please try again.</div>
+            
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-input" id="loginEmail" required placeholder="your@company.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="loginPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn-login">Sign In</button>
+            </form>
+            
+            <div style="text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e1e8e4;">
+                <p style="color: var(--rough-gray); font-size: 0.85rem;">© 2024 Golf Jobs. Professional recruitment excellence.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="main-app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo" onclick="goHome()">
+                    <img src="https://ik.imagekit.io/golfjobs/Golf%20Jobs%20logo%20white.png?updatedAt=1758280288759" alt="Golf Jobs">
+                </div>
+                <nav class="nav-tabs">
+                    <button class="nav-tab active" onclick="switchView('pools')">Talent Pools</button>
+                    <button class="nav-tab" onclick="switchView('shortlist')">
+                        Shortlist <span id="shortlistBadge" class="shortlist-badge" style="display: none;">0</span>
+                    </button>
+                    <button class="nav-tab" onclick="switchView('requests')">My Requests</button>
+                </nav>
+                <div class="user-info">
+                    <span id="userName">Welcome</span>
+                    <div class="credits-badge">
+                        Credits: <span id="creditsCount">0</span>
+                    </div>
+                    <button class="btn-logout" onclick="handleLogout()">Sign Out</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- Pools View -->
+            <div id="poolsView" class="view-section active">
+                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Your Talent Pools</h1>
+                <p style="color: var(--rough-gray); margin-bottom: 2rem; font-size: 1.1rem;">Select a talent pool to browse candidates</p>
+                <div class="pools-grid" id="poolsGrid"></div>
+            </div>
+
+            <!-- Candidates View -->
+            <div id="candidatesView" class="view-section">
+                <button onclick="switchView('pools')" class="btn" style="margin-bottom: 2rem;">← Back to Pools</button>
+                <h1 id="poolTitle" style="font-size: 2rem; color: var(--augusta-green); margin-bottom: 1rem;">Pool Name</h1>
+                <div class="candidates-grid" id="candidatesGrid"></div>
+            </div>
+
+            <!-- Shortlist View -->
+            <div id="shortlistView" class="view-section">
+                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Your Shortlist</h1>
+                <div id="shortlistContent"></div>
+            </div>
+
+            <!-- Requests View -->
+            <div id="requestsView" class="view-section">
+                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 1rem;">My Requests</h1>
+                <div id="requestsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Candidate Modal -->
+    <div id="candidateModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">×</button>
+            <h2 id="modalTitle"></h2>
+            <div id="modalBody"></div>
+            <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                <button class="btn btn-primary" onclick="addToShortlist()">Add to Shortlist</button>
+                <button class="btn btn-primary" onclick="requestContact()">Request Contact (1 Credit)</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Supabase
+        const SUPABASE_URL = 'https://kbadedwbcjetxiertztv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiYWRlZHdiY2pldHhpZXJ0enR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzMDAyNDMsImV4cCI6MjA3Mzg3NjI0M30.igm3XjM8l1OXfilQaAHtmJyCDe9eXILV_P9B3_sUzwg';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Global state
+        let currentUser = null;
+        let currentPool = null;
+        let currentCandidate = null;
+        let userProfile = null;
+        let userPools = [];
+        let shortlist = [];
+
+        // Check authentication on load
+        window.onload = async function() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                await loadUserData(session.user);
+                showApp();
+            } else {
+                document.getElementById('loginScreen').style.display = 'flex';
+            }
+        }
+
+        // Handle login
+        async function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+            
+            if (error) {
+                document.getElementById('loginError').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('loginError').style.display = 'none';
+                }, 3000);
+            } else {
+                await loadUserData(data.user);
+                showApp();
+            }
+        }
+
+        // Load user data
+        async function loadUserData(user) {
+            currentUser = user;
+            
+            // Get user profile
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+            
+            if (profile) {
+                userProfile = profile;
+                document.getElementById('userName').textContent = profile.name || user.email;
+                document.getElementById('creditsCount').textContent = profile.credits || 0;
+            }
+            
+            // Get user's pool access
+            const { data: poolAccess } = await supabase
+                .from('user_pool_access')
+                .select('pool_id')
+                .eq('user_id', user.id);
+            
+            userPools = poolAccess ? poolAccess.map(p => p.pool_id) : [];
+            
+            // Get user's shortlist
+            const { data: shortlistData } = await supabase
+                .from('shortlist')
+                .select('*, candidates(*)')
+                .eq('user_id', user.id);
+            
+            shortlist = shortlistData || [];
+            updateShortlistBadge();
+        }
+
+        // Show main app
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainApp').classList.add('active');
+            loadPools();
+        }
+
+        // Handle logout
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            location.reload();
+        }
+
+        // Switch views
+        function switchView(view) {
+            document.querySelectorAll('.view-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(view + 'View').classList.add('active');
+            event.target.classList.add('active');
+            
+            if (view === 'pools') loadPools();
+            else if (view === 'shortlist') loadShortlist();
+            else if (view === 'requests') loadRequests();
+        }
+
+        // Load talent pools
+        async function loadPools() {
+            const { data: pools } = await supabase
+                .from('talent_pools')
+                .select('*');
+            
+            const poolsGrid = document.getElementById('poolsGrid');
+            poolsGrid.innerHTML = '';
+            
+            for (const pool of pools) {
+                const hasAccess = userPools.includes(pool.id);
+                
+                const poolCard = document.createElement('div');
+                poolCard.className = hasAccess ? 'pool-card' : 'pool-card locked';
+                poolCard.innerHTML = `
+                    <div class="pool-header">
+                        <div class="pool-title">${pool.name}</div>
+                        <div class="pool-badge">${hasAccess ? 'Active' : 'Locked'}</div>
+                    </div>
+                    <div class="pool-stats">
+                        <div class="pool-stat">
+                            <span>Total Candidates</span>
+                            <span>${pool.total_candidates || 0}</span>
+                        </div>
+                        <div class="pool-stat">
+                            <span>Active</span>
+                            <span>${pool.active_candidates || 0}</span>
+                        </div>
+                    </div>
+                `;
+                
+                if (hasAccess) {
+                    poolCard.onclick = () => openPool(pool);
+                }
+                
+                poolsGrid.appendChild(poolCard);
+            }
+        }
+
+        // Open a pool
+        async function openPool(pool) {
+            currentPool = pool;
+            document.getElementById('poolTitle').textContent = pool.name;
+            
+            // Load candidates for this pool
+            const { data: candidates } = await supabase
+                .from('candidates')
+                .select('*')
+                .eq('pool_id', pool.id)
+                .eq('Status', 'Active')
+                .limit(50);
+            
+            const candidatesGrid = document.getElementById('candidatesGrid');
+            candidatesGrid.innerHTML = '';
+            
+            if (candidates && candidates.length > 0) {
+                candidates.forEach(candidate => {
+                    const card = document.createElement('div');
+                    card.className = 'candidate-card';
+                    card.innerHTML = `
+                        <h3 style="color: var(--augusta-green); margin-bottom: 0.5rem;">${candidate.Name || 'Candidate'}</h3>
+                        <p style="color: var(--rough-gray);">${candidate['Town/City'] || ''}, ${candidate.Country || ''}</p>
+                        <p style="margin-top: 1rem;">LinkedIn: ${candidate.LinkedIn || 'Not provided'}</p>
+                    `;
+                    card.onclick = () => openCandidate(candidate);
+                    candidatesGrid.appendChild(card);
+                });
+            } else {
+                candidatesGrid.innerHTML = '<p>No candidates available in this pool.</p>';
+            }
+            
+            switchView('candidates');
+        }
+
+        // Open candidate modal
+        function openCandidate(candidate) {
+            currentCandidate = candidate;
+            document.getElementById('modalTitle').textContent = candidate.Name || 'Candidate';
+            document.getElementById('modalBody').innerHTML = `
+                <p><strong>Location:</strong> ${candidate['Town/City'] || 'Unknown'}, ${candidate.Country || ''}</p>
+                <p><strong>Email:</strong> Hidden (1 credit required)</p>
+                <p><strong>LinkedIn:</strong> ${candidate.LinkedIn || 'Not provided'}</p>
+                <p><strong>GitHub:</strong> ${candidate.GitHub || 'Not provided'}</p>
+                <p><strong>Status:</strong> ${candidate.Status || 'Unknown'}</p>
+            `;
+            document.getElementById('candidateModal').classList.add('active');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('candidateModal').classList.remove('active');
+        }
+
+        // Add to shortlist
+        async function addToShortlist() {
+            if (!currentCandidate) return;
+            
+            const { error } = await supabase
+                .from('shortlist')
+                .insert({
+                    user_id: currentUser.id,
+                    candidate_id: currentCandidate.ID,
+                    saved_from_pool: currentPool.id
+                });
+            
+            if (error) {
+                alert('Already in shortlist or error occurred');
+            } else {
+                alert('Added to shortlist!');
+                closeModal();
+                
+                // Reload shortlist
+                const { data: shortlistData } = await supabase
+                    .from('shortlist')
+                    .select('*, candidates(*)')
+                    .eq('user_id', currentUser.id);
+                
+                shortlist = shortlistData || [];
+                updateShortlistBadge();
+            }
+        }
+
+        // Request contact details
+        async function requestContact() {
+            if (!currentCandidate) return;
+            
+            if (userProfile.credits < 1) {
+                alert('Insufficient credits!');
+                return;
+            }
+            
+            // Deduct credit
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .update({ credits: userProfile.credits - 1 })
+                .eq('id', currentUser.id);
+            
+            // Record request
+            const { error: requestError } = await supabase
+                .from('candidate_requests')
+                .insert({
+                    user_id: currentUser.id,
+                    candidate_id: currentCandidate.ID
+                });
+            
+            if (!profileError && !requestError) {
+                userProfile.credits--;
+                document.getElementById('creditsCount').textContent = userProfile.credits;
+                
+                // Show contact details
+                document.getElementById('modalBody').innerHTML += `
+                    <div style="margin-top: 1rem; padding: 1rem; background: #d4edda; border-radius: 8px;">
+                        <p><strong>Email:</strong> ${currentCandidate.Email || 'Not provided'}</p>
+                        <p><strong>Phone:</strong> ${currentCandidate['Phone Number'] || 'Not provided'}</p>
+                    </div>
+                `;
+                
+                alert('Contact details revealed! 1 credit used.');
+            }
+        }
+
+        // Load shortlist
+        async function loadShortlist() {
+            const content = document.getElementById('shortlistContent');
+            
+            if (shortlist.length === 0) {
+                content.innerHTML = '<p>No candidates saved yet.</p>';
+            } else {
+                content.innerHTML = '<div class="candidates-grid" id="shortlistGrid"></div>';
+                const grid = document.getElementById('shortlistGrid');
+                
+                shortlist.forEach(item => {
+                    if (item.candidates) {
+                        const card = document.createElement('div');
+                        card.className = 'candidate-card';
+                        card.innerHTML = `
+                            <h3>${item.candidates.Name || 'Candidate'}</h3>
+                            <p>${item.candidates['Town/City'] || ''}, ${item.candidates.Country || ''}</p>
+                            <button class="btn" onclick="removeFromShortlist(${item.id})">Remove</button>
+                        `;
+                        grid.appendChild(card);
+                    }
+                });
+            }
+        }
+
+        // Remove from shortlist
+        async function removeFromShortlist(shortlistId) {
+            const { error } = await supabase
+                .from('shortlist')
+                .delete()
+                .eq('id', shortlistId);
+            
+            if (!error) {
+                // Reload shortlist
+                const { data: shortlistData } = await supabase
+                    .from('shortlist')
+                    .select('*, candidates(*)')
+                    .eq('user_id', currentUser.id);
+                
+                shortlist = shortlistData || [];
+                updateShortlistBadge();
+                loadShortlist();
+            }
+        }
+
+        // Load requests
+        async function loadRequests() {
+            const { data: requests } = await supabase
+                .from('candidate_requests')
+                .select('*, candidates(*)')
+                .eq('user_id', currentUser.id);
+            
+            const content = document.getElementById('requestsContent');
+            
+            if (!requests || requests.length === 0) {
+                content.innerHTML = '<p>No requests made yet.</p>';
+            } else {
+                let html = '<div style="background: white; padding: 1rem; border-radius: 8px;">';
+                requests.forEach(req => {
+                    html += `
+                        <div style="padding: 1rem; border-bottom: 1px solid #eee;">
+                            <p><strong>${req.candidates?.Name || 'Candidate'}</strong></p>
+                            <p>Email: ${req.candidates?.Email || 'Not provided'}</p>
+                            <p style="font-size: 0.9rem; color: var(--rough-gray);">
+                                Requested: ${new Date(req.request_date).toLocaleDateString()}
+                            </p>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                content.innerHTML = html;
+            }
+        }
+
+        // Update shortlist badge
+        function updateShortlistBadge() {
+            const badge = document.getElementById('shortlistBadge');
+            if (shortlist.length > 0) {
+                badge.style.display = 'inline';
+                badge.textContent = shortlist.length;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Go home
+        function goHome() {
+            switchView('pools');
+        }
+    </script>
+</body>
+</html>

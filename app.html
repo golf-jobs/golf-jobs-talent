@@ -905,7 +905,7 @@
                 </div>
             </div>
 
-            <!-- Pool Detail View -->
+            <!-- Pool Detail View with Split Layout -->
             <div id="poolDetailView" class="view-section">
                 <div class="breadcrumb">
                     <a href="#" onclick="switchView('pools')">Talent Pools</a>
@@ -938,6 +938,12 @@
                             <option value="3 months">3 Months</option>
                         </select>
                         
+                        <select id="lookingFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
+                            <option value="">Active/Passive</option>
+                            <option value="YES">Actively Looking</option>
+                            <option value="NO">Not Actively Looking</option>
+                        </select>
+                        
                         <button onclick="clearFilters()" class="btn btn-small" style="background: #e5e7eb; color: var(--rough-gray);">
                             Clear All
                         </button>
@@ -965,17 +971,32 @@
                 
                 <div id="candidateCount" style="margin-bottom: 1rem; color: var(--rough-gray);"></div>
                 
-                <!-- Candidates Grid -->
-                <div class="candidates-grid" id="candidatesGrid">
-                    <!-- Loading skeletons -->
-                    <div class="skeleton skeleton-card"></div>
-                    <div class="skeleton skeleton-card"></div>
-                    <div class="skeleton skeleton-card"></div>
-                </div>
-                
-                <!-- Load More -->
-                <div class="load-more-container" id="loadMoreContainer" style="display: none;">
-                    <button class="load-more-btn" onclick="loadMore()">Load More Candidates</button>
+                <!-- Split View Container -->
+                <div style="display: flex; gap: 1.5rem; height: calc(100vh - 350px); min-height: 600px;">
+                    <!-- Left Panel - Candidate List -->
+                    <div style="width: 40%; overflow-y: auto; padding-right: 1rem; border-right: 1px solid #e5e7eb;">
+                        <div id="candidatesListView">
+                            <!-- Loading skeletons -->
+                            <div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div>
+                            <div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div>
+                            <div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div>
+                        </div>
+                        
+                        <!-- Load More -->
+                        <div class="load-more-container" id="loadMoreContainer" style="display: none; padding: 1rem 0;">
+                            <button class="load-more-btn" onclick="loadMore()" style="width: 100%;">Load More</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Panel - Full Profile View -->
+                    <div style="flex: 1; overflow-y: auto; padding-left: 1rem;">
+                        <div id="profileDetailView" style="background: white; border-radius: 16px; padding: 2rem; min-height: 100%;">
+                            <div style="text-align: center; color: var(--rough-gray); padding: 4rem 2rem;">
+                                <h3 style="margin-bottom: 1rem;">Select a candidate</h3>
+                                <p>Click on any candidate from the list to view their full profile</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1498,11 +1519,11 @@
         }
 
         function displayCandidates(candidates) {
-            const candidatesGrid = document.getElementById('candidatesGrid');
+            const candidatesListView = document.getElementById('candidatesListView');
             
             if (!candidates || candidates.length === 0) {
-                candidatesGrid.innerHTML = `
-                    <div class="empty-state" style="grid-column: 1/-1;">
+                candidatesListView.innerHTML = `
+                    <div class="empty-state">
                         <h3>No candidates match your criteria</h3>
                         <p>Try adjusting your filters</p>
                         <button class="btn btn-primary" onclick="clearFilters()">Clear Filters</button>
@@ -1513,7 +1534,7 @@
             
             document.getElementById('candidateCount').textContent = `Showing ${displayedCandidates.length} of ${filteredCandidates.length} candidates`;
             
-            candidatesGrid.innerHTML = candidates.map(candidate => {
+            candidatesListView.innerHTML = candidates.map(candidate => {
                 const jobTitle = toTitleCase(candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`);
                 const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
                 const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
@@ -1521,27 +1542,179 @@
                 const profileScore = calculateProfileScore(candidate);
                 const isTopPick = profileScore >= 85;
                 const isSelected = selectedCandidates.has(candidate.ID);
+                const activelyLooking = (candidate["Actively looking for work"] || '').toUpperCase() === 'YES';
+                const isAvailableNow = (candidate["Notice Period"] || '').toLowerCase().includes('immediate');
+                
+                // Get summary preview
+                const about = candidate["About You"] || candidate.Summary || '';
+                const summaryPreview = about.substring(0, 150) + (about.length > 150 ? '...' : '');
                 
                 return `
-                    <div class="candidate-card ${isSelected ? 'selected' : ''}" id="card-${candidate.ID}">
-                        <input type="checkbox" class="candidate-checkbox" 
+                    <div class="candidate-list-item ${isSelected ? 'selected' : ''}" 
+                         id="card-${candidate.ID}"
+                         style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; 
+                                border: 2px solid ${isSelected ? 'var(--masters-green)' : '#e5e7eb'}; 
+                                cursor: pointer; transition: all 0.3s ease; position: relative;"
+                         onclick="viewCandidateProfile(${JSON.stringify(candidate).replace(/'/g, "&apos;")})">
+                        
+                        <input type="checkbox" 
+                               style="position: absolute; top: 1rem; left: 1rem; width: 20px; height: 20px; cursor: pointer;"
                                ${isSelected ? 'checked' : ''}
                                onchange="toggleCandidateSelection(${candidate.ID})"
                                onclick="event.stopPropagation()">
-                        ${isTopPick ? '<div class="top-pick-badge">⭐ Top Pick</div>' : ''}
-                        <div onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'
-                             style="cursor: pointer; padding-left: 2rem;">
-                            <h3 style="color: var(--augusta-green); margin-bottom: 0.5rem;">${jobTitle}</h3>
-                            <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 1rem;">${location}</p>
-                            <div style="display: flex; justify-content: space-between; align-items: center; 
-                                        padding-top: 1rem; border-top: 1px solid #e5e7eb;">
-                                <span style="color: var(--rough-gray); font-size: 0.9rem;">${salary} • ${notice}</span>
-                                <span style="color: var(--masters-green); font-weight: 600;">View →</span>
+                        
+                        ${isTopPick ? '<div class="top-pick-badge" style="position: absolute; top: -8px; right: 10px;">⭐ TOP PICK</div>' : ''}
+                        
+                        <div style="padding-left: 2.5rem;">
+                            <h3 style="color: var(--augusta-green); margin-bottom: 0.25rem; font-size: 1.1rem;">${jobTitle}</h3>
+                            <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 0.5rem;">${location}</p>
+                            
+                            ${summaryPreview ? `
+                                <p style="color: #555; font-size: 0.85rem; line-height: 1.4; margin-bottom: 0.75rem;">
+                                    ${summaryPreview}
+                                </p>
+                            ` : ''}
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: var(--rough-gray); font-size: 0.85rem;">
+                                    ${salary} • ${notice}
+                                </span>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    ${isAvailableNow ? `
+                                        <span style="background: #d4edda; color: #155724; padding: 0.2rem 0.5rem; 
+                                                   border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
+                                            AVAILABLE NOW
+                                        </span>
+                                    ` : ''}
+                                    ${activelyLooking ? `
+                                        <span style="background: var(--masters-green); color: white; padding: 0.2rem 0.5rem; 
+                                                   border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
+                                            ACTIVELY LOOKING
+                                        </span>
+                                    ` : ''}
+                                    <span style="color: var(--masters-green); font-weight: 600;">View →</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        // New function to display full profile in right panel
+        function viewCandidateProfile(candidate) {
+            currentCandidate = candidate;
+            
+            // Track profile view
+            const candidateName = candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`;
+            trackProfileView(candidate.ID, candidateName);
+            
+            // Highlight selected item in list
+            document.querySelectorAll('.candidate-list-item').forEach(item => {
+                item.style.background = 'white';
+                item.style.borderColor = '#e5e7eb';
+            });
+            const selectedCard = document.getElementById(`card-${candidate.ID}`);
+            if (selectedCard) {
+                selectedCard.style.background = '#f0f8f4';
+                selectedCard.style.borderColor = 'var(--masters-green)';
+            }
+            
+            const jobTitle = toTitleCase(candidateName);
+            const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+            const about = candidate["About You"] || 'No summary provided';
+            const skills = candidate["Your Skills"] || '';
+            const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
+            const notice = formatNoticePeriod(candidate["Notice Period"]);
+            const activelyLooking = candidate["Actively looking for work"] || 'Not specified';
+            const profileScore = calculateProfileScore(candidate);
+            const isTopPick = profileScore >= 85;
+            
+            const profileDetailView = document.getElementById('profileDetailView');
+            profileDetailView.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 2rem;">
+                    <div>
+                        <h1 style="color: var(--augusta-green); margin-bottom: 0.5rem;">
+                            ${jobTitle}
+                            ${isTopPick ? '<span class="top-pick-badge" style="position: static; display: inline-block; margin-left: 1rem;">⭐ TOP PICK</span>' : ''}
+                        </h1>
+                        <p style="color: var(--rough-gray); font-size: 1.1rem;">${location}</p>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-secondary btn-small" onclick="addToShortlistFromProfile()">Save to Shortlist</button>
+                        <button class="btn btn-primary btn-small" onclick="openMessageDialog()">Send Message</button>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div style="background: var(--morning-mist); padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">
+                            Salary Expectations
+                        </div>
+                        <div style="font-weight: 600; font-size: 1.1rem;">${salary}</div>
+                    </div>
+                    <div style="background: var(--morning-mist); padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">
+                            Notice Period
+                        </div>
+                        <div style="font-weight: 600; font-size: 1.1rem;">${notice}</div>
+                    </div>
+                    <div style="background: var(--morning-mist); padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">
+                            Job Search Status
+                        </div>
+                        <div style="font-weight: 600; font-size: 1.1rem;">${activelyLooking}</div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Professional Summary</h3>
+                    <p style="line-height: 1.8; color: #333;">${about.replace(/\n/g, '<br>')}</p>
+                </div>
+                
+                ${skills ? `
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
+                        <p style="line-height: 1.6; color: #333;">${skills.replace(/\n/g, '<br>')}</p>
+                    </div>
+                ` : ''}
+                
+                <div class="notes-panel" style="margin-top: 2rem;">
+                    <h4 style="color: var(--augusta-green); margin-bottom: 0.5rem;">📝 Private Notes</h4>
+                    <textarea id="candidateNotes" class="note-textarea" 
+                              placeholder="Add your notes about this candidate...">${candidateNotes[candidate.ID] || ''}</textarea>
+                    <button class="btn btn-small" onclick="saveNotes()" style="margin-top: 0.5rem;">Save Notes</button>
+                </div>
+            `;
+        }
+
+        // Add functions for profile view actions
+        async function addToShortlistFromProfile() {
+            if (!currentCandidate) return;
+            
+            const existing = shortlist.find(item => item.candidate_id === currentCandidate.ID);
+            if (existing) {
+                alert('Already in shortlist');
+                return;
+            }
+            
+            const { data, error } = await supabase
+                .from('shortlists')
+                .insert({
+                    user_id: currentUser.id,
+                    candidate_id: currentCandidate.ID
+                })
+                .select();
+            
+            if (!error) {
+                alert('Added to shortlist!');
+                await refreshShortlist();
+            }
+        }
+
+        function openMessageDialog() {
+            if (!currentCandidate) return;
+            openCandidate(currentCandidate);
         }
 
         function loadMore() {

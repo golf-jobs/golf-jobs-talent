@@ -1245,6 +1245,13 @@
             return notice + ' notice';
         }
 
+        // Function to add line breaks to text (for summaries)
+        function formatWithLineBreaks(text) {
+            if (!text) return '';
+            // Split on sentence endings and rejoin with <br><br> for clear paragraph breaks
+            return text.replace(/\. /g, '.<br><br>');
+        }
+
         function generateSummaryPreview(text, maxLength = 120) {
             if (!text) return '';
             
@@ -2181,15 +2188,14 @@
             
             for (const candidateId of selectedCandidates) {
                 try {
-                    // Check if already in shortlist
-                    const { data: existing } = await supabase
+                    // Check if already in shortlist using count
+                    const { count } = await supabase
                         .from('shortlists')
-                        .select('id')
+                        .select('*', { count: 'exact', head: true })
                         .eq('user_id', currentUser.id)
-                        .eq('candidate_id', candidateId)
-                        .single();
+                        .eq('candidate_id', candidateId);
                     
-                    if (existing) {
+                    if (count > 0) {
                         skipped++;
                         continue;
                     }
@@ -2315,7 +2321,7 @@
             });
         });
 
-        // Open candidate modal with enhancements
+        // Open candidate modal with enhancements and line breaks
         function openCandidate(candidate) {
             currentCandidate = candidate;
             
@@ -2330,19 +2336,20 @@
             const profileScore = calculateProfileScore(candidate);
             const isTopPick = profileScore >= 85;
             
-            // Create expandable summary
+            // Create expandable summary with line breaks
             let aboutHtml = '';
+            const formattedAbout = formatWithLineBreaks(aboutRaw);
             if (aboutRaw.length > 300) {
                 aboutHtml = `
                     <div id="summaryContainer">
-                        <p id="summaryText" class="expandable-text collapsed" style="line-height: 1.6;">
-                            ${aboutRaw}
+                        <p id="summaryText" class="expandable-text collapsed" style="line-height: 1.8;">
+                            ${formattedAbout}
                         </p>
                         <span class="show-more-btn" onclick="toggleSummary()">Show More</span>
                     </div>
                 `;
             } else {
-                aboutHtml = `<p style="line-height: 1.6;">${aboutRaw}</p>`;
+                aboutHtml = `<p style="line-height: 1.8;">${formattedAbout}</p>`;
             }
             
             const skillsString = candidate["Your Skills"] || candidate.Skills || '';
@@ -2489,20 +2496,19 @@
             await requestContact();
         }
 
-        // FIXED Add to shortlist
+        // FIXED Add to shortlist - Now properly handles checking for duplicates
         async function addToShortlist() {
             if (!currentCandidate) return;
             
             try {
-                // First check if already in shortlist
-                const { data: existing } = await supabase
+                // Check if already in shortlist using count instead of single()
+                const { count } = await supabase
                     .from('shortlists')
-                    .select('id')
+                    .select('*', { count: 'exact', head: true })
                     .eq('user_id', currentUser.id)
-                    .eq('candidate_id', currentCandidate.ID)
-                    .single();
+                    .eq('candidate_id', currentCandidate.ID);
                 
-                if (existing) {
+                if (count > 0) {
                     alert('This candidate is already in your shortlist');
                     return;
                 }

@@ -1798,31 +1798,39 @@
 
         // FIXED: Refresh shortlist function
         async function refreshShortlist() {
-            const { data: shortlistData } = await supabase
+            const { data: shortlistData, error: shortlistError } = await supabase
                 .from('shortlists')
                 .select('*')
                 .eq('user_id', currentUser.id);
             
+            console.log('Shortlist data:', shortlistData, 'Error:', shortlistError);
+            
             // Now fetch candidate details for each shortlist item
             if (shortlistData && shortlistData.length > 0) {
                 const candidateIds = shortlistData.map(item => item.candidate_id);
-                const { data: candidatesData } = await supabase
+                console.log('Fetching candidates with IDs:', candidateIds);
+                
+                const { data: candidatesData, error: candidatesError } = await supabase
                     .from('candidates')
                     .select('*')
                     .in('ID', candidateIds);
                 
+                console.log('Candidates data:', candidatesData, 'Error:', candidatesError);
+                
                 // Combine shortlist with candidate data
                 shortlist = shortlistData.map(item => {
                     const candidate = candidatesData?.find(c => c.ID === item.candidate_id);
+                    console.log('Matching candidate for ID', item.candidate_id, ':', candidate);
                     return {
                         ...item,
-                        candidates: candidate
+                        candidates: candidate || null
                     };
                 });
             } else {
                 shortlist = [];
             }
             
+            console.log('Final shortlist:', shortlist);
             updateShortlistBadge();
         }
 
@@ -2838,10 +2846,11 @@
             }
         }
 
-        // NEW: Load messages view
+        // NEW: Load messages view - only show user's own messages
         function loadMessages() {
             const content = document.getElementById('conversationsList');
             
+            // Regular users only see their own conversations
             const conversationsList = Object.values(conversations);
             
             if (conversationsList.length === 0) {
@@ -2853,16 +2862,23 @@
                     </div>
                 `;
             } else {
-                content.innerHTML = conversationsList.map(conv => {
-                    const lastMessage = conv.messages[conv.messages.length - 1];
-                    return `
-                        <div class="section-box" style="cursor: pointer;" onclick="openConversation('${conv.candidateId}')">
-                            <h3 style="color: var(--augusta-green);">${conv.candidateName}</h3>
-                            <p style="color: var(--rough-gray);">Last message: ${lastMessage.text.substring(0, 100)}...</p>
-                            <p style="font-size: 0.85rem; color: var(--rough-gray);">${new Date(lastMessage.timestamp).toLocaleString()}</p>
-                        </div>
-                    `;
-                }).join('');
+                content.innerHTML = `
+                    <h3 style="margin-bottom: 1rem; color: var(--augusta-green);">Your Conversations</h3>
+                    ${conversationsList.map(conv => {
+                        const lastMessage = conv.messages[conv.messages.length - 1];
+                        return `
+                            <div class="section-box" style="cursor: pointer; margin-bottom: 1rem;" 
+                                 onclick="openConversation('${conv.candidateId}')">
+                                <h3 style="color: var(--augusta-green);">${conv.candidateName}</h3>
+                                <p style="color: var(--rough-gray);">Last message: ${lastMessage.text.substring(0, 100)}...</p>
+                                <p style="font-size: 0.85rem; color: var(--rough-gray);">${new Date(lastMessage.timestamp).toLocaleString()}</p>
+                                <p style="font-size: 0.85rem; color: var(--masters-green);">
+                                    ${conv.messages.length} message${conv.messages.length !== 1 ? 's' : ''}
+                                </p>
+                            </div>
+                        `;
+                    }).join('')}
+                `;
             }
         }
 

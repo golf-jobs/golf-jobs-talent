@@ -511,6 +511,64 @@
             text-transform: uppercase;
         }
 
+        /* Message System Styles */
+        .message-box {
+            background: #f8f9fa;
+            border: 1px solid #e1e8e4;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .message-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 0.75rem;
+            border: 2px solid #e1e8e4;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .message-textarea:focus {
+            outline: none;
+            border-color: var(--masters-green);
+        }
+
+        .conversation-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+        }
+
+        .message.sent {
+            background: var(--masters-green);
+            color: white;
+            margin-left: 20%;
+            text-align: right;
+        }
+
+        .message.received {
+            background: #f0f0f0;
+            margin-right: 20%;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 0.25rem;
+        }
+
         /* Sorting Bar */
         .sorting-bar {
             display: flex;
@@ -576,40 +634,6 @@
 
         .modal-close:hover {
             color: var(--pro-shop-navy);
-        }
-
-        /* Confirmation Dialog */
-        .confirmation-dialog {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 2rem;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            z-index: 3000;
-            max-width: 400px;
-            display: none;
-        }
-
-        .confirmation-dialog.active {
-            display: block;
-        }
-
-        .dialog-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 2999;
-            display: none;
-        }
-
-        .dialog-overlay.active {
-            display: block;
         }
 
         /* Notes Panel */
@@ -895,8 +919,8 @@
                     <button class="nav-tab" onclick="switchView('shortlist')">
                         Shortlist <span id="shortlistBadge" class="shortlist-badge" style="display: none;">0</span>
                     </button>
+                    <button class="nav-tab" onclick="switchView('messages')">Messages</button>
                     <button class="nav-tab" onclick="switchView('account')">My Account</button>
-                    <button class="nav-tab" onclick="switchView('requests')">My Requests</button>
                     <button id="adminTab" class="nav-tab" onclick="switchView('admin')" style="display:none;">Admin</button>
                 </nav>
                 <div class="user-info">
@@ -1077,6 +1101,12 @@
                 <div id="shortlistContent"></div>
             </div>
 
+            <!-- Messages View -->
+            <div id="messagesView" class="view-section">
+                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Messages</h1>
+                <div id="conversationsList"></div>
+            </div>
+
             <!-- Account View -->
             <div id="accountView" class="view-section">
                 <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">My Account</h1>
@@ -1085,23 +1115,12 @@
                     <p style="margin-bottom: 1rem;"><strong>Name:</strong> <span id="accountName">-</span></p>
                     <p style="margin-bottom: 1rem;"><strong>Email:</strong> <span id="accountEmail">-</span></p>
                     <p style="margin-bottom: 1rem;"><strong>Credits Balance:</strong> <span id="accountCredits">0</span></p>
-                    <p><strong>Total Requests:</strong> <span id="totalRequests">0</span></p>
+                    <p><strong>Total Messages Sent:</strong> <span id="totalMessages">0</span></p>
                 </div>
                 
                 <div class="section-box">
                     <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">Credits History</h2>
                     <div id="creditsHistory"></div>
-                </div>
-            </div>
-
-            <!-- Requests View -->
-            <div id="requestsView" class="view-section">
-                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">My Requests</h1>
-                <div class="section-box">
-                    <p style="margin-bottom: 1.5rem; color: var(--rough-gray);">
-                        Your contact requests are processed within 24 hours. Graham will reach out to candidates on your behalf and provide detailed introductions.
-                    </p>
-                    <div id="requestsList"></div>
                 </div>
             </div>
 
@@ -1115,8 +1134,8 @@
                 </div>
                 
                 <div class="section-box">
-                    <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">All Requests</h2>
-                    <div id="adminRequestsList"></div>
+                    <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">Recent Messages</h2>
+                    <div id="adminMessagesList"></div>
                 </div>
             </div>
         </div>
@@ -1136,31 +1155,25 @@
                 <button class="btn btn-small" onclick="saveNotes()" style="margin-top: 0.5rem;">Save Notes</button>
             </div>
             
+            <!-- Message Section (replaces contact request) -->
+            <div class="message-box">
+                <h4 style="color: var(--augusta-green); margin-bottom: 0.5rem;">💬 Send Message</h4>
+                <p style="font-size: 0.85rem; color: var(--rough-gray); margin-bottom: 0.5rem;">
+                    First message to this candidate will use 1 credit. Follow-up messages are free.
+                </p>
+                <div id="previousMessages" class="conversation-container" style="display: none;">
+                    <!-- Previous messages will appear here -->
+                </div>
+                <textarea class="message-textarea" id="messageText" 
+                          placeholder="Introduce yourself and explain why you're interested in this candidate..."></textarea>
+                <button class="btn btn-primary btn-small" onclick="sendMessage()" style="margin-top: 0.5rem;">
+                    Send Message <span id="creditCost"></span>
+                </button>
+            </div>
+            
             <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end; flex-wrap: wrap;">
                 <button class="btn btn-secondary" onclick="addToShortlist()">Save to Shortlist</button>
-                <button class="btn btn-primary" onclick="showCreditConfirmation()">Request Contact Details (1 Credit)</button>
             </div>
-        </div>
-    </div>
-    
-    <!-- Confirmation Dialog -->
-    <div class="dialog-overlay" id="dialogOverlay"></div>
-    <div class="confirmation-dialog" id="confirmationDialog">
-        <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Confirm Contact Request</h3>
-        <p style="margin-bottom: 1rem;">You are about to use <strong>1 credit</strong> to request contact with this candidate.</p>
-        <div style="background: #f0f8f4; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-            <p style="font-size: 0.9rem; line-height: 1.6;">
-                <strong>What happens next:</strong><br>
-                • Graham will personally contact the candidate<br>
-                • You'll receive their full contact details via email<br>
-                • A tailored introduction will be facilitated<br>
-                • Response typically within 24 hours
-            </p>
-        </div>
-        <p style="margin-bottom: 1.5rem;">Current balance: <strong id="currentCredits">0</strong> credits</p>
-        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-            <button class="btn btn-secondary" onclick="hideConfirmation()">Cancel</button>
-            <button class="btn btn-primary" onclick="confirmCreditUse()">Confirm Request</button>
         </div>
     </div>
 
@@ -1188,6 +1201,7 @@
         let currentPage = 0;
         const candidatesPerPage = 20;
         let searchTerm = '';
+        let conversations = {};
 
         // Utility functions
         function toTitleCase(str) {
@@ -1701,7 +1715,6 @@
         function handleKeyboardShortcuts(e) {
             if (e.key === 'Escape') {
                 closeModal();
-                hideConfirmation();
             }
             
             if (e.ctrlKey || e.metaKey) {
@@ -1765,19 +1778,50 @@
             
             userPools = poolAccess ? poolAccess.map(p => p.pool_id) : [];
             
-            const { data: shortlistData } = await supabase
-                .from('shortlists')
-                .select('*, candidates(*)')
-                .eq('user_id', user.id);
-            
-            shortlist = shortlistData || [];
-            updateShortlistBadge();
+            // FIXED: Properly fetch shortlist with candidate data
+            await refreshShortlist();
             
             // Load saved notes from localStorage
             const savedNotes = localStorage.getItem('candidateNotes_' + currentUser.id);
             if (savedNotes) {
                 candidateNotes = JSON.parse(savedNotes);
             }
+            
+            // Load conversations from localStorage  
+            const savedConversations = localStorage.getItem('conversations_' + currentUser.id);
+            if (savedConversations) {
+                conversations = JSON.parse(savedConversations);
+            }
+        }
+
+        // FIXED: Refresh shortlist function
+        async function refreshShortlist() {
+            const { data: shortlistData } = await supabase
+                .from('shortlists')
+                .select('*')
+                .eq('user_id', currentUser.id);
+            
+            // Now fetch candidate details for each shortlist item
+            if (shortlistData && shortlistData.length > 0) {
+                const candidateIds = shortlistData.map(item => item.candidate_id);
+                const { data: candidatesData } = await supabase
+                    .from('candidates')
+                    .select('*')
+                    .in('ID', candidateIds);
+                
+                // Combine shortlist with candidate data
+                shortlist = shortlistData.map(item => {
+                    const candidate = candidatesData?.find(c => c.ID === item.candidate_id);
+                    return {
+                        ...item,
+                        candidates: candidate
+                    };
+                });
+            } else {
+                shortlist = [];
+            }
+            
+            updateShortlistBadge();
         }
 
         // Show main app
@@ -1807,8 +1851,8 @@
             
             if (view === 'pools') loadPools();
             else if (view === 'shortlist') loadShortlist();
+            else if (view === 'messages') loadMessages();
             else if (view === 'account') loadAccount();
-            else if (view === 'requests') loadRequests();
             else if (view === 'admin' && userProfile?.role === 'admin') loadAdmin();
             
             const url = new URL(window.location);
@@ -2203,7 +2247,7 @@
             });
         }
 
-        // FIXED Bulk Add to Shortlist - MINIMAL version
+        // FIXED: Bulk Add to Shortlist
         async function bulkAddToShortlist() {
             if (selectedCandidates.size === 0) {
                 alert('Please select candidates first');
@@ -2211,47 +2255,37 @@
             }
             
             let added = 0;
-            let errors = 0;
+            let skipped = 0;
             
             for (const candidateId of selectedCandidates) {
-                try {
-                    const { data, error } = await supabase
-                        .from('shortlists')
-                        .insert({
-                            user_id: currentUser.id,
-                            candidate_id: candidateId
-                            // Removed pool_id
-                        })
-                        .select();
-                    
-                    if (error) {
-                        if (!error.message?.includes('duplicate')) {
-                            console.error('Error for candidate', candidateId, ':', error);
-                            errors++;
-                        }
-                    } else if (data) {
-                        added++;
-                    }
-                } catch (err) {
-                    console.error('Error in bulk add:', err);
-                    errors++;
+                // Check if already in shortlist
+                const existing = shortlist.find(item => item.candidate_id === candidateId);
+                if (existing) {
+                    skipped++;
+                    continue;
+                }
+                
+                const { data, error } = await supabase
+                    .from('shortlists')
+                    .insert({
+                        user_id: currentUser.id,
+                        candidate_id: candidateId
+                    })
+                    .select();
+                
+                if (!error && data) {
+                    added++;
                 }
             }
             
             let message = `Added ${added} candidates to shortlist.`;
-            if (errors > 0) message += ` ${errors} errors occurred.`;
+            if (skipped > 0) message += ` ${skipped} already in shortlist.`;
             
             alert(message);
             deselectAll();
             
             // Refresh shortlist
-            const { data: shortlistData } = await supabase
-                .from('shortlists')
-                .select('*, candidates(*)')
-                .eq('user_id', currentUser.id);
-            
-            shortlist = shortlistData || [];
-            updateShortlistBadge();
+            await refreshShortlist();
         }
 
         // Export functions
@@ -2331,8 +2365,8 @@
             });
         });
 
-        // Open candidate modal with enhancements and line breaks
-        function openCandidate(candidate) {
+        // Open candidate modal with messaging
+        async function openCandidate(candidate) {
             currentCandidate = candidate;
             
             const jobTitle = toTitleCase(candidate["Current Job Title"] || 
@@ -2345,6 +2379,26 @@
             
             const profileScore = calculateProfileScore(candidate);
             const isTopPick = profileScore >= 85;
+            
+            // Check if conversation exists
+            const hasConversation = conversations[candidate.ID]?.messages?.length > 0;
+            const creditCostElement = document.getElementById('creditCost');
+            creditCostElement.textContent = hasConversation ? '(Free)' : '(1 Credit)';
+            
+            // Show previous messages if they exist
+            const previousMessagesDiv = document.getElementById('previousMessages');
+            if (hasConversation) {
+                previousMessagesDiv.style.display = 'block';
+                previousMessagesDiv.innerHTML = conversations[candidate.ID].messages.map(msg => `
+                    <div class="message ${msg.from === 'employer' ? 'sent' : 'received'}">
+                        ${msg.text}
+                        <div class="message-time">${new Date(msg.timestamp).toLocaleString()}</div>
+                    </div>
+                `).join('');
+                previousMessagesDiv.scrollTop = previousMessagesDiv.scrollHeight;
+            } else {
+                previousMessagesDiv.style.display = 'none';
+            }
             
             // Create expandable summary with line breaks
             let aboutHtml = '';
@@ -2441,12 +2495,6 @@
                 </div>
                 
                 ${skillsHtml}
-                
-                <div style="background: #e6f2ff; border: 1px solid #3a7858; border-radius: 12px; padding: 1rem; margin-top: 2rem;">
-                    <p style="color: var(--augusta-green); font-weight: 600;">
-                        💼 To connect with this candidate, request their contact details and Graham will facilitate a personalized introduction.
-                    </p>
-                </div>
             `;
             
             // Load saved notes
@@ -2483,128 +2531,115 @@
             alert('Notes saved!');
         }
 
+        // NEW: Send message function
+        async function sendMessage() {
+            if (!currentCandidate) return;
+            
+            const messageText = document.getElementById('messageText').value.trim();
+            if (!messageText) {
+                alert('Please enter a message');
+                return;
+            }
+            
+            // Check if this is the first message to this candidate
+            const isFirstMessage = !conversations[currentCandidate.ID]?.messages?.length;
+            
+            if (isFirstMessage && userProfile.credits < 1) {
+                alert('Insufficient credits! Contact graham@golf-jobs.com to purchase more.');
+                return;
+            }
+            
+            // If first message, deduct credit
+            if (isFirstMessage) {
+                const { error } = await supabase
+                    .from('users')
+                    .update({ credits: userProfile.credits - 1 })
+                    .eq('id', currentUser.id);
+                
+                if (error) {
+                    alert('Error processing message. Please try again.');
+                    return;
+                }
+                
+                userProfile.credits--;
+                document.getElementById('creditsCount').textContent = userProfile.credits;
+            }
+            
+            // Save message to conversations
+            if (!conversations[currentCandidate.ID]) {
+                conversations[currentCandidate.ID] = {
+                    candidateId: currentCandidate.ID,
+                    candidateName: currentCandidate["Current Job Title"] || currentCandidate.Name,
+                    messages: []
+                };
+            }
+            
+            const message = {
+                from: 'employer',
+                text: messageText,
+                timestamp: new Date().toISOString()
+            };
+            
+            conversations[currentCandidate.ID].messages.push(message);
+            
+            // Save to localStorage
+            localStorage.setItem('conversations_' + currentUser.id, JSON.stringify(conversations));
+            
+            // Clear the message textarea
+            document.getElementById('messageText').value = '';
+            
+            // Update the UI
+            const previousMessagesDiv = document.getElementById('previousMessages');
+            previousMessagesDiv.style.display = 'block';
+            previousMessagesDiv.innerHTML = conversations[currentCandidate.ID].messages.map(msg => `
+                <div class="message ${msg.from === 'employer' ? 'sent' : 'received'}">
+                    ${msg.text}
+                    <div class="message-time">${new Date(msg.timestamp).toLocaleString()}</div>
+                </div>
+            `).join('');
+            previousMessagesDiv.scrollTop = previousMessagesDiv.scrollHeight;
+            
+            // Update credit cost display
+            document.getElementById('creditCost').textContent = '(Free)';
+            
+            alert('Message sent successfully! The candidate will be notified.');
+        }
+
         // Close modal
         function closeModal() {
             document.getElementById('candidateModal').classList.remove('active');
         }
 
-        // Credit confirmation
-        function showCreditConfirmation() {
-            document.getElementById('currentCredits').textContent = userProfile.credits;
-            document.getElementById('confirmationDialog').classList.add('active');
-            document.getElementById('dialogOverlay').classList.add('active');
-        }
-
-        function hideConfirmation() {
-            document.getElementById('confirmationDialog').classList.remove('active');
-            document.getElementById('dialogOverlay').classList.remove('active');
-        }
-
-        async function confirmCreditUse() {
-            hideConfirmation();
-            await requestContact();
-        }
-
-        // FIXED Request contact details - MINIMAL version
-        async function requestContact() {
-            if (!currentCandidate) return;
-            
-            if (userProfile.credits < 1) {
-                alert('Insufficient credits! Contact graham@golf-jobs.com to purchase more.');
-                return;
-            }
-            
-            try {
-                // First, deduct the credit
-                const { error: profileError } = await supabase
-                    .from('users')
-                    .update({ credits: userProfile.credits - 1 })
-                    .eq('id', currentUser.id);
-                
-                if (profileError) {
-                    console.error('Error updating credits:', profileError);
-                    alert('Error processing request. Please try again.');
-                    return;
-                }
-                
-                // Insert minimal request data - only essential fields
-                const { data: requestData, error: requestError } = await supabase
-                    .from('requests')
-                    .insert({
-                        user_id: currentUser.id,
-                        candidate_id: currentCandidate.ID,
-                        credits_used: 1
-                        // Removed ALL optional fields
-                    })
-                    .select();
-                
-                if (requestError) {
-                    console.error('Full request error details:', requestError);
-                    // Refund the credit
-                    await supabase
-                        .from('users')
-                        .update({ credits: userProfile.credits })
-                        .eq('id', currentUser.id);
-                    alert('Error recording request. Your credit has been refunded. Check console for details.');
-                    return;
-                }
-                
-                // Update local state
-                userProfile.credits--;
-                document.getElementById('creditsCount').textContent = userProfile.credits;
-                
-                // Show success message
-                alert('Contact request submitted successfully! Graham will reach out within 24 hours.');
-                closeModal();
-                
-            } catch (err) {
-                console.error('Unexpected error:', err);
-                alert('An unexpected error occurred. Please check the console for details.');
-            }
-        }
-
-        // FIXED Add to shortlist - MINIMAL version
+        // FIXED: Add to shortlist
         async function addToShortlist() {
             if (!currentCandidate) return;
             
-            try {
-                // Just try to insert - let database handle duplicates
-                const { data, error } = await supabase
-                    .from('shortlists')
-                    .insert({
-                        user_id: currentUser.id,
-                        candidate_id: currentCandidate.ID
-                        // Removed pool_id as it might not exist
-                    })
-                    .select();
-                
-                if (error) {
-                    // Check if it's a duplicate error
-                    if (error.message && error.message.includes('duplicate')) {
-                        alert('This candidate is already in your shortlist');
-                    } else {
-                        console.error('Full shortlist error:', error);
-                        alert('Error adding to shortlist. Check console for details.');
-                    }
-                    return;
-                }
-                
-                alert('Added to shortlist!');
-                closeModal();
-                
-                // Refresh shortlist
-                const { data: shortlistData } = await supabase
-                    .from('shortlists')
-                    .select('*, candidates(*)')
-                    .eq('user_id', currentUser.id);
-                
-                shortlist = shortlistData || [];
-                updateShortlistBadge();
-                
-            } catch (err) {
-                console.error('Unexpected error:', err);
-                alert('Error adding to shortlist. Check console for details.');
+            // Check if already in shortlist
+            const existing = shortlist.find(item => item.candidate_id === currentCandidate.ID);
+            if (existing) {
+                alert('This candidate is already in your shortlist');
+                return;
             }
+            
+            const { data, error } = await supabase
+                .from('shortlists')
+                .insert({
+                    user_id: currentUser.id,
+                    candidate_id: currentCandidate.ID
+                })
+                .select();
+            
+            if (error) {
+                console.error('Error adding to shortlist:', error);
+                alert('Error adding to shortlist. Please try again.');
+                return;
+            }
+            
+            alert('Added to shortlist!');
+            closeModal();
+            
+            // Refresh shortlist
+            await refreshShortlist();
         }
 
         // Load shortlist
@@ -2663,13 +2698,7 @@
                 .eq('id', shortlistId);
             
             if (!error) {
-                const { data: shortlistData } = await supabase
-                    .from('shortlists')
-                    .select('*, candidates(*)')
-                    .eq('user_id', currentUser.id);
-                
-                shortlist = shortlistData || [];
-                updateShortlistBadge();
+                await refreshShortlist();
                 loadShortlist();
             }
         }
@@ -2684,28 +2713,87 @@
             }
         }
 
+        // NEW: Load messages view
+        function loadMessages() {
+            const content = document.getElementById('conversationsList');
+            
+            const conversationsList = Object.values(conversations);
+            
+            if (conversationsList.length === 0) {
+                content.innerHTML = `
+                    <div class="section-box" style="text-align: center;">
+                        <h2>No messages yet</h2>
+                        <p style="color: var(--rough-gray); margin-bottom: 1rem;">Start a conversation by messaging candidates from their profile.</p>
+                        <button class="btn btn-primary" onclick="switchView('pools')">Browse Candidates</button>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = conversationsList.map(conv => {
+                    const lastMessage = conv.messages[conv.messages.length - 1];
+                    return `
+                        <div class="section-box" style="cursor: pointer;" onclick="openConversation('${conv.candidateId}')">
+                            <h3 style="color: var(--augusta-green);">${conv.candidateName}</h3>
+                            <p style="color: var(--rough-gray);">Last message: ${lastMessage.text.substring(0, 100)}...</p>
+                            <p style="font-size: 0.85rem; color: var(--rough-gray);">${new Date(lastMessage.timestamp).toLocaleString()}</p>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // NEW: Open conversation
+        async function openConversation(candidateId) {
+            // Find the candidate data
+            let candidate = allCandidates.find(c => c.ID == candidateId);
+            
+            if (!candidate) {
+                // Try to fetch from database if not in current pool
+                const { data } = await supabase
+                    .from('candidates')
+                    .select('*')
+                    .eq('ID', candidateId)
+                    .single();
+                
+                if (data) {
+                    candidate = data;
+                }
+            }
+            
+            if (candidate) {
+                openCandidate(candidate);
+            }
+        }
+
         async function loadAccount() {
             document.getElementById('accountName').textContent = userProfile?.name || '-';
             document.getElementById('accountEmail').textContent = currentUser?.email || '-';
             document.getElementById('accountCredits').textContent = userProfile?.credits || 0;
             
-            const { count } = await supabase
-                .from('requests')
-                .select('*', { count: 'exact', head: true })
-                .eq('user_id', currentUser.id);
+            // Count total messages sent
+            let totalMessages = 0;
+            Object.values(conversations).forEach(conv => {
+                totalMessages += conv.messages.filter(m => m.from === 'employer').length;
+            });
+            document.getElementById('totalMessages').textContent = totalMessages;
             
-            document.getElementById('totalRequests').textContent = count || 0;
-            
-            // Load credits history
-            const { data: requests } = await supabase
-                .from('requests')
-                .select('*, candidates(*)')
-                .eq('user_id', currentUser.id)
-                .order('created_at', { ascending: false })
-                .limit(10);
-            
+            // Load credits history (messages that cost credits)
             const historyDiv = document.getElementById('creditsHistory');
-            if (requests && requests.length > 0) {
+            
+            // Get first messages from each conversation
+            const creditMessages = [];
+            Object.values(conversations).forEach(conv => {
+                if (conv.messages.length > 0) {
+                    const firstMessage = conv.messages[0];
+                    if (firstMessage.from === 'employer') {
+                        creditMessages.push({
+                            candidateName: conv.candidateName,
+                            timestamp: firstMessage.timestamp
+                        });
+                    }
+                }
+            });
+            
+            if (creditMessages.length > 0) {
                 historyDiv.innerHTML = `
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
@@ -2716,70 +2804,18 @@
                             </tr>
                         </thead>
                         <tbody>
-                            ${requests.map(req => {
-                                const jobTitle = req.candidates ? toTitleCase(req.candidates["Current Job Title"] || 
-                                               req.candidates.Name) : 'Unknown';
-                                const date = req.created_at || 'Unknown';
-                                return `
-                                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                                        <td style="padding: 0.5rem;">${new Date(date).toLocaleDateString()}</td>
-                                        <td style="padding: 0.5rem;">${jobTitle}</td>
-                                        <td style="padding: 0.5rem;">-${req.credits_used || 1}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
+                            ${creditMessages.map(msg => `
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 0.5rem;">${new Date(msg.timestamp).toLocaleDateString()}</td>
+                                    <td style="padding: 0.5rem;">${msg.candidateName}</td>
+                                    <td style="padding: 0.5rem;">-1</td>
+                                </tr>
+                            `).join('')}
                         </tbody>
                     </table>
                 `;
             } else {
                 historyDiv.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No credit history yet.</p>';
-            }
-        }
-
-        // FIXED Load Requests
-        async function loadRequests() {
-            const { data: requests } = await supabase
-                .from('requests')
-                .select('*, candidates(*)')
-                .eq('user_id', currentUser.id)
-                .order('created_at', { ascending: false });
-            
-            const content = document.getElementById('requestsList');
-            
-            if (!requests || requests.length === 0) {
-                content.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No requests made yet.</p>';
-            } else {
-                content.innerHTML = `
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f9fafb;">
-                                <th style="padding: 1rem; text-align: left;">Date</th>
-                                <th style="padding: 1rem; text-align: left;">Candidate</th>
-                                <th style="padding: 1rem; text-align: left;">Location</th>
-                                <th style="padding: 1rem; text-align: left;">Credits</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${requests.map(req => {
-                                const candidate = req.candidates;
-                                const jobTitle = candidate ? toTitleCase(candidate["Current Job Title"] || 
-                                               candidate.Name || 
-                                               `Candidate #${req.candidate_id}`) : `Candidate #${req.candidate_id}`;
-                                const location = candidate ? cleanAndFormatLocation(candidate["Town/City"], candidate.Country) : 'N/A';
-                                const date = req.created_at || 'Unknown';
-                                
-                                return `
-                                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                                        <td style="padding: 1rem;">${new Date(date).toLocaleDateString()}</td>
-                                        <td style="padding: 1rem;">${jobTitle}</td>
-                                        <td style="padding: 1rem;">${location}</td>
-                                        <td style="padding: 1rem;">${req.credits_used || 1}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                `;
             }
         }
 
@@ -2819,44 +2855,47 @@
                 usersList.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No users found.</p>';
             }
             
-            const { data: allRequests } = await supabase
-                .from('requests')
-                .select('*, users(name, email), candidates(*)')
-                .order('created_at', { ascending: false })
-                .limit(50);
+            // Show recent messages in admin view
+            const messagesList = document.getElementById('adminMessagesList');
+            const allConversations = [];
             
-            const requestsList = document.getElementById('adminRequestsList');
-            if (allRequests && allRequests.length > 0) {
-                requestsList.innerHTML = `
+            // This would need to be stored in database for a real multi-user system
+            // For now, just show current user's messages in admin view
+            Object.values(conversations).forEach(conv => {
+                conv.messages.forEach(msg => {
+                    if (msg.from === 'employer') {
+                        allConversations.push({
+                            candidate: conv.candidateName,
+                            message: msg.text.substring(0, 100),
+                            timestamp: msg.timestamp
+                        });
+                    }
+                });
+            });
+            
+            if (allConversations.length > 0) {
+                messagesList.innerHTML = `
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="background: #f9fafb;">
                                 <th style="padding: 1rem; text-align: left;">Date</th>
-                                <th style="padding: 1rem; text-align: left;">User</th>
                                 <th style="padding: 1rem; text-align: left;">Candidate</th>
-                                <th style="padding: 1rem; text-align: left;">Credits</th>
+                                <th style="padding: 1rem; text-align: left;">Message</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${allRequests.map(req => {
-                                const jobTitle = req.candidates ? toTitleCase(req.candidates["Current Job Title"] || 
-                                               req.candidates.Name || 
-                                               `Candidate #${req.candidate_id}`) : `Candidate #${req.candidate_id}`;
-                                const date = req.created_at || 'Unknown';
-                                return `
-                                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                                        <td style="padding: 1rem;">${new Date(date).toLocaleDateString()}</td>
-                                        <td style="padding: 1rem;">${req.users?.name || req.users?.email || 'Unknown'}</td>
-                                        <td style="padding: 1rem;">${jobTitle}</td>
-                                        <td style="padding: 1rem;">${req.credits_used || 1}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
+                            ${allConversations.slice(0, 20).map(msg => `
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 1rem;">${new Date(msg.timestamp).toLocaleString()}</td>
+                                    <td style="padding: 1rem;">${msg.candidate}</td>
+                                    <td style="padding: 1rem;">${msg.message}...</td>
+                                </tr>
+                            `).join('')}
                         </tbody>
                     </table>
                 `;
             } else {
-                requestsList.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No requests found.</p>';
+                messagesList.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No messages found.</p>';
             }
         }
 

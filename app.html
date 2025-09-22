@@ -316,62 +316,64 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Filter Panel Mobile */
-        .filter-toggle-mobile {
-            display: none;
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            width: 60px;
-            height: 60px;
-            background: var(--augusta-green);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            cursor: pointer;
-            z-index: 99;
-            font-size: 1.5rem;
+        /* Analytics Dashboard */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
 
-        @media (max-width: 768px) {
-            .filter-toggle-mobile {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            .filter-panel {
-                position: fixed;
-                top: 0;
-                left: -100%;
-                width: 80%;
-                height: 100vh;
-                background: white;
-                z-index: 1000;
-                transition: left 0.3s ease;
-                overflow-y: auto;
-                box-shadow: 2px 0 20px rgba(0,0,0,0.1);
-            }
-            
-            .filter-panel.active {
-                left: 0;
-            }
-            
-            .filter-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0,0,0,0.5);
-                z-index: 999;
-            }
-            
-            .filter-overlay.active {
-                display: block;
-            }
+        .analytics-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .analytics-card h3 {
+            color: var(--augusta-green);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--masters-green);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--rough-gray);
+            font-size: 0.9rem;
+        }
+
+        .top-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .top-list li {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-list li:last-child {
+            border-bottom: none;
+        }
+
+        .rank-badge {
+            background: var(--club-gold);
+            color: var(--augusta-green);
+            padding: 0.25rem 0.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-right: 0.75rem;
         }
 
         /* Pools Grid */
@@ -511,6 +513,64 @@
             text-transform: uppercase;
         }
 
+        /* Message System Styles */
+        .message-box {
+            background: #f8f9fa;
+            border: 1px solid #e1e8e4;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .message-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 0.75rem;
+            border: 2px solid #e1e8e4;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        .message-textarea:focus {
+            outline: none;
+            border-color: var(--masters-green);
+        }
+
+        .conversation-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+        }
+
+        .message.sent {
+            background: var(--masters-green);
+            color: white;
+            margin-left: 20%;
+            text-align: right;
+        }
+
+        .message.received {
+            background: #f0f0f0;
+            margin-right: 20%;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 0.25rem;
+        }
+
         /* Sorting Bar */
         .sorting-bar {
             display: flex;
@@ -531,6 +591,15 @@
             display: flex;
             gap: 0.5rem;
             flex-wrap: wrap;
+        }
+
+        /* Filter Panel */
+        .filter-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
 
         /* Modal */
@@ -589,7 +658,7 @@
             border-radius: 16px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             z-index: 3000;
-            max-width: 400px;
+            max-width: 500px;
             display: none;
         }
 
@@ -629,84 +698,6 @@
             border-radius: 8px;
             resize: vertical;
             font-family: inherit;
-        }
-
-        /* Show More/Less */
-        .expandable-text {
-            position: relative;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-
-        .expandable-text.collapsed {
-            max-height: 120px;
-        }
-
-        .show-more-btn {
-            color: var(--masters-green);
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.9rem;
-            margin-top: 0.5rem;
-            display: inline-block;
-        }
-
-        .show-more-btn:hover {
-            color: var(--augusta-green);
-        }
-
-        /* Highlight Search Terms */
-        .highlight {
-            background: yellow;
-            padding: 0 2px;
-            border-radius: 2px;
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        }
-
-        .empty-state img {
-            width: 200px;
-            opacity: 0.5;
-            margin-bottom: 1rem;
-        }
-
-        .empty-state h3 {
-            color: var(--augusta-green);
-            margin-bottom: 1rem;
-        }
-
-        .empty-state p {
-            color: var(--rough-gray);
-            margin-bottom: 2rem;
-        }
-
-        /* Load More */
-        .load-more-container {
-            text-align: center;
-            padding: 2rem;
-        }
-
-        .load-more-btn {
-            padding: 0.875rem 2rem;
-            background: white;
-            color: var(--augusta-green);
-            border: 2px solid var(--augusta-green);
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .load-more-btn:hover {
-            background: var(--augusta-green);
-            color: white;
         }
 
         /* Buttons */
@@ -775,53 +766,45 @@
             color: var(--augusta-green);
         }
 
-        /* Tooltip */
-        .tooltip {
-            position: relative;
-            display: inline-block;
-        }
-
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 200px;
-            background-color: var(--pro-shop-navy);
-            color: white;
+        /* Empty State */
+        .empty-state {
             text-align: center;
-            border-radius: 8px;
-            padding: 0.5rem;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -100px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 0.875rem;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
 
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
+        .empty-state h3 {
+            color: var(--augusta-green);
+            margin-bottom: 1rem;
         }
 
-        /* Request Status Badge */
-        .request-status {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
+        .empty-state p {
+            color: var(--rough-gray);
+            margin-bottom: 2rem;
+        }
+
+        /* Load More */
+        .load-more-container {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .load-more-btn {
+            padding: 0.875rem 2rem;
+            background: white;
+            color: var(--augusta-green);
+            border: 2px solid var(--augusta-green);
+            border-radius: 10px;
             font-weight: 600;
-            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .request-status.pending {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .request-status.completed {
-            background: #d4edda;
-            color: #155724;
+        .load-more-btn:hover {
+            background: var(--augusta-green);
+            color: white;
         }
 
         /* Responsive */
@@ -876,7 +859,7 @@
             </form>
             
             <div style="text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e1e8e4;">
-                <p style="color: var(--rough-gray); font-size: 0.85rem;">© 2024 Golf Jobs. Professional recruitment excellence.</p>
+                <p style="color: var(--rough-gray); font-size: 0.85rem;">© 2025 Golf Jobs. Professional recruitment excellence.</p>
                 <p style="margin-top: 0.5rem; color: var(--rough-gray); font-size: 0.85rem;">Need access? Contact <strong>graham@golf-jobs.com</strong></p>
             </div>
         </div>
@@ -895,8 +878,8 @@
                     <button class="nav-tab" onclick="switchView('shortlist')">
                         Shortlist <span id="shortlistBadge" class="shortlist-badge" style="display: none;">0</span>
                     </button>
+                    <button class="nav-tab" onclick="switchView('messages')">Messages</button>
                     <button class="nav-tab" onclick="switchView('account')">My Account</button>
-                    <button class="nav-tab" onclick="switchView('requests')">My Requests</button>
                     <button id="adminTab" class="nav-tab" onclick="switchView('admin')" style="display:none;">Admin</button>
                 </nav>
                 <div class="user-info">
@@ -920,15 +903,9 @@
                     <div class="skeleton skeleton-card"></div>
                     <div class="skeleton skeleton-card"></div>
                 </div>
-                
-                <div class="section-box">
-                    <h2 style="font-size: 1.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Unlock More Talent Pools</h2>
-                    <p style="color: var(--rough-gray); margin-bottom: 1.5rem;">Expand your recruitment reach with access to additional regions</p>
-                    <button class="btn btn-primary" onclick="alert('Contact graham@golf-jobs.com for access to additional pools')">Request Access</button>
-                </div>
             </div>
 
-            <!-- Pool Detail View -->
+            <!-- Pool Detail View with Split Layout -->
             <div id="poolDetailView" class="view-section">
                 <div class="breadcrumb">
                     <a href="#" onclick="switchView('pools')">Talent Pools</a>
@@ -937,13 +914,10 @@
                 </div>
                 
                 <!-- Filter Panel -->
-                <div class="section-box filter-panel" id="filterPanel">
-                    <button class="filter-close-mobile" onclick="toggleFilterPanel()" style="display: none; position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
-                    
+                <div class="filter-panel" id="filterPanel">
                     <input type="text" id="searchInput" placeholder="Search by name, role, skills, or location..." 
                            style="width: 100%; padding: 0.875rem; border: 2px solid #e1e8e4; border-radius: 12px; font-size: 1rem; margin-bottom: 1rem;">
                     
-                    <!-- Filters -->
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start;">
                         <select id="salaryFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
                             <option value="">All Salaries</option>
@@ -970,69 +944,13 @@
                             <option value="NO">Not Actively Looking</option>
                         </select>
                         
-                        <select id="categoryFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
-                            <option value="">All Categories</option>
-                            <option value="greenkeeping">Greenkeeping</option>
-                            <option value="management">Management</option>
-                            <option value="sales">Sales & Business Dev</option>
-                            <option value="marketing">Marketing & PR</option>
-                            <option value="fandB">F&B / Hospitality</option>
-                            <option value="professional">Golf Professional</option>
-                            <option value="operations">Operations</option>
-                            <option value="retail">Retail & Pro Shop</option>
-                            <option value="maintenance">Maintenance & Facilities</option>
-                            <option value="admin">Admin & Support</option>
-                            <option value="other">Other</option>
-                        </select>
-                        
-                        <!-- Location Filter Dropdown -->
-                        <div style="position: relative;">
-                            <button onclick="toggleLocationDropdown()" 
-                                    style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; 
-                                           font-size: 0.95rem; background: white; cursor: pointer; 
-                                           min-width: 150px; text-align: left; display: flex; 
-                                           justify-content: space-between; align-items: center;">
-                                <span id="locationFilterText">All Locations</span>
-                                <span style="font-size: 0.8rem;">▼</span>
-                            </button>
-                            <div id="locationDropdown" style="display: none; position: absolute; top: 100%; 
-                                                              left: 0; right: 0; background: white; 
-                                                              border: 2px solid #e1e8e4; border-radius: 8px; 
-                                                              margin-top: 0.25rem; max-height: 300px; 
-                                                              overflow-y: auto; z-index: 1000; min-width: 200px;">
-                                <div style="padding: 0.5rem; border-bottom: 1px solid #e1e8e4;">
-                                    <button onclick="selectAllLocations()" 
-                                            style="margin-right: 0.5rem; padding: 0.25rem 0.5rem; 
-                                                   border: 1px solid #e1e8e4; border-radius: 4px; 
-                                                   background: white; cursor: pointer; font-size: 0.85rem;">
-                                        Select All
-                                    </button>
-                                    <button onclick="clearAllLocations()" 
-                                            style="padding: 0.25rem 0.5rem; border: 1px solid #e1e8e4; 
-                                                   border-radius: 4px; background: white; cursor: pointer; 
-                                                   font-size: 0.85rem;">
-                                        Clear All
-                                    </button>
-                                </div>
-                                <div id="locationCheckboxes" style="padding: 0.5rem;">
-                                    <!-- Populated dynamically -->
-                                </div>
-                            </div>
-                        </div>
-                        
                         <button onclick="clearFilters()" class="btn btn-small" style="background: #e5e7eb; color: var(--rough-gray);">
                             Clear All
                         </button>
                     </div>
                 </div>
                 
-                <!-- Filter Toggle Mobile -->
-                <button class="filter-toggle-mobile" onclick="toggleFilterPanel()">
-                    ⚙️
-                </button>
-                <div class="filter-overlay" id="filterOverlay" onclick="toggleFilterPanel()"></div>
-                
-                <!-- Sorting and Bulk Actions -->
+                <!-- Sorting Bar -->
                 <div class="sorting-bar">
                     <div class="sort-options">
                         <label style="margin-right: 0.5rem; color: var(--rough-gray);">Sort by:</label>
@@ -1047,24 +965,38 @@
                     <div class="bulk-actions">
                         <button class="btn btn-small btn-secondary" onclick="selectAll()">Select All</button>
                         <button class="btn btn-small btn-secondary" onclick="deselectAll()">Clear Selection</button>
-                        <button class="btn btn-small btn-primary" onclick="bulkAddToShortlist()">Add Selected to Shortlist</button>
-                        <button class="btn btn-small btn-primary" onclick="exportCandidates()">Export</button>
+                        <button class="btn btn-small btn-primary" onclick="bulkAddToShortlist()">Add to Shortlist</button>
                     </div>
                 </div>
                 
                 <div id="candidateCount" style="margin-bottom: 1rem; color: var(--rough-gray);"></div>
                 
-                <!-- Candidates Grid with Pagination -->
-                <div class="candidates-grid" id="candidatesGrid">
-                    <!-- Loading skeletons -->
-                    <div class="skeleton skeleton-card"></div>
-                    <div class="skeleton skeleton-card"></div>
-                    <div class="skeleton skeleton-card"></div>
-                </div>
-                
-                <!-- Load More -->
-                <div class="load-more-container" id="loadMoreContainer" style="display: none;">
-                    <button class="load-more-btn" onclick="loadMore()">Load More Candidates</button>
+                <!-- Split View Container -->
+                <div style="display: flex; gap: 1.5rem; height: calc(100vh - 350px); min-height: 600px;">
+                    <!-- Left Panel - Candidate List -->
+                    <div style="width: 40%; overflow-y: auto; padding-right: 1rem; border-right: 1px solid #e5e7eb;">
+                        <div id="candidatesListView">
+                            <!-- Loading skeletons -->
+                            <div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div>
+                            <div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div>
+                            <div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div>
+                        </div>
+                        
+                        <!-- Load More -->
+                        <div class="load-more-container" id="loadMoreContainer" style="display: none; padding: 1rem 0;">
+                            <button class="load-more-btn" onclick="loadMore()" style="width: 100%;">Load More</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Panel - Full Profile View -->
+                    <div style="flex: 1; overflow-y: auto; padding-left: 1rem;">
+                        <div id="profileDetailView" style="background: white; border-radius: 16px; padding: 2rem; min-height: 100%;">
+                            <div style="text-align: center; color: var(--rough-gray); padding: 4rem 2rem;">
+                                <h3 style="margin-bottom: 1rem;">Select a candidate</h3>
+                                <p>Click on any candidate from the list to view their full profile</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1077,6 +1009,12 @@
                 <div id="shortlistContent"></div>
             </div>
 
+            <!-- Messages View -->
+            <div id="messagesView" class="view-section">
+                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Messages</h1>
+                <div id="conversationsList"></div>
+            </div>
+
             <!-- Account View -->
             <div id="accountView" class="view-section">
                 <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">My Account</h1>
@@ -1085,38 +1023,62 @@
                     <p style="margin-bottom: 1rem;"><strong>Name:</strong> <span id="accountName">-</span></p>
                     <p style="margin-bottom: 1rem;"><strong>Email:</strong> <span id="accountEmail">-</span></p>
                     <p style="margin-bottom: 1rem;"><strong>Credits Balance:</strong> <span id="accountCredits">0</span></p>
-                    <p><strong>Total Requests:</strong> <span id="totalRequests">0</span></p>
-                </div>
-                
-                <div class="section-box">
-                    <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">Credits History</h2>
-                    <div id="creditsHistory"></div>
-                </div>
-            </div>
-
-            <!-- Requests View -->
-            <div id="requestsView" class="view-section">
-                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">My Requests</h1>
-                <div class="section-box">
-                    <p style="margin-bottom: 1.5rem; color: var(--rough-gray);">
-                        Your contact requests are processed within 24 hours. Graham will reach out to candidates on your behalf and provide detailed introductions.
-                    </p>
-                    <div id="requestsList"></div>
+                    <p><strong>Total Messages Sent:</strong> <span id="totalMessages">0</span></p>
                 </div>
             </div>
 
             <!-- Admin View -->
             <div id="adminView" class="view-section">
-                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">Admin Panel</h1>
+                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">Admin Dashboard</h1>
                 
+                <!-- Analytics Section -->
+                <div class="section-box">
+                    <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">📊 Platform Analytics</h2>
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <h3>Total Profile Views</h3>
+                            <div class="stat-number" id="totalViews">0</div>
+                            <div class="stat-label">All time views</div>
+                        </div>
+                        <div class="analytics-card">
+                            <h3>Total Messages</h3>
+                            <div class="stat-number" id="totalMessagesAdmin">0</div>
+                            <div class="stat-label">Messages sent</div>
+                        </div>
+                        <div class="analytics-card">
+                            <h3>Active Users</h3>
+                            <div class="stat-number" id="activeUsers">0</div>
+                            <div class="stat-label">Registered employers</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Most Viewed Profiles -->
+                <div class="section-box">
+                    <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">🔥 Most Viewed Profiles</h2>
+                    <ul class="top-list" id="mostViewedList">
+                        <li>Loading...</li>
+                    </ul>
+                </div>
+
+                <!-- Most Messaged Candidates -->
+                <div class="section-box">
+                    <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">💬 Most Messaged Candidates</h2>
+                    <ul class="top-list" id="mostMessagedList">
+                        <li>Loading...</li>
+                    </ul>
+                </div>
+
+                <!-- All Messages -->
+                <div class="section-box">
+                    <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">Recent Messages</h2>
+                    <div id="adminMessagesList"></div>
+                </div>
+
+                <!-- All Users -->
                 <div class="section-box">
                     <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">All Users</h2>
                     <div id="adminUsersList"></div>
-                </div>
-                
-                <div class="section-box">
-                    <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">All Requests</h2>
-                    <div id="adminRequestsList"></div>
                 </div>
             </div>
         </div>
@@ -1136,31 +1098,52 @@
                 <button class="btn btn-small" onclick="saveNotes()" style="margin-top: 0.5rem;">Save Notes</button>
             </div>
             
+            <!-- Message Section -->
+            <div class="message-box">
+                <h4 style="color: var(--augusta-green); margin-bottom: 0.5rem;">💬 Send Message</h4>
+                <p style="font-size: 0.85rem; color: var(--rough-gray); margin-bottom: 0.5rem;">
+                    First message to this candidate will use 1 credit. Follow-up messages are free.
+                </p>
+                <div id="previousMessages" class="conversation-container" style="display: none;">
+                    <!-- Previous messages will appear here -->
+                </div>
+                <textarea class="message-textarea" id="messageText" 
+                          placeholder="Introduce yourself and explain why you're interested in this candidate..."></textarea>
+                <button class="btn btn-primary btn-small" onclick="sendMessage()" style="margin-top: 0.5rem;">
+                    Send Message <span id="creditCost"></span>
+                </button>
+            </div>
+            
             <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end; flex-wrap: wrap;">
                 <button class="btn btn-secondary" onclick="addToShortlist()">Save to Shortlist</button>
-                <button class="btn btn-primary" onclick="showCreditConfirmation()">Request Contact Details (1 Credit)</button>
             </div>
         </div>
     </div>
-    
-    <!-- Confirmation Dialog -->
-    <div class="dialog-overlay" id="dialogOverlay"></div>
-    <div class="confirmation-dialog" id="confirmationDialog">
-        <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Confirm Contact Request</h3>
-        <p style="margin-bottom: 1rem;">You are about to use <strong>1 credit</strong> to request contact with this candidate.</p>
-        <div style="background: #f0f8f4; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-            <p style="font-size: 0.9rem; line-height: 1.6;">
-                <strong>What happens next:</strong><br>
-                • Graham will personally contact the candidate<br>
-                • You'll receive their full contact details via email<br>
-                • A tailored introduction will be facilitated<br>
-                • Response typically within 24 hours
+
+    <!-- Message Confirmation Dialog -->
+    <div class="dialog-overlay" id="messageDialogOverlay" onclick="cancelMessage()"></div>
+    <div class="confirmation-dialog" id="messageConfirmationDialog">
+        <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Confirm Message Send</h3>
+        <div style="background: #fef3e6; border: 2px solid var(--club-gold); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+            <p style="margin-bottom: 0.75rem;"><strong>⚠️ This will use 1 credit</strong></p>
+            <p style="font-size: 0.9rem; line-height: 1.6; margin-bottom: 0.5rem;">
+                By sending this message:
             </p>
+            <ul style="font-size: 0.9rem; line-height: 1.6; margin-left: 1.5rem;">
+                <li>1 credit will be deducted from your account</li>
+                <li>Your message will be sent directly to the candidate</li>
+                <li>The candidate's email remains private</li>
+                <li>You can continue the conversation for free</li>
+                <li>All messages are logged for quality assurance</li>
+            </ul>
         </div>
-        <p style="margin-bottom: 1.5rem;">Current balance: <strong id="currentCredits">0</strong> credits</p>
+        <p style="margin-bottom: 1.5rem;">Current balance: <strong id="currentCreditsMsg">0</strong> credits</p>
+        <p style="margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--rough-gray);">
+            After sending: <strong id="afterCreditsMsg">0</strong> credits remaining
+        </p>
         <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-            <button class="btn btn-secondary" onclick="hideConfirmation()">Cancel</button>
-            <button class="btn btn-primary" onclick="confirmCreditUse()">Confirm Request</button>
+            <button class="btn btn-secondary" onclick="cancelMessage()">Cancel</button>
+            <button class="btn btn-primary" onclick="confirmMessage()">Confirm & Send (1 Credit)</button>
         </div>
     </div>
 
@@ -1180,39 +1163,18 @@
         let allCandidates = [];
         let filteredCandidates = [];
         let displayedCandidates = [];
-        let selectedLocations = new Set();
-        let availableLocations = new Set();
         let selectedCandidates = new Set();
         let candidateNotes = {};
-        let searchTimeout = null;
+        let conversations = {};
+        let profileViews = {};
         let currentPage = 0;
         const candidatesPerPage = 20;
-        let searchTerm = '';
-
-        // Helper function to hydrate shortlist with candidate data
-        async function hydrateShortlist(rows) {
-            if (!rows || rows.length === 0) return [];
-            const ids = rows.map(r => r.candidate_id).filter(Boolean);
-            if (ids.length === 0) return rows;
-
-            const { data: candidates } = await supabase
-                .from('candidates')
-                .select('*')
-                .in('ID', ids);
-
-            const byId = Object.fromEntries((candidates || []).map(c => [c.ID, c]));
-            return rows.map(r => ({ ...r, candidates: byId[r.candidate_id] || null }));
-        }
 
         // Utility functions
         function toTitleCase(str) {
             if (!str) return str;
             
-            const acronyms = ['UK', 'USA', 'US', 'CEO', 'CFO', 'COO', 'CTO', 'CIO', 'CMO', 
-                             'PGA', 'PR', 'HR', 'IT', 'SEO', 'SEM', 'EMEA', 'APAC', 'B2B', 
-                             'B2C', 'VP', 'SVP', 'EVP', 'GM', 'MD', 'PA', 'EA', 'F&B', 
-                             'R&D', 'QA', 'UI', 'UX', 'API', 'CRM', 'ERP', 'KPI', 'ROI',
-                             'P&L', 'M&A', 'IPO', 'MBA', 'PhD', 'CPA', 'LLP', 'LLC'];
+            const acronyms = ['UK', 'USA', 'US', 'CEO', 'CFO', 'COO', 'CTO', 'PGA', 'HR', 'IT', 'F&B'];
             
             return str.toLowerCase().split(/(\s+|-)/).map(word => {
                 const cleanWord = word.replace(/[.,;:!?]/g, '');
@@ -1230,40 +1192,17 @@
         }
 
         function cleanAndFormatLocation(townCity, country) {
-            const excludeTerms = ['England', 'United Kingdom', 'UK', 'Scotland', 'Wales', 'Northern Ireland', 
-                                 'Great Britain', 'GB', 'Uk', 'england', 'united kingdom'];
+            const excludeTerms = ['England', 'United Kingdom', 'UK', 'Scotland', 'Wales', 'Northern Ireland'];
             
             let cleanedTown = townCity ? townCity.trim() : '';
-            
-            if (cleanedTown.includes(',')) {
-                cleanedTown = cleanedTown.split(',')[0].trim();
-            }
-            
             let cleanedCountry = country ? country.trim() : '';
             
             if (excludeTerms.some(term => cleanedCountry.toLowerCase() === term.toLowerCase())) {
                 cleanedCountry = '';
             }
             
-            if (cleanedCountry && cleanedCountry.includes(',')) {
-                const parts = cleanedCountry.split(',');
-                const firstPart = parts[0].trim();
-                if (!excludeTerms.some(term => firstPart.toLowerCase() === term.toLowerCase())) {
-                    if (!cleanedTown) {
-                        cleanedTown = firstPart;
-                    }
-                    cleanedCountry = '';
-                }
-            }
-            
-            if (cleanedTown === cleanedTown.toUpperCase() && cleanedTown.length > 2) {
-                cleanedTown = toTitleCase(cleanedTown);
-            } else {
-                cleanedTown = toTitleCase(cleanedTown);
-            }
-            
             if (cleanedTown) {
-                return cleanedTown;
+                return toTitleCase(cleanedTown);
             }
             
             return 'Location Not Specified';
@@ -1277,7 +1216,7 @@
         }
 
         function formatNoticePeriod(notice) {
-            if (!notice) return 'Unknown Notice Period';
+            if (!notice) return 'Unknown';
             const lowerNotice = notice.toLowerCase();
             if (lowerNotice.includes('immediately') || lowerNotice.includes('immediate')) return 'Available immediately';
             if (lowerNotice.includes('1 week')) return '1 week notice';
@@ -1288,420 +1227,54 @@
             return notice + ' notice';
         }
 
-        // Function to add line breaks to text (for summaries)
-        function formatWithLineBreaks(text) {
-            if (!text) return '';
-            // Split on sentence endings and rejoin with <br><br> for clear paragraph breaks
-            return text.replace(/\. /g, '.<br><br>');
-        }
-
-        function generateSummaryPreview(text, maxLength = 120) {
-            if (!text) return '';
-            
-            const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-            
-            if (sentences.length === 0) return text.substring(0, maxLength) + '...';
-            
-            const keyPhrases = ['years experience', 'specializing in', 'expertise in', 'responsible for', 
-                               'passionate about', 'skilled in', 'background in', 'focused on'];
-            
-            let bestSentence = sentences[0];
-            for (let sentence of sentences) {
-                if (keyPhrases.some(phrase => sentence.toLowerCase().includes(phrase))) {
-                    bestSentence = sentence;
-                    break;
-                }
-            }
-            
-            const summary = bestSentence.trim();
-            if (summary.length > maxLength) {
-                return summary.substring(0, maxLength) + '...';
-            }
-            return summary;
-        }
-
-        function formatSkillsDisplay(skillsString) {
-            if (!skillsString) return '';
-            
-            // Return as plain text - no green highlights
-            if (skillsString.length > 150) {
-                return `<p style="color: var(--rough-gray); font-size: 0.9rem; line-height: 1.4; margin-bottom: 0.5rem;">
-                        ${skillsString.substring(0, 120)}...</p>`;
-            }
-            
-            return `<p style="color: var(--rough-gray); font-size: 0.9rem; line-height: 1.4; margin-bottom: 0.5rem;">
-                    ${skillsString}</p>`;
-        }
-
-        // Profile score calculation
         function calculateProfileScore(candidate) {
             let score = 0;
             let maxScore = 100;
             
-            // Professional Summary - 30 points max
             const aboutYou = candidate["About You"] || '';
-            if (aboutYou.length > 200) {
-                score += 30;
-            } else if (aboutYou.length > 100) {
-                score += 20;
-            } else if (aboutYou.length > 50) {
-                score += 10;
-            }
+            if (aboutYou.length > 200) score += 30;
+            else if (aboutYou.length > 100) score += 20;
+            else if (aboutYou.length > 50) score += 10;
             
-            // Skills - 20 points
             const skills = candidate["Your Skills"] || '';
-            if (skills.length > 100) {
-                score += 20;
-            } else if (skills.length > 50) {
-                score += 15;
-            } else if (skills.length > 20) {
-                score += 10;
-            }
+            if (skills.length > 100) score += 20;
+            else if (skills.length > 50) score += 15;
+            else if (skills.length > 20) score += 10;
             
-            // Job Title - 10 points
-            if (candidate["Current Job Title"] || candidate["Job Title"]) {
-                score += 10;
-            }
-            
-            // Salary expectations - 10 points
-            if (candidate["What are your salary expectations?"] || candidate["Salary Expectations"]) {
-                score += 10;
-            }
-            
-            // Notice period - 10 points
-            if (candidate["Notice Period"]) {
-                score += 10;
-            }
-            
-            // Location - 5 points
-            if (candidate["Town/City"]) {
-                score += 5;
-            }
-            
-            // Contact info - 5 points each
-            if (candidate["Email"]) score += 5;
-            if (candidate["LinkedIn"]) score += 5;
-            if (candidate["GitHub"]) score += 5;
+            if (candidate["Current Job Title"] || candidate["Job Title"]) score += 10;
+            if (candidate["What are your salary expectations?"]) score += 10;
+            if (candidate["Notice Period"]) score += 10;
+            if (candidate["Town/City"]) score += 5;
             
             return Math.min((score / maxScore) * 100, 100);
         }
 
-        function isNewCandidate(candidate) {
-            if (!candidate.created_at) return false;
-            const createdDate = new Date(candidate.created_at);
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            return createdDate > sevenDaysAgo;
-        }
-
-        function highlightSearchTerms(text, term) {
-            if (!term || !text) return text;
-            const regex = new RegExp(`(${term})`, 'gi');
-            return text.replace(regex, '<span class="highlight">$1</span>');
-        }
-
-        function detectJobCategory(jobTitle) {
-            if (!jobTitle) return 'other';
-            
-            const title = jobTitle.toLowerCase();
-            
-            const greenkeepingKeywords = [
-                'greenkeep', 'green keep', 'course manager', 'turf', 'agronomist', 'superintendent',
-                'groundsman', 'grounds', 'course maintenance', 'irrigation', 'horticultur',
-                'course care', 'course condition', 'grounds crew', 'greens staff', 'deputy course',
-                'assistant greenkeeper', 'head greenkeeper', 'spray technician', 'mechanic greenkeep'
-            ];
-            if (greenkeepingKeywords.some(keyword => title.includes(keyword))) {
-                return 'greenkeeping';
+        // Track profile view
+        async function trackProfileView(candidateId, candidateName) {
+            if (!profileViews[candidateId]) {
+                profileViews[candidateId] = { count: 0, name: candidateName };
             }
+            profileViews[candidateId].count++;
             
-            const managementKeywords = [
-                'director', 'manager', 'head of', 'chief', 'ceo', 'coo', 'cfo', 'cto', 'cio',
-                'president', 'vice president', 'vp ', 'svp', 'evp', 'executive', 'partner',
-                'managing director', 'general manager', 'gm ', 'regional manager', 'area manager',
-                'operations director', 'commercial director', 'finance director', 'managing partner',
-                'owner', 'proprietor', 'chairman', 'board member', 'trustee', 'committee'
-            ];
-            if (managementKeywords.some(keyword => title.includes(keyword))) {
-                return 'management';
-            }
+            // Save to localStorage for persistence
+            localStorage.setItem('profileViews', JSON.stringify(profileViews));
             
-            const salesKeywords = [
-                'sales', 'business development', 'account manager', 'commercial', 'revenue',
-                'client manager', 'customer success', 'relationship manager', 'account executive',
-                'sales representative', 'sales exec', 'biz dev', 'partnerships', 'corporate sales',
-                'membership sales', 'sales consultant', 'sales advisor', 'telesales', 'inside sales',
-                'field sales', 'sales support', 'sales coordinator', 'key account', 'national account',
-                'territory manager', 'district manager', 'business manager', 'development manager'
-            ];
-            if (salesKeywords.some(keyword => title.includes(keyword))) {
-                return 'sales';
-            }
-            
-            const marketingKeywords = [
-                'marketing', 'pr ', 'public relations', 'communications', 'social media', 'brand',
-                'digital marketing', 'content', 'copywriter', 'graphic design', 'designer',
-                'creative', 'advertising', 'media', 'campaign', 'seo', 'sem', 'ppc', 'email marketing',
-                'marketing exec', 'marketing assistant', 'marketing coordinator', 'marketing manager',
-                'community manager', 'influence', 'affiliate', 'growth', 'acquisition', 'retention',
-                'engagement', 'events', 'event manager', 'event coordinator', 'conference'
-            ];
-            if (marketingKeywords.some(keyword => title.includes(keyword))) {
-                return 'marketing';
-            }
-            
-            const fandBKeywords = [
-                'chef', 'food', 'beverage', 'f&b', 'f & b', 'restaurant', 'bar', 'catering',
-                'hospitality', 'waiter', 'waitress', 'server', 'barista', 'sommelier', 'kitchen',
-                'cook', 'sous chef', 'head chef', 'pastry', 'baker', 'dining', 'banquet',
-                'room service', 'food service', 'maitre', 'host', 'hostess', 'steward',
-                'breakfast', 'lunch', 'dinner', 'cafe', 'bistro', 'clubhouse', 'halfway house',
-                'beverage cart', 'snack bar', 'concession', 'catering manager', 'food manager'
-            ];
-            if (fandBKeywords.some(keyword => title.includes(keyword))) {
-                return 'fandB';
-            }
-            
-            const professionalKeywords = [
-                'golf professional', 'pga', 'teaching pro', 'head pro', 'assistant pro',
-                'golf coach', 'golf instructor', 'golf teacher', 'club professional',
-                'touring pro', 'tour professional', 'golf director', 'director of golf',
-                'first assistant', 'second assistant', 'golf services', 'lesson', 'academy',
-                'instruction', 'fitting', 'club fitter', 'custom fitting', 'golf shop'
-            ];
-            if (professionalKeywords.some(keyword => title.includes(keyword))) {
-                return 'professional';
-            }
-            
-            const operationsKeywords = [
-                'operations', 'coordinator', 'administrator', 'duty manager', 'shift manager',
-                'logistics', 'planning', 'scheduling', 'procurement', 'purchasing', 'buyer',
-                'supply chain', 'inventory', 'warehouse', 'distribution', 'facilities manager',
-                'office manager', 'project manager', 'program manager', 'compliance', 'quality',
-                'health and safety', 'h&s', 'risk', 'audit', 'process', 'improvement', 'efficiency'
-            ];
-            if (operationsKeywords.some(keyword => title.includes(keyword)) && !title.includes('it ')) {
-                return 'operations';
-            }
-            
-            const retailKeywords = [
-                'retail', 'pro shop', 'golf shop', 'shop', 'merchandis', 'buyer', 'visual',
-                'store manager', 'shop manager', 'retail manager', 'retail assistant',
-                'shop assistant', 'sales assistant', 'cashier', 'till', 'stock', 'inventory',
-                'display', 'window', 'fashion', 'apparel', 'clothing', 'equipment',
-                'club sales', 'golf sales', 'retail supervisor', 'shop supervisor'
-            ];
-            if (retailKeywords.some(keyword => title.includes(keyword))) {
-                return 'retail';
-            }
-            
-            const maintenanceKeywords = [
-                'maintenance', 'mechanic', 'facilities', 'technician', 'engineer', 'electrical',
-                'electrician', 'plumber', 'plumbing', 'hvac', 'carpenter', 'joiner', 'painter',
-                'decorator', 'handyman', 'repair', 'service', 'workshop', 'machinery',
-                'equipment tech', 'golf car', 'golf cart', 'buggy', 'vehicle', 'fleet',
-                'building', 'property', 'estate', 'security', 'groundswork', 'landscap'
-            ];
-            if (maintenanceKeywords.some(keyword => title.includes(keyword))) {
-                return 'maintenance';
-            }
-            
-            const adminKeywords = [
-                'admin', 'assistant', 'reception', 'secretary', 'clerk', 'support', 'office',
-                'pa ', 'personal assistant', 'executive assistant', 'ea ', 'bookkeep',
-                'accounts', 'finance assistant', 'payroll', 'hr assistant', 'data entry',
-                'customer service', 'call center', 'help desk', 'front desk', 'concierge',
-                'coordinator', 'junior', 'trainee', 'apprentice', 'intern', 'entry level'
-            ];
-            if (adminKeywords.some(keyword => title.includes(keyword))) {
-                return 'admin';
-            }
-            
-            return 'other';
-        }
-
-        // Enhanced filter functions with debounce
-        function debounce(func, delay) {
-            return function() {
-                const context = this;
-                const args = arguments;
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => func.apply(context, args), delay);
+            // Also save to database if available
+            try {
+                await supabase.from('profile_views').insert({
+                    candidate_id: candidateId,
+                    candidate_name: candidateName,
+                    viewer_id: currentUser.id,
+                    viewer_email: currentUser.email,
+                    viewed_at: new Date().toISOString()
+                });
+            } catch (err) {
+                console.log('Analytics tracking:', err);
             }
         }
 
-        function updateFiltersWithCounts() {
-            const categories = {};
-            const salaryRanges = {
-                '0-30000': 0,
-                '30000-40000': 0,
-                '40000-50000': 0,
-                '50000-60000': 0,
-                '60000-70000': 0,
-                '70000+': 0
-            };
-            
-            allCandidates.forEach(candidate => {
-                const category = detectJobCategory(candidate["Current Job Title"] || candidate["Job Title"]);
-                categories[category] = (categories[category] || 0) + 1;
-                
-                const salary = parseFloat(candidate["What are your salary expectations?"]) || 0;
-                if (salary >= 70000) salaryRanges['70000+']++;
-                else if (salary >= 60000) salaryRanges['60000-70000']++;
-                else if (salary >= 50000) salaryRanges['50000-60000']++;
-                else if (salary >= 40000) salaryRanges['40000-50000']++;
-                else if (salary >= 30000) salaryRanges['30000-40000']++;
-                else if (salary > 0) salaryRanges['0-30000']++;
-            });
-            
-            // Update category filter with counts
-            const categoryFilter = document.getElementById('categoryFilter');
-            if (categoryFilter) {
-                const currentValue = categoryFilter.value;
-                categoryFilter.innerHTML = `
-                    <option value="">All Categories (${allCandidates.length})</option>
-                    ${categories.greenkeeping ? `<option value="greenkeeping">Greenkeeping (${categories.greenkeeping})</option>` : ''}
-                    ${categories.management ? `<option value="management">Management (${categories.management})</option>` : ''}
-                    ${categories.sales ? `<option value="sales">Sales & Business Dev (${categories.sales})</option>` : ''}
-                    ${categories.marketing ? `<option value="marketing">Marketing & PR (${categories.marketing})</option>` : ''}
-                    ${categories.fandB ? `<option value="fandB">F&B / Hospitality (${categories.fandB})</option>` : ''}
-                    ${categories.professional ? `<option value="professional">Golf Professional (${categories.professional})</option>` : ''}
-                    ${categories.operations ? `<option value="operations">Operations (${categories.operations})</option>` : ''}
-                    ${categories.retail ? `<option value="retail">Retail & Pro Shop (${categories.retail})</option>` : ''}
-                    ${categories.maintenance ? `<option value="maintenance">Maintenance & Facilities (${categories.maintenance})</option>` : ''}
-                    ${categories.admin ? `<option value="admin">Admin & Support (${categories.admin})</option>` : ''}
-                    ${categories.other ? `<option value="other">Other (${categories.other})</option>` : ''}
-                `;
-                categoryFilter.value = currentValue;
-            }
-        }
-
-        // Location filter functions
-        function populateLocationFilter(candidates) {
-            availableLocations.clear();
-            let unspecifiedCount = 0;
-            
-            candidates.forEach(candidate => {
-                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-                if (location && location !== 'Location Not Specified') {
-                    availableLocations.add(location);
-                } else {
-                    unspecifiedCount++;
-                }
-            });
-            
-            const sortedLocations = Array.from(availableLocations).sort();
-            const checkboxesDiv = document.getElementById('locationCheckboxes');
-            
-            let html = sortedLocations.map(location => {
-                const count = candidates.filter(c => 
-                    cleanAndFormatLocation(c["Town/City"], c.Country) === location
-                ).length;
-                
-                return `
-                    <div style="margin-bottom: 0.5rem;">
-                        <label style="display: flex; align-items: center; cursor: pointer;">
-                            <input type="checkbox" value="${location}" 
-                                   onchange="updateLocationSelection(this)" 
-                                   style="margin-right: 0.5rem;">
-                            <span style="font-size: 0.9rem;">${location} (${count})</span>
-                        </label>
-                    </div>
-                `;
-            }).join('');
-            
-            // Add Unspecified at the bottom if there are any
-            if (unspecifiedCount > 0) {
-                html += `
-                    <div style="margin-bottom: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #e5e7eb;">
-                        <label style="display: flex; align-items: center; cursor: pointer;">
-                            <input type="checkbox" value="Location Not Specified" 
-                                   onchange="updateLocationSelection(this)" 
-                                   style="margin-right: 0.5rem;">
-                            <span style="font-size: 0.9rem; color: var(--rough-gray);">Unspecified (${unspecifiedCount})</span>
-                        </label>
-                    </div>
-                `;
-            }
-            
-            checkboxesDiv.innerHTML = html;
-        }
-
-        function toggleLocationDropdown() {
-            const dropdown = document.getElementById('locationDropdown');
-            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function toggleFilterPanel() {
-            const panel = document.getElementById('filterPanel');
-            const overlay = document.getElementById('filterOverlay');
-            
-            if (window.innerWidth <= 768) {
-                panel.classList.toggle('active');
-                overlay.classList.toggle('active');
-            }
-        }
-
-        document.addEventListener('click', function(e) {
-            const dropdown = document.getElementById('locationDropdown');
-            const button = e.target.closest('button');
-            if (dropdown && !dropdown.contains(e.target) && 
-                (!button || button.getAttribute('onclick') !== 'toggleLocationDropdown()')) {
-                dropdown.style.display = 'none';
-            }
-        });
-
-        function updateLocationSelection(checkbox) {
-            if (checkbox.checked) {
-                selectedLocations.add(checkbox.value);
-            } else {
-                selectedLocations.delete(checkbox.value);
-            }
-            updateLocationFilterText();
-            applyFiltersDebounced();
-        }
-
-        function updateLocationFilterText() {
-            const text = document.getElementById('locationFilterText');
-            if (selectedLocations.size === 0) {
-                text.textContent = 'All Locations';
-            } else if (selectedLocations.size === 1) {
-                text.textContent = Array.from(selectedLocations)[0];
-            } else {
-                text.textContent = `${selectedLocations.size} locations selected`;
-            }
-        }
-
-        function selectAllLocations() {
-            const checkboxes = document.querySelectorAll('#locationCheckboxes input[type="checkbox"]');
-            checkboxes.forEach(cb => {
-                cb.checked = true;
-                selectedLocations.add(cb.value);
-            });
-            updateLocationFilterText();
-            applyFiltersDebounced();
-        }
-
-        function clearAllLocations() {
-            const checkboxes = document.querySelectorAll('#locationCheckboxes input[type="checkbox"]');
-            checkboxes.forEach(cb => {
-                cb.checked = false;
-            });
-            selectedLocations.clear();
-            updateLocationFilterText();
-            applyFiltersDebounced();
-        }
-
-        // Debounced filter application
-        const applyFiltersDebounced = debounce(applyFilters, 300);
-
-        // Enhanced authentication and data loading
+        // Initialize
         window.onload = async function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('search')) {
-                searchTerm = urlParams.get('search');
-            }
-            
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
                 await loadUserData(session.user);
@@ -1710,28 +1283,14 @@
                 document.getElementById('loginScreen').style.display = 'flex';
             }
             
-            document.addEventListener('keydown', handleKeyboardShortcuts);
-        }
-
-        function handleKeyboardShortcuts(e) {
-            if (e.key === 'Escape') {
-                closeModal();
-                hideConfirmation();
-            }
-            
-            if (e.ctrlKey || e.metaKey) {
-                if (e.key === 'a' && document.getElementById('poolDetailView').classList.contains('active')) {
-                    e.preventDefault();
-                    selectAll();
-                }
-                if (e.key === 'e') {
-                    e.preventDefault();
-                    exportCandidates();
-                }
+            // Load saved profile views
+            const savedViews = localStorage.getItem('profileViews');
+            if (savedViews) {
+                profileViews = JSON.parse(savedViews);
             }
         }
 
-        // Handle login
+        // Login
         async function handleLogin(event) {
             event.preventDefault();
             const email = document.getElementById('loginEmail').value;
@@ -1753,11 +1312,11 @@
             }
         }
 
-        // Load user data with local storage for notes
+        // Load user data
         async function loadUserData(user) {
             currentUser = user;
             
-            const { data: profile, error } = await supabase
+            const { data: profile } = await supabase
                 .from('users')
                 .select('*')
                 .eq('id', user.id)
@@ -1765,7 +1324,7 @@
             
             if (profile) {
                 userProfile = profile;
-                document.getElementById('userName').textContent = profile.name || user.email;
+                document.getElementById('userName').textContent = profile.name || user.email.split('@')[0];
                 document.getElementById('creditsCount').textContent = profile.credits || 0;
                 
                 if (profile.role === 'admin') {
@@ -1780,36 +1339,68 @@
             
             userPools = poolAccess ? poolAccess.map(p => p.pool_id) : [];
             
+            await refreshShortlist();
+            
+            // Load saved data
+            const savedNotes = localStorage.getItem('candidateNotes_' + currentUser.id);
+            if (savedNotes) candidateNotes = JSON.parse(savedNotes);
+            
+            const savedConversations = localStorage.getItem('conversations_' + currentUser.id);
+            if (savedConversations) conversations = JSON.parse(savedConversations);
+        }
+
+        // Refresh shortlist - FIXED
+        async function refreshShortlist() {
             const { data: shortlistData } = await supabase
                 .from('shortlists')
-                .select('*, candidates(*)')
-                .eq('user_id', user.id);
+                .select('*')
+                .eq('user_id', currentUser.id);
             
-            // FIXED: Hydrate shortlist data
-            shortlist = await hydrateShortlist(shortlistData || []);
+            if (shortlistData && shortlistData.length > 0) {
+                const candidateIds = shortlistData.map(item => item.candidate_id);
+                const { data: candidatesData } = await supabase
+                    .from('candidates')
+                    .select('*')
+                    .in('ID', candidateIds);
+                
+                shortlist = shortlistData.map(item => {
+                    const candidate = candidatesData?.find(c => c.ID === item.candidate_id);
+                    return {
+                        ...item,
+                        candidates: candidate || null
+                    };
+                });
+            } else {
+                shortlist = [];
+            }
+            
             updateShortlistBadge();
-            
-            // Load saved notes from localStorage
-            const savedNotes = localStorage.getItem('candidateNotes_' + currentUser.id);
-            if (savedNotes) {
-                candidateNotes = JSON.parse(savedNotes);
+        }
+
+        function updateShortlistBadge() {
+            const badge = document.getElementById('shortlistBadge');
+            if (shortlist.length > 0) {
+                badge.style.display = 'inline';
+                badge.textContent = shortlist.length;
+            } else {
+                badge.style.display = 'none';
             }
         }
 
-        // Show main app
+        // Show app
         function showApp() {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainApp').classList.add('active');
             loadPools();
         }
 
-        // Handle logout
+        // Logout
         async function handleLogout() {
             await supabase.auth.signOut();
             location.reload();
         }
 
-        // Switch views with URL state
+        // Switch views
         function switchView(view) {
             document.querySelectorAll('.view-section').forEach(section => {
                 section.classList.remove('active');
@@ -1823,19 +1414,14 @@
             
             if (view === 'pools') loadPools();
             else if (view === 'shortlist') loadShortlist();
+            else if (view === 'messages') loadMessages();
             else if (view === 'account') loadAccount();
-            else if (view === 'requests') loadRequests();
             else if (view === 'admin' && userProfile?.role === 'admin') loadAdmin();
-            
-            const url = new URL(window.location);
-            url.searchParams.set('view', view);
-            window.history.pushState({}, '', url);
         }
 
-        // Load talent pools with loading state and sort by count
+        // Load pools
         async function loadPools() {
             const poolsGrid = document.getElementById('poolsGrid');
-            
             poolsGrid.innerHTML = `
                 <div class="skeleton skeleton-card"></div>
                 <div class="skeleton skeleton-card"></div>
@@ -1855,7 +1441,6 @@
                 pool.total_candidates = count || 0;
             }
             
-            // Sort pools by candidate count (highest first)
             pools.sort((a, b) => b.total_candidates - a.total_candidates);
             
             poolsGrid.innerHTML = '';
@@ -1888,45 +1473,28 @@
             }
         }
 
-        // Open a pool and show candidates with pagination
+        // Open pool - FIXED
         async function openPool(pool) {
             currentPool = pool;
             currentPage = 0;
             document.getElementById('currentPoolName').textContent = pool.name;
             
-            // Show loading state
-            const candidatesGrid = document.getElementById('candidatesGrid');
-            candidatesGrid.innerHTML = `
-                <div class="skeleton skeleton-card"></div>
-                <div class="skeleton skeleton-card"></div>
-                <div class="skeleton skeleton-card"></div>
+            const candidatesListView = document.getElementById('candidatesListView');
+            candidatesListView.innerHTML = `
+                <div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div>
+                <div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div>
+                <div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div>
             `;
             
-            const { data: candidates, error } = await supabase
+            const { data: candidates } = await supabase
                 .from('candidates')
                 .select('*')
                 .eq('pool_id', pool.id);
             
-            console.log(`Loading candidates for ${pool.id}:`, candidates?.length, error);
-            
-            // Sort by profile completeness score (now called "Best Match")
             allCandidates = (candidates || []).sort((a, b) => {
-                const scoreA = calculateProfileScore(a);
-                const scoreB = calculateProfileScore(b);
-                
-                const hasSummaryA = a["About You"] && a["About You"].length > 50;
-                const hasSummaryB = b["About You"] && b["About You"].length > 50;
-                
-                if (hasSummaryA && !hasSummaryB) return -1;
-                if (!hasSummaryA && hasSummaryB) return 1;
-                
-                return scoreB - scoreA;
+                return calculateProfileScore(b) - calculateProfileScore(a);
             });
             
-            populateLocationFilter(allCandidates);
-            updateFiltersWithCounts();
-            
-            // FIXED: Apply initial filters and display - fixed syntax error
             filteredCandidates = [...allCandidates];
             displayCandidatesPage();
             
@@ -1934,7 +1502,7 @@
             document.getElementById('poolDetailView').classList.add('active');
         }
 
-        // Display candidates with pagination
+        // Display candidates
         function displayCandidatesPage() {
             const startIdx = currentPage * candidatesPerPage;
             const endIdx = startIdx + candidatesPerPage;
@@ -1942,7 +1510,6 @@
             
             displayCandidates(displayedCandidates);
             
-            // Show/hide load more button
             const loadMoreContainer = document.getElementById('loadMoreContainer');
             if (endIdx < filteredCandidates.length) {
                 loadMoreContainer.style.display = 'block';
@@ -1951,98 +1518,82 @@
             }
         }
 
-        function loadMore() {
-            currentPage++;
-            displayCandidatesPage();
-        }
-
-        // Display candidates in grid with enhancements
         function displayCandidates(candidates) {
-            const candidatesGrid = document.getElementById('candidatesGrid');
+            const candidatesListView = document.getElementById('candidatesListView');
             
             if (!candidates || candidates.length === 0) {
-                candidatesGrid.innerHTML = `
-                    <div class="empty-state" style="grid-column: 1/-1;">
+                candidatesListView.innerHTML = `
+                    <div class="empty-state">
                         <h3>No candidates match your criteria</h3>
-                        <p>Try adjusting your filters or search terms</p>
-                        <button class="btn btn-primary" onclick="clearFilters()">Clear All Filters</button>
+                        <p>Try adjusting your filters</p>
+                        <button class="btn btn-primary" onclick="clearFilters()">Clear Filters</button>
                     </div>
                 `;
-                updateCandidateCount(0);
                 return;
             }
             
-            updateCandidateCount(filteredCandidates.length);
+            document.getElementById('candidateCount').textContent = `Showing ${displayedCandidates.length} of ${filteredCandidates.length} candidates`;
             
-            candidatesGrid.innerHTML = candidates.map(candidate => {
-                const jobTitle = toTitleCase(candidate["Current Job Title"] || 
-                               candidate["Job Title"] || 
-                               candidate.Name || 
-                               `Candidate #${candidate.ID}`);
-                
-                let displayTitle = jobTitle;
-                if (searchTerm) {
-                    displayTitle = highlightSearchTerms(jobTitle, searchTerm);
-                }
-                
+            candidatesListView.innerHTML = candidates.map(candidate => {
+                const jobTitle = toTitleCase(candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`);
                 const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-                const salary = formatSalaryExact(candidate["What are your salary expectations?"] || 
-                                               candidate["Salary Expectations"]);
-                const noticeRaw = candidate["Notice Period"];
-                const notice = noticeRaw ? formatNoticePeriod(noticeRaw) : 'Unknown Notice Period';
-                const activelyLooking = (candidate["Actively looking for work"] || '').toUpperCase() === 'YES';
-                
-                const about = candidate["About You"] || candidate.Summary || '';
-                const summary = generateSummaryPreview(about);
-                
-                const skillsDisplay = formatSkillsDisplay(candidate["Your Skills"] || candidate.Skills || '');
-                
-                // Only show "Top Pick" for profiles with 85%+ completeness
+                const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
+                const notice = formatNoticePeriod(candidate["Notice Period"]);
                 const profileScore = calculateProfileScore(candidate);
                 const isTopPick = profileScore >= 85;
-                const isNew = isNewCandidate(candidate);
-                
                 const isSelected = selectedCandidates.has(candidate.ID);
+                const activelyLooking = (candidate["Actively looking for work"] || '').toUpperCase() === 'YES';
+                const isAvailableNow = (candidate["Notice Period"] || '').toLowerCase().includes('immediate');
+                
+                // Get summary preview
+                const about = candidate["About You"] || candidate.Summary || '';
+                const summaryPreview = about.substring(0, 150) + (about.length > 150 ? '...' : '');
                 
                 return `
-                    <div class="candidate-card ${isSelected ? 'selected' : ''}" 
-                         id="card-${candidate.ID}">
+                    <div class="candidate-list-item ${isSelected ? 'selected' : ''}" 
+                         id="card-${candidate.ID}"
+                         style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; 
+                                border: 2px solid ${isSelected ? 'var(--masters-green)' : '#e5e7eb'}; 
+                                cursor: pointer; transition: all 0.3s ease; position: relative;"
+                         onclick="viewCandidateProfile(${JSON.stringify(candidate).replace(/'/g, "&apos;")})">
+                        
                         <input type="checkbox" 
-                               class="candidate-checkbox" 
+                               style="position: absolute; top: 1rem; left: 1rem; width: 20px; height: 20px; cursor: pointer;"
                                ${isSelected ? 'checked' : ''}
                                onchange="toggleCandidateSelection(${candidate.ID})"
                                onclick="event.stopPropagation()">
                         
-                        ${isTopPick ? '<div class="top-pick-badge">⭐ Top Pick</div>' : ''}
-                        ${isNew ? '<div class="new-badge">New</div>' : ''}
+                        ${isTopPick ? '<div class="top-pick-badge" style="position: absolute; top: -8px; right: 10px;">⭐ TOP PICK</div>' : ''}
                         
-                        ${activelyLooking ? `
-                            <div style="position: absolute; top: 0.75rem; right: 0.75rem; 
-                                       background: linear-gradient(135deg, var(--masters-green), var(--putting-green)); 
-                                       color: white; padding: 0.2rem 0.5rem; 
-                                       border-radius: 15px; font-size: 0.65rem; 
-                                       font-weight: 600; text-transform: uppercase; 
-                                       letter-spacing: 0.3px;">
-                                Actively Looking
-                            </div>
-                        ` : ''}
-                        
-                        <div onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'
-                             style="cursor: pointer; padding-left: 2rem;">
-                            <h3 style="color: var(--augusta-green); margin-bottom: 0.5rem; ${activelyLooking ? 'padding-right: 140px;' : ''}">
-                                ${displayTitle}
-                            </h3>
-                            <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 1rem;">
-                                ${location}
-                            </p>
-                            ${summary ? `<p style="margin-bottom: 1rem; font-size: 0.95rem; color: var(--pro-shop-navy);">${summary}</p>` : ''}
-                            ${skillsDisplay}
-                            <div style="display: flex; justify-content: space-between; align-items: center; 
-                                        padding-top: 1rem; border-top: 1px solid #e5e7eb;">
-                                <span style="color: var(--rough-gray); font-size: 0.9rem;">
+                        <div style="padding-left: 2.5rem;">
+                            <h3 style="color: var(--augusta-green); margin-bottom: 0.25rem; font-size: 1.1rem;">${jobTitle}</h3>
+                            <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 0.5rem;">${location}</p>
+                            
+                            ${summaryPreview ? `
+                                <p style="color: #555; font-size: 0.85rem; line-height: 1.4; margin-bottom: 0.75rem;">
+                                    ${summaryPreview}
+                                </p>
+                            ` : ''}
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: var(--rough-gray); font-size: 0.85rem;">
                                     ${salary} • ${notice}
                                 </span>
-                                <span style="color: var(--masters-green); font-weight: 600;">View →</span>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    ${isAvailableNow ? `
+                                        <span style="background: #d4edda; color: #155724; padding: 0.2rem 0.5rem; 
+                                                   border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
+                                            AVAILABLE NOW
+                                        </span>
+                                    ` : ''}
+                                    ${activelyLooking ? `
+                                        <span style="background: var(--masters-green); color: white; padding: 0.2rem 0.5rem; 
+                                                   border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
+                                            ACTIVELY LOOKING
+                                        </span>
+                                    ` : ''}
+                                    <span style="color: var(--masters-green); font-weight: 600;">View →</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2050,32 +1601,160 @@
             }).join('');
         }
 
-        // Update candidate count display
-        function updateCandidateCount(count) {
-            const countElement = document.getElementById('candidateCount');
-            if (countElement) {
-                const showing = Math.min(displayedCandidates.length, count);
-                if (count > candidatesPerPage && showing < count) {
-                    countElement.textContent = `Showing ${showing} of ${count} candidates`;
-                } else {
-                    countElement.textContent = count > 0 ? `Showing ${count} candidate${count !== 1 ? 's' : ''}` : '';
-                }
+        // New function to display full profile in right panel
+        function viewCandidateProfile(candidate) {
+            currentCandidate = candidate;
+            
+            // Track profile view
+            const candidateName = candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`;
+            trackProfileView(candidate.ID, candidateName);
+            
+            // Highlight selected item in list
+            document.querySelectorAll('.candidate-list-item').forEach(item => {
+                item.style.background = 'white';
+                item.style.borderColor = '#e5e7eb';
+            });
+            const selectedCard = document.getElementById(`card-${candidate.ID}`);
+            if (selectedCard) {
+                selectedCard.style.background = '#f0f8f4';
+                selectedCard.style.borderColor = 'var(--masters-green)';
+            }
+            
+            const jobTitle = toTitleCase(candidateName);
+            const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+            const about = candidate["About You"] || 'No summary provided';
+            const skills = candidate["Your Skills"] || '';
+            const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
+            const notice = formatNoticePeriod(candidate["Notice Period"]);
+            const activelyLooking = candidate["Actively looking for work"] || 'Not specified';
+            const profileScore = calculateProfileScore(candidate);
+            const isTopPick = profileScore >= 85;
+            
+            const profileDetailView = document.getElementById('profileDetailView');
+            profileDetailView.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 2rem;">
+                    <div>
+                        <h1 style="color: var(--augusta-green); margin-bottom: 0.5rem;">
+                            ${jobTitle}
+                            ${isTopPick ? '<span class="top-pick-badge" style="position: static; display: inline-block; margin-left: 1rem;">⭐ TOP PICK</span>' : ''}
+                        </h1>
+                        <p style="color: var(--rough-gray); font-size: 1.1rem;">${location}</p>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-secondary btn-small" onclick="addToShortlistFromProfile()">Save to Shortlist</button>
+                        <button class="btn btn-primary btn-small" onclick="openMessageDialog()">Send Message</button>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div style="background: var(--morning-mist); padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">
+                            Salary Expectations
+                        </div>
+                        <div style="font-weight: 600; font-size: 1.1rem;">${salary}</div>
+                    </div>
+                    <div style="background: var(--morning-mist); padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">
+                            Notice Period
+                        </div>
+                        <div style="font-weight: 600; font-size: 1.1rem;">${notice}</div>
+                    </div>
+                    <div style="background: var(--morning-mist); padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">
+                            Job Search Status
+                        </div>
+                        <div style="font-weight: 600; font-size: 1.1rem;">${activelyLooking}</div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Professional Summary</h3>
+                    <p style="line-height: 1.8; color: #333;">${about.replace(/\n/g, '<br>')}</p>
+                </div>
+                
+                ${skills ? `
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
+                        <p style="line-height: 1.6; color: #333;">${skills.replace(/\n/g, '<br>')}</p>
+                    </div>
+                ` : ''}
+                
+                <div class="notes-panel" style="margin-top: 2rem;">
+                    <h4 style="color: var(--augusta-green); margin-bottom: 0.5rem;">📝 Private Notes</h4>
+                    <textarea id="candidateNotes" class="note-textarea" 
+                              placeholder="Add your notes about this candidate...">${candidateNotes[candidate.ID] || ''}</textarea>
+                    <button class="btn btn-small" onclick="saveNotes()" style="margin-top: 0.5rem;">Save Notes</button>
+                </div>
+            `;
+        }
+
+        // Add functions for profile view actions
+        async function addToShortlistFromProfile() {
+            if (!currentCandidate) return;
+            
+            const existing = shortlist.find(item => item.candidate_id === currentCandidate.ID);
+            if (existing) {
+                alert('Already in shortlist');
+                return;
+            }
+            
+            const { data, error } = await supabase
+                .from('shortlists')
+                .insert({
+                    user_id: currentUser.id,
+                    candidate_id: currentCandidate.ID
+                })
+                .select();
+            
+            if (!error) {
+                alert('Added to shortlist!');
+                await refreshShortlist();
             }
         }
 
-        // Apply filters with automatic update
+        function openMessageDialog() {
+            if (!currentCandidate) return;
+            openCandidate(currentCandidate);
+        }
+
+        function loadMore() {
+            currentPage++;
+            displayCandidatesPage();
+        }
+
+        // Filters
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', debounce(applyFilters, 300));
+            }
+            
+            ['salaryFilter', 'noticeFilter', 'lookingFilter'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', applyFilters);
+                }
+            });
+        });
+
+        function debounce(func, delay) {
+            let timeout;
+            return function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, arguments), delay);
+            }
+        }
+
         function applyFilters() {
-            searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const salaryFilter = document.getElementById('salaryFilter').value;
             const noticeFilter = document.getElementById('noticeFilter').value;
             const lookingFilter = document.getElementById('lookingFilter').value;
-            const categoryFilter = document.getElementById('categoryFilter').value;
             
             let filtered = [...allCandidates];
             
             if (searchTerm) {
                 filtered = filtered.filter(c => 
-                    (c.Name || '').toLowerCase().includes(searchTerm) ||
                     (c["Current Job Title"] || '').toLowerCase().includes(searchTerm) ||
                     (c["Town/City"] || '').toLowerCase().includes(searchTerm) ||
                     (c["Your Skills"] || '').toLowerCase().includes(searchTerm) ||
@@ -2105,34 +1784,11 @@
                 );
             }
             
-            if (categoryFilter) {
-                filtered = filtered.filter(c => {
-                    const jobTitle = c["Current Job Title"] || c["Job Title"] || '';
-                    return detectJobCategory(jobTitle) === categoryFilter;
-                });
-            }
-            
-            if (selectedLocations.size > 0) {
-                filtered = filtered.filter(c => {
-                    const location = cleanAndFormatLocation(c["Town/City"], c.Country);
-                    return selectedLocations.has(location);
-                });
-            }
-            
             filteredCandidates = filtered;
             currentPage = 0;
             displayCandidatesPage();
-            
-            const url = new URL(window.location);
-            if (searchTerm) {
-                url.searchParams.set('search', searchTerm);
-            } else {
-                url.searchParams.delete('search');
-            }
-            window.history.pushState({}, '', url);
         }
 
-        // Apply sort
         function applySort() {
             const sortValue = document.getElementById('sortSelect').value;
             
@@ -2167,34 +1823,24 @@
             displayCandidatesPage();
         }
 
-        // Clear filters
         function clearFilters() {
             document.getElementById('searchInput').value = '';
             document.getElementById('salaryFilter').value = '';
             document.getElementById('noticeFilter').value = '';
             document.getElementById('lookingFilter').value = '';
-            document.getElementById('categoryFilter').value = '';
-            clearAllLocations();
-            searchTerm = '';
             filteredCandidates = [...allCandidates];
             currentPage = 0;
             displayCandidatesPage();
-            
-            const url = new URL(window.location);
-            url.searchParams.delete('search');
-            window.history.pushState({}, '', url);
         }
 
-        // Bulk selection functions
+        // Selection
         function toggleCandidateSelection(candidateId) {
             if (selectedCandidates.has(candidateId)) {
                 selectedCandidates.delete(candidateId);
-                const card = document.getElementById(`card-${candidateId}`);
-                if (card) card.classList.remove('selected');
+                document.getElementById(`card-${candidateId}`).classList.remove('selected');
             } else {
                 selectedCandidates.add(candidateId);
-                const card = document.getElementById(`card-${candidateId}`);
-                if (card) card.classList.add('selected');
+                document.getElementById(`card-${candidateId}`).classList.add('selected');
             }
         }
 
@@ -2204,7 +1850,7 @@
                 const card = document.getElementById(`card-${candidate.ID}`);
                 if (card) {
                     card.classList.add('selected');
-                    const checkbox = card.querySelector('.candidate-checkbox');
+                    const checkbox = card.querySelector('input[type="checkbox"]');
                     if (checkbox) checkbox.checked = true;
                 }
             });
@@ -2212,220 +1858,58 @@
 
         function deselectAll() {
             selectedCandidates.clear();
-            document.querySelectorAll('.candidate-card').forEach(card => {
+            document.querySelectorAll('.candidate-list-item').forEach(card => {
                 card.classList.remove('selected');
-                const checkbox = card.querySelector('.candidate-checkbox');
+                const checkbox = card.querySelector('input[type="checkbox"]');
                 if (checkbox) checkbox.checked = false;
             });
         }
 
-        // FIXED Bulk Add to Shortlist - MINIMAL version
-        async function bulkAddToShortlist() {
-            if (selectedCandidates.size === 0) {
-                alert('Please select candidates first');
-                return;
-            }
-            
-            let added = 0;
-            let errors = 0;
-            
-            for (const candidateId of selectedCandidates) {
-                try {
-                    const { data, error } = await supabase
-                        .from('shortlists')
-                        .insert({
-                            user_id: currentUser.id,
-                            candidate_id: candidateId
-                            // Removed pool_id
-                        })
-                        .select();
-                    
-                    if (error) {
-                        if (!error.message?.includes('duplicate')) {
-                            console.error('Error for candidate', candidateId, ':', error);
-                            errors++;
-                        }
-                    } else if (data) {
-                        added++;
-                    }
-                } catch (err) {
-                    console.error('Error in bulk add:', err);
-                    errors++;
-                }
-            }
-            
-            let message = `Added ${added} candidates to shortlist.`;
-            if (errors > 0) message += ` ${errors} errors occurred.`;
-            
-            alert(message);
-            deselectAll();
-            
-            // FIXED: Refresh shortlist with hydration
-            const { data: shortlistData } = await supabase
-                .from('shortlists')
-                .select('*, candidates(*)')
-                .eq('user_id', currentUser.id);
-            
-            shortlist = await hydrateShortlist(shortlistData || []);
-            updateShortlistBadge();
-        }
-
-        // Export functions
-        function exportCandidates() {
-            const toExport = selectedCandidates.size > 0 ? 
-                filteredCandidates.filter(c => selectedCandidates.has(c.ID)) : 
-                filteredCandidates;
-            
-            if (toExport.length === 0) {
-                alert('No candidates to export');
-                return;
-            }
-            
-            let csv = 'Job Title,Location,Salary Expectations,Notice Period,Actively Looking,Match Quality\n';
-            
-            toExport.forEach(candidate => {
-                const jobTitle = candidate["Current Job Title"] || candidate["Job Title"] || '';
-                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-                const salary = candidate["What are your salary expectations?"] || 'Negotiable';
-                const notice = candidate["Notice Period"] || 'Unknown';
-                const looking = candidate["Actively looking for work"] || 'Unknown';
-                const score = calculateProfileScore(candidate).toFixed(0);
-                
-                csv += `"${jobTitle}","${location}","${salary}","${notice}","${looking}","${score}%"\n`;
-            });
-            
-            downloadCSV(csv, 'candidates_export.csv');
-        }
-
-        function exportShortlist() {
-            if (shortlist.length === 0) {
-                alert('No candidates in shortlist');
-                return;
-            }
-            
-            let csv = 'Job Title,Location,Salary Expectations,Notice Period,Notes\n';
-            
-            shortlist.forEach(item => {
-                const candidate = item.candidates;
-                if (!candidate) return;
-                
-                const jobTitle = candidate["Current Job Title"] || candidate["Job Title"] || '';
-                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-                const salary = candidate["What are your salary expectations?"] || 'Negotiable';
-                const notice = candidate["Notice Period"] || 'Unknown';
-                const notes = candidateNotes[candidate.ID] || '';
-                
-                csv += `"${jobTitle}","${location}","${salary}","${notice}","${notes}"\n`;
-            });
-            
-            downloadCSV(csv, 'shortlist_export.csv');
-        }
-
-        function downloadCSV(csv, filename) {
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.setAttribute('href', url);
-            a.setAttribute('download', filename);
-            a.click();
-            window.URL.revokeObjectURL(url);
-        }
-
-        // Search functionality with debounce
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                searchInput.addEventListener('input', applyFiltersDebounced);
-            }
-            
-            // Auto-apply filters on change
-            ['salaryFilter', 'noticeFilter', 'lookingFilter', 'categoryFilter'].forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.addEventListener('change', applyFiltersDebounced);
-                }
-            });
-        });
-
-        // Open candidate modal with enhancements and line breaks
-        function openCandidate(candidate) {
+        // Open candidate modal
+        async function openCandidate(candidate) {
             currentCandidate = candidate;
             
-            const jobTitle = toTitleCase(candidate["Current Job Title"] || 
-                           candidate["Job Title"] || 
-                           candidate.Name || 
-                           `Candidate #${candidate.ID}`);
+            // Track profile view
+            const candidateName = candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`;
+            await trackProfileView(candidate.ID, candidateName);
             
+            const jobTitle = toTitleCase(candidateName);
             const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-            const aboutRaw = candidate["About You"] || candidate.Summary || 'No summary provided';
+            const about = candidate["About You"] || 'No summary provided';
+            const skills = candidate["Your Skills"] || '';
+            const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
+            const notice = formatNoticePeriod(candidate["Notice Period"]);
             
-            const profileScore = calculateProfileScore(candidate);
-            const isTopPick = profileScore >= 85;
+            // Check conversation status
+            const hasConversation = conversations[candidate.ID]?.messages?.length > 0;
+            document.getElementById('creditCost').textContent = hasConversation ? '(Free)' : '(1 Credit)';
             
-            // Create expandable summary with line breaks
-            let aboutHtml = '';
-            const formattedAbout = formatWithLineBreaks(aboutRaw);
-            if (aboutRaw.length > 300) {
-                aboutHtml = `
-                    <div id="summaryContainer">
-                        <p id="summaryText" class="expandable-text collapsed" style="line-height: 1.8;">
-                            ${formattedAbout}
-                        </p>
-                        <span class="show-more-btn" onclick="toggleSummary()">Show More</span>
+            // Show previous messages
+            const previousMessagesDiv = document.getElementById('previousMessages');
+            if (hasConversation) {
+                previousMessagesDiv.style.display = 'block';
+                previousMessagesDiv.innerHTML = conversations[candidate.ID].messages.map(msg => `
+                    <div class="message ${msg.from === 'employer' ? 'sent' : 'received'}">
+                        ${msg.text}
+                        <div class="message-time">${new Date(msg.timestamp).toLocaleString()}</div>
                     </div>
-                `;
+                `).join('');
             } else {
-                aboutHtml = `<p style="line-height: 1.8;">${formattedAbout}</p>`;
+                previousMessagesDiv.style.display = 'none';
             }
             
-            const skillsString = candidate["Your Skills"] || candidate.Skills || '';
-            let skillsHtml = '';
-            
-            if (skillsString) {
-                if (skillsString.includes('•') || skillsString.includes('–')) {
-                    const bulletPoints = skillsString.split(/[•–-]/).map(s => s.trim()).filter(s => s && s.length > 3);
-                    skillsHtml = `
-                        <div style="margin-bottom: 2rem;">
-                            <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
-                            <ul style="margin-left: 1.5rem; line-height: 1.8;">
-                                ${bulletPoints.map(point => `<li>${point}</li>`).join('')}
-                            </ul>
-                        </div>
-                    `;
-                } else {
-                    skillsHtml = `
-                        <div style="margin-bottom: 2rem;">
-                            <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
-                            <p style="line-height: 1.6;">${skillsString}</p>
-                        </div>
-                    `;
-                }
-            }
-            
-            const noticeRaw = candidate["Notice Period"];
-            const notice = noticeRaw ? formatNoticePeriod(noticeRaw) : 'Unknown Notice Period';
-            const salary = formatSalaryExact(candidate["What are your salary expectations?"] || 
-                                           candidate["Salary Expectations"]);
-            const activelyLooking = candidate["Actively looking for work"] || 'Not specified';
-            
-            document.getElementById('modalTitle').innerHTML = `
-                ${jobTitle}
-                ${isTopPick ? `
-                    <span class="tooltip" style="margin-left: 1rem;">
-                        <span class="top-pick-badge" style="position: static; display: inline-block;">
-                            ⭐ Top Pick
-                        </span>
-                        <span class="tooltiptext">Match quality: ${profileScore.toFixed(0)}%</span>
-                    </span>
-                ` : ''}
-            `;
-            
+            document.getElementById('modalTitle').textContent = jobTitle;
             document.getElementById('modalBody').innerHTML = `
                 <div style="margin-bottom: 2rem;">
                     <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Professional Summary</h3>
-                    ${aboutHtml}
+                    <p style="line-height: 1.8;">${about}</p>
                 </div>
-                
+                ${skills ? `
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
+                        <p style="line-height: 1.6;">${skills}</p>
+                    </div>
+                ` : ''}
                 <div style="margin-bottom: 2rem;">
                     <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Key Information</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
@@ -2447,185 +1931,196 @@
                             </div>
                             <div style="font-weight: 600;">${notice}</div>
                         </div>
-                        <div style="background: var(--morning-mist); padding: 1rem; border-radius: 8px;">
-                            <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">
-                                Actively Looking
-                            </div>
-                            <div style="font-weight: 600;">${activelyLooking}</div>
-                        </div>
                     </div>
-                </div>
-                
-                ${skillsHtml}
-                
-                <div style="background: #e6f2ff; border: 1px solid #3a7858; border-radius: 12px; padding: 1rem; margin-top: 2rem;">
-                    <p style="color: var(--augusta-green); font-weight: 600;">
-                        💼 To connect with this candidate, request their contact details and Graham will facilitate a personalized introduction.
-                    </p>
                 </div>
             `;
             
-            // Load saved notes
-            const notes = candidateNotes[candidate.ID] || '';
-            document.getElementById('candidateNotes').value = notes;
-            
+            document.getElementById('candidateNotes').value = candidateNotes[candidate.ID] || '';
             document.getElementById('candidateModal').classList.add('active');
         }
 
-        function toggleSummary() {
-            const summaryText = document.getElementById('summaryText');
-            const btn = document.querySelector('.show-more-btn');
-            
-            if (summaryText.classList.contains('collapsed')) {
-                summaryText.classList.remove('collapsed');
-                summaryText.style.maxHeight = 'none';
-                btn.textContent = 'Show Less';
-            } else {
-                summaryText.classList.add('collapsed');
-                btn.textContent = 'Show More';
-            }
+        function closeModal() {
+            document.getElementById('candidateModal').classList.remove('active');
         }
 
-        // Notes functions
+        // Notes
         function saveNotes() {
             if (!currentCandidate) return;
             
             const notes = document.getElementById('candidateNotes').value;
             candidateNotes[currentCandidate.ID] = notes;
-            
-            // Save to localStorage
             localStorage.setItem('candidateNotes_' + currentUser.id, JSON.stringify(candidateNotes));
-            
             alert('Notes saved!');
         }
 
-        // Close modal
-        function closeModal() {
-            document.getElementById('candidateModal').classList.remove('active');
-        }
-
-        // Credit confirmation
-        function showCreditConfirmation() {
-            document.getElementById('currentCredits').textContent = userProfile.credits;
-            document.getElementById('confirmationDialog').classList.add('active');
-            document.getElementById('dialogOverlay').classList.add('active');
-        }
-
-        function hideConfirmation() {
-            document.getElementById('confirmationDialog').classList.remove('active');
-            document.getElementById('dialogOverlay').classList.remove('active');
-        }
-
-        async function confirmCreditUse() {
-            hideConfirmation();
-            await requestContact();
-        }
-
-        // FIXED Request contact details - MINIMAL version
-        async function requestContact() {
+        // Messaging
+        async function sendMessage() {
             if (!currentCandidate) return;
             
-            if (userProfile.credits < 1) {
-                alert('Insufficient credits! Contact graham@golf-jobs.com to purchase more.');
+            const messageText = document.getElementById('messageText').value.trim();
+            if (!messageText) {
+                alert('Please enter a message');
                 return;
             }
             
-            try {
-                // First, deduct the credit
-                const { error: profileError } = await supabase
+            window.pendingMessage = messageText;
+            
+            const isFirstMessage = !conversations[currentCandidate.ID]?.messages?.length;
+            
+            if (isFirstMessage) {
+                if (userProfile.credits < 1) {
+                    alert('Insufficient credits! Contact graham@golf-jobs.com to purchase more.');
+                    return;
+                }
+                
+                document.getElementById('currentCreditsMsg').textContent = userProfile.credits;
+                document.getElementById('afterCreditsMsg').textContent = userProfile.credits - 1;
+                document.getElementById('messageConfirmationDialog').classList.add('active');
+                document.getElementById('messageDialogOverlay').classList.add('active');
+            } else {
+                await processMessage();
+            }
+        }
+
+        function cancelMessage() {
+            document.getElementById('messageConfirmationDialog').classList.remove('active');
+            document.getElementById('messageDialogOverlay').classList.remove('active');
+            window.pendingMessage = null;
+        }
+
+        async function confirmMessage() {
+            document.getElementById('messageConfirmationDialog').classList.remove('active');
+            document.getElementById('messageDialogOverlay').classList.remove('active');
+            await processMessage();
+        }
+
+        async function processMessage() {
+            if (!currentCandidate || !window.pendingMessage) return;
+            
+            const messageText = window.pendingMessage;
+            const isFirstMessage = !conversations[currentCandidate.ID]?.messages?.length;
+            
+            if (isFirstMessage) {
+                const { error } = await supabase
                     .from('users')
                     .update({ credits: userProfile.credits - 1 })
                     .eq('id', currentUser.id);
                 
-                if (profileError) {
-                    console.error('Error updating credits:', profileError);
-                    alert('Error processing request. Please try again.');
+                if (error) {
+                    alert('Error processing message. Please try again.');
                     return;
                 }
                 
-                // Insert minimal request data - only essential fields
-                const { data: requestData, error: requestError } = await supabase
-                    .from('requests')
-                    .insert({
-                        user_id: currentUser.id,
-                        candidate_id: currentCandidate.ID,
-                        credits_used: 1
-                        // Removed ALL optional fields
-                    })
-                    .select();
-                
-                if (requestError) {
-                    console.error('Full request error details:', requestError);
-                    // Refund the credit
-                    await supabase
-                        .from('users')
-                        .update({ credits: userProfile.credits })
-                        .eq('id', currentUser.id);
-                    alert('Error recording request. Your credit has been refunded. Check console for details.');
-                    return;
-                }
-                
-                // Update local state
                 userProfile.credits--;
                 document.getElementById('creditsCount').textContent = userProfile.credits;
-                
-                // Show success message
-                alert('Contact request submitted successfully! Graham will reach out within 24 hours.');
-                closeModal();
-                
-            } catch (err) {
-                console.error('Unexpected error:', err);
-                alert('An unexpected error occurred. Please check the console for details.');
             }
+            
+            if (!conversations[currentCandidate.ID]) {
+                conversations[currentCandidate.ID] = {
+                    candidateId: currentCandidate.ID,
+                    candidateName: currentCandidate["Current Job Title"] || currentCandidate.Name,
+                    messages: []
+                };
+            }
+            
+            const message = {
+                from: 'employer',
+                text: messageText,
+                timestamp: new Date().toISOString()
+            };
+            
+            conversations[currentCandidate.ID].messages.push(message);
+            localStorage.setItem('conversations_' + currentUser.id, JSON.stringify(conversations));
+            
+            // Save to database
+            try {
+                await supabase.from('messages').insert({
+                    employer_id: currentUser.id,
+                    employer_email: currentUser.email,
+                    candidate_id: currentCandidate.ID,
+                    candidate_name: currentCandidate["Current Job Title"] || currentCandidate.Name,
+                    message_text: messageText,
+                    is_first_message: isFirstMessage,
+                    credit_used: isFirstMessage ? 1 : 0,
+                    created_at: new Date().toISOString()
+                });
+            } catch (err) {
+                console.log('Message saved locally');
+            }
+            
+            document.getElementById('messageText').value = '';
+            window.pendingMessage = null;
+            
+            const previousMessagesDiv = document.getElementById('previousMessages');
+            previousMessagesDiv.style.display = 'block';
+            previousMessagesDiv.innerHTML = conversations[currentCandidate.ID].messages.map(msg => `
+                <div class="message ${msg.from === 'employer' ? 'sent' : 'received'}">
+                    ${msg.text}
+                    <div class="message-time">${new Date(msg.timestamp).toLocaleString()}</div>
+                </div>
+            `).join('');
+            
+            document.getElementById('creditCost').textContent = '(Free)';
+            alert('Message sent successfully!');
         }
 
-        // FIXED Add to shortlist - MINIMAL version
+        // Shortlist
         async function addToShortlist() {
             if (!currentCandidate) return;
             
-            try {
-                // Just try to insert - let database handle duplicates
-                const { data, error } = await supabase
-                    .from('shortlists')
-                    .insert({
-                        user_id: currentUser.id,
-                        candidate_id: currentCandidate.ID
-                        // Removed pool_id as it might not exist
-                    })
-                    .select();
-                
-                if (error) {
-                    // Check if it's a duplicate error
-                    if (error.message && error.message.includes('duplicate')) {
-                        alert('This candidate is already in your shortlist');
-                    } else {
-                        console.error('Full shortlist error:', error);
-                        alert('Error adding to shortlist. Check console for details.');
-                    }
-                    return;
-                }
-                
+            const existing = shortlist.find(item => item.candidate_id === currentCandidate.ID);
+            if (existing) {
+                alert('Already in shortlist');
+                return;
+            }
+            
+            const { data, error } = await supabase
+                .from('shortlists')
+                .insert({
+                    user_id: currentUser.id,
+                    candidate_id: currentCandidate.ID
+                })
+                .select();
+            
+            if (!error) {
                 alert('Added to shortlist!');
                 closeModal();
-                
-                // FIXED: Refresh shortlist with hydration
-                const { data: shortlistData } = await supabase
-                    .from('shortlists')
-                    .select('*, candidates(*)')
-                    .eq('user_id', currentUser.id);
-                
-                shortlist = await hydrateShortlist(shortlistData || []);
-                updateShortlistBadge();
-                
-            } catch (err) {
-                console.error('Unexpected error:', err);
-                alert('Error adding to shortlist. Check console for details.');
+                await refreshShortlist();
             }
         }
 
-        // Load shortlist
+        async function bulkAddToShortlist() {
+            if (selectedCandidates.size === 0) {
+                alert('Please select candidates first');
+                return;
+            }
+            
+            let added = 0;
+            
+            for (const candidateId of selectedCandidates) {
+                const existing = shortlist.find(item => item.candidate_id === candidateId);
+                if (!existing) {
+                    const { data } = await supabase
+                        .from('shortlists')
+                        .insert({
+                            user_id: currentUser.id,
+                            candidate_id: candidateId
+                        })
+                        .select();
+                    
+                    if (data) added++;
+                }
+            }
+            
+            alert(`Added ${added} candidates to shortlist`);
+            deselectAll();
+            await refreshShortlist();
+        }
+
         async function loadShortlist() {
             const content = document.getElementById('shortlistContent');
+            
+            await refreshShortlist();
             
             if (!shortlist || shortlist.length === 0) {
                 content.innerHTML = `
@@ -2635,172 +2130,172 @@
                         <button class="btn btn-primary" onclick="switchView('pools')">Browse Talent Pools</button>
                     </div>
                 `;
-            } else {
-                content.innerHTML = '<div class="candidates-grid" id="shortlistGrid"></div>';
-                const grid = document.getElementById('shortlistGrid');
+                return;
+            }
+            
+            content.innerHTML = '<div class="candidates-grid" id="shortlistGrid"></div>';
+            const grid = document.getElementById('shortlistGrid');
+            
+            grid.innerHTML = shortlist.map(item => {
+                const candidate = item.candidates;
+                if (!candidate) return '';
                 
-                grid.innerHTML = shortlist.map(item => {
-                    const candidate = item.candidates;
-                    if (!candidate) return '';
-                    
-                    const jobTitle = toTitleCase(candidate["Current Job Title"] || 
-                                   candidate["Job Title"] || 
-                                   candidate.Name || 
-                                   `Candidate #${candidate.ID}`);
-                    const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-                    const notes = candidateNotes[candidate.ID] || '';
-                    
-                    return `
-                        <div class="candidate-card" style="position: relative;">
-                            <button onclick="removeFromShortlist(${item.id})" 
-                                    style="position: absolute; top: 1rem; right: 1rem; 
-                                           background: #fee; color: var(--hazard-red); 
-                                           border: none; padding: 0.5rem 1rem; 
-                                           border-radius: 8px; cursor: pointer; z-index: 10;">
-                                Remove
-                            </button>
-                            <div onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'> 
-                                <h3 style="color: var(--augusta-green);">${jobTitle}</h3>
-                                <p style="color: var(--rough-gray);">${location}</p>
-                                ${notes ? `<p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--club-gold);">📝 ${notes.substring(0, 50)}...</p>` : ''}
+                const jobTitle = toTitleCase(candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`);
+                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+                const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
+                const notice = formatNoticePeriod(candidate["Notice Period"]);
+                const notes = candidateNotes[candidate.ID] || '';
+                
+                return `
+                    <div class="candidate-card" style="position: relative;">
+                        <button onclick="removeFromShortlist(${item.id})" 
+                                style="position: absolute; top: 1rem; right: 1rem; 
+                                       background: #fee; color: var(--hazard-red); 
+                                       border: none; padding: 0.5rem 1rem; 
+                                       border-radius: 8px; cursor: pointer; z-index: 10;
+                                       font-size: 0.85rem;">
+                            Remove
+                        </button>
+                        <div onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'
+                             style="cursor: pointer;">
+                            <h3 style="color: var(--augusta-green); margin-bottom: 0.5rem; padding-right: 80px;">
+                                ${jobTitle}
+                            </h3>
+                            <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 1rem;">
+                                ${location}
+                            </p>
+                            ${notes ? `
+                                <div style="background: #fffef5; border-left: 3px solid var(--club-gold); 
+                                           padding: 0.5rem; margin: 0.75rem 0; border-radius: 4px;">
+                                    <p style="font-size: 0.85rem; color: var(--club-gold); margin: 0;">
+                                        📝 Note: ${notes.substring(0, 100)}${notes.length > 100 ? '...' : ''}
+                                    </p>
+                                </div>
+                            ` : ''}
+                            <div style="display: flex; justify-content: space-between; align-items: center; 
+                                        padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                                <span style="color: var(--rough-gray); font-size: 0.9rem;">
+                                    ${salary} • ${notice}
+                                </span>
+                                <span style="color: var(--masters-green); font-weight: 600;">View →</span>
                             </div>
+                        </div>
+                    </div>
+                `;
+            }).filter(html => html !== '').join('');
+        }
+
+        async function removeFromShortlist(shortlistId) {
+            if (!confirm('Remove from shortlist?')) return;
+            
+            await supabase
+                .from('shortlists')
+                .delete()
+                .eq('id', shortlistId);
+            
+            await refreshShortlist();
+            loadShortlist();
+        }
+
+        function exportShortlist() {
+            if (shortlist.length === 0) {
+                alert('No candidates in shortlist');
+                return;
+            }
+            
+            let csv = 'Job Title,Location,Salary,Notice Period,Notes\n';
+            
+            shortlist.forEach(item => {
+                const c = item.candidates;
+                if (c) {
+                    const jobTitle = c["Current Job Title"] || c["Job Title"] || '';
+                    const location = cleanAndFormatLocation(c["Town/City"], c.Country);
+                    const salary = c["What are your salary expectations?"] || 'Negotiable';
+                    const notice = c["Notice Period"] || 'Unknown';
+                    const notes = candidateNotes[c.ID] || '';
+                    
+                    csv += `"${jobTitle}","${location}","${salary}","${notice}","${notes}"\n`;
+                }
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'shortlist.csv';
+            a.click();
+        }
+
+        // Messages
+        function loadMessages() {
+            const content = document.getElementById('conversationsList');
+            const conversationsList = Object.values(conversations);
+            
+            if (conversationsList.length === 0) {
+                content.innerHTML = `
+                    <div class="section-box" style="text-align: center;">
+                        <h2>No messages yet</h2>
+                        <p style="color: var(--rough-gray); margin-bottom: 1rem;">Start a conversation by messaging candidates.</p>
+                        <button class="btn btn-primary" onclick="switchView('pools')">Browse Candidates</button>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = conversationsList.map(conv => {
+                    const lastMessage = conv.messages[conv.messages.length - 1];
+                    return `
+                        <div class="section-box" style="cursor: pointer; margin-bottom: 1rem;" 
+                             onclick="openConversation('${conv.candidateId}')">
+                            <h3 style="color: var(--augusta-green);">${conv.candidateName}</h3>
+                            <p style="color: var(--rough-gray);">Last: ${lastMessage.text.substring(0, 100)}...</p>
+                            <p style="font-size: 0.85rem; color: var(--rough-gray);">
+                                ${new Date(lastMessage.timestamp).toLocaleString()} • ${conv.messages.length} messages
+                            </p>
                         </div>
                     `;
                 }).join('');
             }
         }
 
-        async function removeFromShortlist(shortlistId) {
-            if (!confirm('Remove this candidate from your shortlist?')) return;
+        async function openConversation(candidateId) {
+            let candidate = allCandidates.find(c => c.ID == candidateId);
             
-            const { error } = await supabase
-                .from('shortlists')
-                .delete()
-                .eq('id', shortlistId);
-            
-            if (!error) {
-                // FIXED: Refresh shortlist with hydration
-                const { data: shortlistData } = await supabase
-                    .from('shortlists')
-                    .select('*, candidates(*)')
-                    .eq('user_id', currentUser.id);
+            if (!candidate) {
+                const { data } = await supabase
+                    .from('candidates')
+                    .select('*')
+                    .eq('ID', candidateId)
+                    .single();
                 
-                shortlist = await hydrateShortlist(shortlistData || []);
-                updateShortlistBadge();
-                loadShortlist();
+                if (data) candidate = data;
             }
+            
+            if (candidate) openCandidate(candidate);
         }
 
-        function updateShortlistBadge() {
-            const badge = document.getElementById('shortlistBadge');
-            if (shortlist.length > 0) {
-                badge.style.display = 'inline';
-                badge.textContent = shortlist.length;
-            } else {
-                badge.style.display = 'none';
-            }
-        }
-
-        async function loadAccount() {
+        // Account
+        function loadAccount() {
             document.getElementById('accountName').textContent = userProfile?.name || '-';
             document.getElementById('accountEmail').textContent = currentUser?.email || '-';
             document.getElementById('accountCredits').textContent = userProfile?.credits || 0;
             
-            const { count } = await supabase
-                .from('requests')
-                .select('*', { count: 'exact', head: true })
-                .eq('user_id', currentUser.id);
-            
-            document.getElementById('totalRequests').textContent = count || 0;
-            
-            // Load credits history
-            const { data: requests } = await supabase
-                .from('requests')
-                .select('*, candidates(*)')
-                .eq('user_id', currentUser.id)
-                .order('created_at', { ascending: false })
-                .limit(10);
-            
-            const historyDiv = document.getElementById('creditsHistory');
-            if (requests && requests.length > 0) {
-                historyDiv.innerHTML = `
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f9fafb;">
-                                <th style="padding: 0.5rem; text-align: left;">Date</th>
-                                <th style="padding: 0.5rem; text-align: left;">Candidate</th>
-                                <th style="padding: 0.5rem; text-align: left;">Credits</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${requests.map(req => {
-                                const jobTitle = req.candidates ? toTitleCase(req.candidates["Current Job Title"] || 
-                                               req.candidates.Name) : 'Unknown';
-                                const date = req.created_at || 'Unknown';
-                                return `
-                                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                                        <td style="padding: 0.5rem;">${new Date(date).toLocaleDateString()}</td>
-                                        <td style="padding: 0.5rem;">${jobTitle}</td>
-                                        <td style="padding: 0.5rem;">-${req.credits_used || 1}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                `;
-            } else {
-                historyDiv.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No credit history yet.</p>';
-            }
+            let totalMessages = 0;
+            Object.values(conversations).forEach(conv => {
+                totalMessages += conv.messages.filter(m => m.from === 'employer').length;
+            });
+            document.getElementById('totalMessages').textContent = totalMessages;
         }
 
-        // FIXED Load Requests
-        async function loadRequests() {
-            const { data: requests } = await supabase
-                .from('requests')
-                .select('*, candidates(*)')
-                .eq('user_id', currentUser.id)
-                .order('created_at', { ascending: false });
-            
-            const content = document.getElementById('requestsList');
-            
-            if (!requests || requests.length === 0) {
-                content.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No requests made yet.</p>';
-            } else {
-                content.innerHTML = `
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f9fafb;">
-                                <th style="padding: 1rem; text-align: left;">Date</th>
-                                <th style="padding: 1rem; text-align: left;">Candidate</th>
-                                <th style="padding: 1rem; text-align: left;">Location</th>
-                                <th style="padding: 1rem; text-align: left;">Credits</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${requests.map(req => {
-                                const candidate = req.candidates;
-                                const jobTitle = candidate ? toTitleCase(candidate["Current Job Title"] || 
-                                               candidate.Name || 
-                                               `Candidate #${req.candidate_id}`) : `Candidate #${req.candidate_id}`;
-                                const location = candidate ? cleanAndFormatLocation(candidate["Town/City"], candidate.Country) : 'N/A';
-                                const date = req.created_at || 'Unknown';
-                                
-                                return `
-                                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                                        <td style="padding: 1rem;">${new Date(date).toLocaleDateString()}</td>
-                                        <td style="padding: 1rem;">${jobTitle}</td>
-                                        <td style="padding: 1rem;">${location}</td>
-                                        <td style="padding: 1rem;">${req.credits_used || 1}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                `;
-            }
-        }
-
+        // Admin
         async function loadAdmin() {
+            if (userProfile?.role !== 'admin') {
+                document.getElementById('adminView').innerHTML = '<p style="text-align: center; color: var(--hazard-red);">Access denied.</p>';
+                return;
+            }
+            
+            // Load analytics
+            await loadAnalytics();
+            
+            // Load users
             const { data: allUsers } = await supabase
                 .from('users')
                 .select('*')
@@ -2808,15 +2303,16 @@
             
             const usersList = document.getElementById('adminUsersList');
             if (allUsers && allUsers.length > 0) {
+                document.getElementById('activeUsers').textContent = allUsers.length;
+                
                 usersList.innerHTML = `
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="background: #f9fafb;">
                                 <th style="padding: 1rem; text-align: left;">Name</th>
                                 <th style="padding: 1rem; text-align: left;">Email</th>
-                                <th style="padding: 1rem; text-align: left;">Role</th>
                                 <th style="padding: 1rem; text-align: left;">Credits</th>
-                                <th style="padding: 1rem; text-align: left;">Created</th>
+                                <th style="padding: 1rem; text-align: left;">Joined</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2824,7 +2320,6 @@
                                 <tr style="border-bottom: 1px solid #e5e7eb;">
                                     <td style="padding: 1rem;">${user.name || 'Not set'}</td>
                                     <td style="padding: 1rem;">${user.email}</td>
-                                    <td style="padding: 1rem;">${user.role || 'viewer'}</td>
                                     <td style="padding: 1rem;">${user.credits || 0}</td>
                                     <td style="padding: 1rem;">${new Date(user.created_at).toLocaleDateString()}</td>
                                 </tr>
@@ -2832,55 +2327,147 @@
                         </tbody>
                     </table>
                 `;
-            } else {
-                usersList.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No users found.</p>';
             }
             
-            const { data: allRequests } = await supabase
-                .from('requests')
-                .select('*, users(name, email), candidates(*)')
+            // Load messages
+            const { data: allMessages } = await supabase
+                .from('messages')
+                .select('*')
                 .order('created_at', { ascending: false })
                 .limit(50);
             
-            const requestsList = document.getElementById('adminRequestsList');
-            if (allRequests && allRequests.length > 0) {
-                requestsList.innerHTML = `
+            if (allMessages && allMessages.length > 0) {
+                document.getElementById('totalMessagesAdmin').textContent = allMessages.length;
+                
+                const messagesList = document.getElementById('adminMessagesList');
+                messagesList.innerHTML = `
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="background: #f9fafb;">
-                                <th style="padding: 1rem; text-align: left;">Date</th>
-                                <th style="padding: 1rem; text-align: left;">User</th>
-                                <th style="padding: 1rem; text-align: left;">Candidate</th>
-                                <th style="padding: 1rem; text-align: left;">Credits</th>
+                                <th style="padding: 0.75rem; text-align: left;">Date</th>
+                                <th style="padding: 0.75rem; text-align: left;">Employer</th>
+                                <th style="padding: 0.75rem; text-align: left;">Candidate</th>
+                                <th style="padding: 0.75rem; text-align: left;">Message</th>
+                                <th style="padding: 0.75rem; text-align: left;">Credits</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${allRequests.map(req => {
-                                const jobTitle = req.candidates ? toTitleCase(req.candidates["Current Job Title"] || 
-                                               req.candidates.Name || 
-                                               `Candidate #${req.candidate_id}`) : `Candidate #${req.candidate_id}`;
-                                const date = req.created_at || 'Unknown';
-                                return `
-                                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                                        <td style="padding: 1rem;">${new Date(date).toLocaleDateString()}</td>
-                                        <td style="padding: 1rem;">${req.users?.name || req.users?.email || 'Unknown'}</td>
-                                        <td style="padding: 1rem;">${jobTitle}</td>
-                                        <td style="padding: 1rem;">${req.credits_used || 1}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
+                            ${allMessages.map(msg => `
+                                <tr style="border-bottom: 1px solid #e5e7eb;">
+                                    <td style="padding: 0.75rem; font-size: 0.85rem;">
+                                        ${new Date(msg.created_at).toLocaleDateString()}
+                                    </td>
+                                    <td style="padding: 0.75rem; font-size: 0.85rem;">
+                                        ${msg.employer_email}
+                                    </td>
+                                    <td style="padding: 0.75rem; font-size: 0.85rem;">
+                                        ${msg.candidate_name || `ID: ${msg.candidate_id}`}
+                                    </td>
+                                    <td style="padding: 0.75rem; font-size: 0.85rem;">
+                                        ${msg.message_text.substring(0, 100)}...
+                                    </td>
+                                    <td style="padding: 0.75rem; font-size: 0.85rem;">
+                                        ${msg.is_first_message ? 
+                                            '<span style="background: #ffc107; padding: 2px 6px; border-radius: 4px;">1</span>' : 
+                                            '<span style="background: #e9ecef; padding: 2px 6px; border-radius: 4px;">0</span>'}
+                                    </td>
+                                </tr>
+                            `).join('')}
                         </tbody>
                     </table>
                 `;
-            } else {
-                requestsList.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No requests found.</p>';
             }
+        }
+
+        async function loadAnalytics() {
+            // Get profile views from database
+            const { data: views } = await supabase
+                .from('profile_views')
+                .select('candidate_id, candidate_name');
+            
+            // Count views per candidate
+            const viewCounts = {};
+            if (views) {
+                views.forEach(view => {
+                    if (!viewCounts[view.candidate_id]) {
+                        viewCounts[view.candidate_id] = {
+                            name: view.candidate_name,
+                            count: 0
+                        };
+                    }
+                    viewCounts[view.candidate_id].count++;
+                });
+            }
+            
+            // Also add local views
+            Object.entries(profileViews).forEach(([id, data]) => {
+                if (viewCounts[id]) {
+                    viewCounts[id].count += data.count;
+                } else {
+                    viewCounts[id] = data;
+                }
+            });
+            
+            // Sort and display most viewed
+            const sortedViews = Object.entries(viewCounts)
+                .sort((a, b) => b[1].count - a[1].count)
+                .slice(0, 10);
+            
+            const totalViews = Object.values(viewCounts).reduce((sum, v) => sum + v.count, 0);
+            document.getElementById('totalViews').textContent = totalViews;
+            
+            document.getElementById('mostViewedList').innerHTML = sortedViews.map((item, index) => `
+                <li>
+                    <div style="display: flex; align-items: center;">
+                        <span class="rank-badge">#${index + 1}</span>
+                        <span>${item[1].name || `Candidate #${item[0]}`}</span>
+                    </div>
+                    <span style="color: var(--masters-green); font-weight: 600;">
+                        ${item[1].count} views
+                    </span>
+                </li>
+            `).join('') || '<li>No data yet</li>';
+            
+            // Get message counts
+            const { data: messages } = await supabase
+                .from('messages')
+                .select('candidate_id, candidate_name');
+            
+            const messageCounts = {};
+            if (messages) {
+                messages.forEach(msg => {
+                    if (!messageCounts[msg.candidate_id]) {
+                        messageCounts[msg.candidate_id] = {
+                            name: msg.candidate_name,
+                            count: 0
+                        };
+                    }
+                    messageCounts[msg.candidate_id].count++;
+                });
+            }
+            
+            const sortedMessages = Object.entries(messageCounts)
+                .sort((a, b) => b[1].count - a[1].count)
+                .slice(0, 10);
+            
+            document.getElementById('mostMessagedList').innerHTML = sortedMessages.map((item, index) => `
+                <li>
+                    <div style="display: flex; align-items: center;">
+                        <span class="rank-badge">#${index + 1}</span>
+                        <span>${item[1].name || `Candidate #${item[0]}`}</span>
+                    </div>
+                    <span style="color: var(--masters-green); font-weight: 600;">
+                        ${item[1].count} messages
+                    </span>
+                </li>
+            `).join('') || '<li>No messages yet</li>';
         }
 
         function goHome() {
             switchView('pools');
         }
 
+        // Modal close on click outside
         document.getElementById('candidateModal')?.addEventListener('click', function(e) {
             if (e.target === this) closeModal();
         });

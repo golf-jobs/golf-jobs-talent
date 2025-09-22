@@ -1,2854 +1,771 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Golf Jobs - Premium Talent Pools</title>
-    
-    <!-- Add Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --augusta-green: #004d26;
-            --fairway-green: #2d5f3f;
-            --masters-green: #3a7858;
-            --putting-green: #6b9080;
-            --club-gold: #c9a961;
-            --trophy-gold: #f4d03f;
-            --sand-bunker: #f5e6d3;
-            --morning-mist: #f8f9fa;
-            --pro-shop-navy: #1a2332;
-            --scorecard-white: #ffffff;
-            --rough-gray: #6c757d;
-            --hazard-red: #c9302c;
-            --water-hazard: #2c5aa0;
-        }
-
-        body {
-            font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            line-height: 1.6;
-            color: var(--pro-shop-navy);
-            background: linear-gradient(180deg, #f8f9fa 0%, #e8efe8 100%);
-            min-height: 100vh;
-        }
-
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Poppins', sans-serif;
-            font-weight: 600;
-        }
-
-        /* Loading States */
-        .skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-        }
-
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        .skeleton-card {
-            height: 250px;
-            border-radius: 16px;
-            margin-bottom: 1.75rem;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(0, 77, 38, 0.1);
-            border-top-color: var(--augusta-green);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 2rem auto;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Login Screen */
-        .login-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--augusta-green);
-        }
-
-        .login-box {
-            background: white;
-            padding: 3rem;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            width: 90%;
-            max-width: 450px;
-            animation: slideUp 0.5s ease;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .login-title {
-            text-align: center;
-            color: var(--augusta-green);
-            margin-bottom: 0.5rem;
-            font-size: 1.75rem;
-            font-weight: 700;
-        }
-
-        .login-subtitle {
-            text-align: center;
-            color: var(--rough-gray);
-            margin-bottom: 2rem;
-            font-size: 0.95rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--pro-shop-navy);
-            font-weight: 600;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 0.875rem 1rem;
-            border: 2px solid #e1e8e4;
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--masters-green);
-            box-shadow: 0 0 0 3px rgba(58, 120, 88, 0.1);
-        }
-
-        .btn-login {
-            width: 100%;
-            padding: 1rem;
-            background: linear-gradient(135deg, var(--augusta-green) 0%, var(--masters-green) 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 77, 38, 0.3);
-        }
-
-        .login-error {
-            background: #fee;
-            color: var(--hazard-red);
-            padding: 0.75rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            text-align: center;
-            display: none;
-        }
-
-        /* Main App */
-        .main-app {
-            display: none;
-        }
-
-        .main-app.active {
-            display: block;
-        }
-
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, var(--augusta-green) 0%, var(--fairway-green) 100%);
-            color: white;
-            padding: 1rem 0;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            cursor: pointer;
-        }
-
-        .logo img {
-            height: 60px;
-        }
-
-        .nav-tabs {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .nav-tab {
-            padding: 0.625rem 1.25rem;
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            border: none;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.95rem;
-            font-weight: 500;
-            font-family: 'Poppins', sans-serif;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            position: relative;
-        }
-
-        .nav-tab:hover {
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-2px);
-        }
-
-        .nav-tab.active {
-            background: var(--club-gold);
-            color: var(--augusta-green);
-            font-weight: 600;
-        }
-
-        .shortlist-badge {
-            background: rgba(255,255,255,0.3);
-            padding: 0.125rem 0.375rem;
-            border-radius: 10px;
-            margin-left: 0.25rem;
-            font-size: 0.875rem;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            background: rgba(0,0,0,0.2);
-            padding: 0.5rem 1rem;
-            border-radius: 12px;
-        }
-
-        .credits-badge {
-            background: linear-gradient(135deg, var(--club-gold) 0%, var(--trophy-gold) 100%);
-            color: var(--augusta-green);
-            padding: 0.375rem 1rem;
-            border-radius: 20px;
-            font-weight: 700;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .btn-logout {
-            padding: 0.5rem 1rem;
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-logout:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        /* Container */
-        .container {
-            max-width: 1400px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-
-        /* View Sections */
-        .view-section {
-            display: none;
-        }
-
-        .view-section.active {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Filter Panel Mobile */
-        .filter-toggle-mobile {
-            display: none;
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            width: 60px;
-            height: 60px;
-            background: var(--augusta-green);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            cursor: pointer;
-            z-index: 99;
-            font-size: 1.5rem;
-        }
-
-        @media (max-width: 768px) {
-            .filter-toggle-mobile {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            .filter-panel {
-                position: fixed;
-                top: 0;
-                left: -100%;
-                width: 80%;
-                height: 100vh;
-                background: white;
-                z-index: 1000;
-                transition: left 0.3s ease;
-                overflow-y: auto;
-                box-shadow: 2px 0 20px rgba(0,0,0,0.1);
-            }
-            
-            .filter-panel.active {
-                left: 0;
-            }
-            
-            .filter-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0,0,0,0.5);
-                z-index: 999;
-            }
-            
-            .filter-overlay.active {
-                display: block;
-            }
-        }
-
-        /* Pools Grid */
-        .pools-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .pool-card {
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .pool-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
-        }
-
-        .pool-card.locked {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        .pool-header {
-            background: linear-gradient(135deg, var(--fairway-green) 0%, var(--masters-green) 100%);
-            padding: 2rem;
-            color: white;
-            position: relative;
-        }
-
-        .pool-title {
-            font-size: 1.75rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .pool-badge {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: var(--club-gold);
-            color: var(--augusta-green);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.875rem;
-            font-weight: 700;
-        }
-
-        .pool-stats {
-            padding: 2rem;
-        }
-
-        .pool-stat {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .pool-stat:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-
-        /* Candidates Grid */
-        .candidates-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-            gap: 1.75rem;
-            margin-bottom: 2rem;
-        }
-
-        .candidate-card {
-            background: white;
-            border-radius: 16px;
-            padding: 1.75rem;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            transition: all 0.3s ease;
-            border: 1px solid #e5e7eb;
-            position: relative;
-            cursor: pointer;
-        }
-
-        .candidate-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 6px 24px rgba(0,0,0,0.1);
-            border-color: var(--masters-green);
-        }
-
-        .candidate-card.selected {
-            background: #f0f8f4;
-            border-color: var(--masters-green);
-        }
-
-        .candidate-checkbox {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-
-        .top-pick-badge {
-            position: absolute;
-            top: -10px;
-            right: 15px;
-            background: linear-gradient(135deg, #2d5f3f, #3a7858);
-            color: white;
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-
-        .new-badge {
-            position: absolute;
-            top: -8px;
-            left: 1rem;
-            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
-            color: white;
-            padding: 0.2rem 0.5rem;
-            border-radius: 10px;
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        /* Sorting Bar */
-        .sorting-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .sort-options {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .bulk-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(26, 35, 50, 0.95);
-            backdrop-filter: blur(10px);
-            overflow-y: auto;
-        }
-
-        .modal.active {
-            display: block;
-        }
-
-        .modal-content {
-            background: white;
-            margin: 3% auto;
-            padding: 2rem;
-            width: 90%;
-            max-width: 700px;
-            border-radius: 20px;
-            position: relative;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            font-size: 2rem;
-            cursor: pointer;
-            background: none;
-            border: none;
-            color: var(--rough-gray);
-        }
-
-        .modal-close:hover {
-            color: var(--pro-shop-navy);
-        }
-
-        /* Confirmation Dialog */
-        .confirmation-dialog {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 2rem;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            z-index: 3000;
-            max-width: 400px;
-            display: none;
-        }
-
-        .confirmation-dialog.active {
-            display: block;
-        }
-
-        .dialog-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 2999;
-            display: none;
-        }
-
-        .dialog-overlay.active {
-            display: block;
-        }
-
-        /* Notes Panel */
-        .notes-panel {
-            background: #fffef5;
-            border: 1px solid var(--club-gold);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-
-        .note-textarea {
-            width: 100%;
-            min-height: 80px;
-            padding: 0.5rem;
-            border: 1px solid #e1e8e4;
-            border-radius: 8px;
-            resize: vertical;
-            font-family: inherit;
-        }
-
-        /* Show More/Less */
-        .expandable-text {
-            position: relative;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-
-        .expandable-text.collapsed {
-            max-height: 120px;
-        }
-
-        .show-more-btn {
-            color: var(--masters-green);
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.9rem;
-            margin-top: 0.5rem;
-            display: inline-block;
-        }
-
-        .show-more-btn:hover {
-            color: var(--augusta-green);
-        }
-
-        /* Highlight Search Terms */
-        .highlight {
-            background: yellow;
-            padding: 0 2px;
-            border-radius: 2px;
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        }
-
-        .empty-state img {
-            width: 200px;
-            opacity: 0.5;
-            margin-bottom: 1rem;
-        }
-
-        .empty-state h3 {
-            color: var(--augusta-green);
-            margin-bottom: 1rem;
-        }
-
-        .empty-state p {
-            color: var(--rough-gray);
-            margin-bottom: 2rem;
-        }
-
-        /* Load More */
-        .load-more-container {
-            text-align: center;
-            padding: 2rem;
-        }
-
-        .load-more-btn {
-            padding: 0.875rem 2rem;
-            background: white;
-            color: var(--augusta-green);
-            border: 2px solid var(--augusta-green);
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .load-more-btn:hover {
-            background: var(--augusta-green);
-            color: white;
-        }
-
-        /* Buttons */
-        .btn {
-            padding: 0.875rem 1.75rem;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: 'Poppins', sans-serif;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--augusta-green) 0%, var(--masters-green) 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 77, 38, 0.3);
-        }
-
-        .btn-secondary {
-            background: white;
-            color: var(--augusta-green);
-            border: 2px solid var(--augusta-green);
-        }
-
-        .btn-secondary:hover {
-            background: var(--augusta-green);
-            color: white;
-        }
-
-        .btn-small {
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
-        }
-
-        .section-box {
-            background: white;
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            margin-bottom: 2rem;
-        }
-
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 2rem;
-            color: var(--rough-gray);
-        }
-
-        .breadcrumb a {
-            color: var(--masters-green);
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .breadcrumb a:hover {
-            color: var(--augusta-green);
-        }
-
-        /* Tooltip */
-        .tooltip {
-            position: relative;
-            display: inline-block;
-        }
-
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 200px;
-            background-color: var(--pro-shop-navy);
-            color: white;
-            text-align: center;
-            border-radius: 8px;
-            padding: 0.5rem;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -100px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 0.875rem;
-        }
-
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .pools-grid, .candidates-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .header-content {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .nav-tabs {
-                flex-wrap: wrap;
-            }
-            
-            .sorting-bar {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .modal-content {
-                margin: 10% 1rem;
-                width: calc(100% - 2rem);
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Golf Jobs – Talent Pools</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <style>
+    :root{
+      --augusta-green:#3a7858;
+      --masters-green:#2e6f4e;
+      --pro-shop-navy:#0f172a;
+      --club-gold:#d4af37;
+      --morning-mist:#f3f6f4;
+      --rough-gray:#6b7280;
+      --hazard-red:#b91c1c;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(135deg,#f5f7fa 0%,#e9ecef 100%)}
+    .login-container{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+    .login-box{background:#fff;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:2rem;max-width:420px;width:100%}
+    .login-title{font-size:1.75rem;color:var(--augusta-green);margin:0 0 .25rem}
+    .login-subtitle{color:var(--rough-gray);margin-bottom:1.5rem}
+    .form-group{margin-bottom:1rem}
+    .form-label{font-weight:600;color:var(--pro-shop-navy);display:block;margin-bottom:.4rem}
+    .form-input{width:100%;padding:.8rem 1rem;border:1px solid #e5e7eb;border-radius:12px;background:#f9fafb}
+    .btn-login{width:100%;padding:.9rem 1rem;border-radius:12px;background:var(--augusta-green);color:#fff;border:none;font-weight:700;cursor:pointer}
+    .login-error{display:none;background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca;padding:.75rem 1rem;border-radius:10px;margin-bottom:1rem}
+    .main-app{display:none}
+    .main-app.active{display:block}
+    header.header{background:var(--pro-shop-navy);color:#fff;padding:1rem 0}
+    .header-content{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:0 1rem}
+    .logo img{height:34px;cursor:pointer}
+    .nav-tabs{display:flex;gap:.5rem;flex-wrap:wrap}
+    .nav-tab{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:.5rem .9rem;cursor:pointer}
+    .nav-tab.active{background:#fff;color:var(--pro-shop-navy);font-weight:700}
+    .user-info{display:flex;align-items:center;gap:.75rem}
+    .credits-badge{background:#fff;color:var(--pro-shop-navy);padding:.25rem .6rem;border-radius:999px;font-weight:700}
+    .btn-logout{background:#fff;color:var(--pro-shop-navy);border:none;border-radius:10px;padding:.5rem .8rem;cursor:pointer}
+    .container{max-width:1200px;margin:2rem auto;padding:0 1rem}
+    .section-box{background:#fff;border-radius:16px;padding:2rem;box-shadow:0 4px 20px rgba(0,0,0,.08);margin-bottom:2rem}
+    .pools-grid,.candidates-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+    .pool-card,.candidate-card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:1.2rem;cursor:pointer}
+    .skeleton{background:linear-gradient(90deg,#eee,#f5f5f5,#eee);background-size:200% 100%;animation:shimmer 1.25s infinite}
+    .skeleton-card{height:120px;border-radius:16px}
+    @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+    .view-section{display:none}
+    .view-section.active{display:block}
+    .shortlist-badge{margin-left:.35rem;background:#fff;color:var(--pro-shop-navy);padding:.1rem .45rem;border-radius:999px;font-size:.8rem}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-start;justify-content:center;padding:2rem;z-index:20}
+    .modal.active{display:flex}
+    .modal-content{background:#fff;border-radius:16px;max-width:900px;width:100%;padding:1.5rem;position:relative}
+    .modal-close{position:absolute;top:.75rem;right:.75rem;background:#eee;border:none;border-radius:999px;width:34px;height:34px;font-size:20px;cursor:pointer}
+    .note-textarea{width:100%;min-height:90px;border:1px solid #e5e7eb;border-radius:12px;padding:.75rem}
+    .btn{border:none;border-radius:10px;padding:.7rem 1rem;cursor:pointer}
+    .btn-primary{background:var(--augusta-green);color:#fff}
+    .btn-secondary{background:#f3f6f4}
+    .btn-secondary:hover{background:var(--augusta-green);color:#fff}
+    .btn-small{padding:.5rem 1rem;font-size:.875rem}
+    .dialog-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);display:none;z-index:30}
+    .dialog-overlay.active{display:block}
+    .confirmation-dialog{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border-radius:16px;max-width:540px;width:90%;padding:1.25rem;box-shadow:0 10px 30px rgba(0,0,0,.16);display:none;z-index:31}
+    .confirmation-dialog.active{display:block}
+    .request-status{display:inline-block;padding:.25rem .75rem;border-radius:12px;font-size:.75rem;font-weight:700;text-transform:uppercase}
+    .request-status.pending{background:#fff3cd;color:#856404}
+    .request-status.completed{background:#d4edda;color:#155724}
+    @media (max-width:768px){
+      .pools-grid,.candidates-grid{grid-template-columns:1fr}
+      .header-content{flex-direction:column;align-items:stretch}
+      .modal-content{margin:10% 1rem;width:calc(100% - 2rem)}
+    }
+  </style>
 </head>
 <body>
-    <!-- Login Screen -->
-    <div id="loginScreen" class="login-container">
-        <div class="login-box">
-            <div style="text-align: center; margin-bottom: 2rem;">
-                <img src="https://ik.imagekit.io/golfjobs/Golf%20Jobs%20logo%20black.png?updatedAt=1757017924442" alt="Golf Jobs" style="width: 200px;">
-            </div>
-            <h1 class="login-title">Talent Pool Access</h1>
-            <p class="login-subtitle">Exclusive recruitment platform</p>
-            
-            <div id="loginError" class="login-error">Invalid credentials. Please try again.</div>
-            
-            <form onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" class="form-input" id="loginEmail" required placeholder="your@company.com">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-input" id="loginPassword" required placeholder="••••••••">
-                </div>
-                <button type="submit" class="btn-login">Sign In</button>
-            </form>
-            
-            <div style="text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e1e8e4;">
-                <p style="color: var(--rough-gray); font-size: 0.85rem;">© 2024 Golf Jobs. Professional recruitment excellence.</p>
-                <p style="margin-top: 0.5rem; color: var(--rough-gray); font-size: 0.85rem;">Need access? Contact <strong>graham@golf-jobs.com</strong></p>
-            </div>
+  <!-- Login -->
+  <div id="loginScreen" class="login-container">
+    <div class="login-box">
+      <div style="text-align:center;margin-bottom:2rem;">
+        <img src="https://ik.imagekit.io/golfjobs/Golf%20Jobs%20logo%20black.png?updatedAt=1757017924442" alt="Golf Jobs" style="width:200px;">
+      </div>
+      <h1 class="login-title">Talent Pool Access</h1>
+      <p class="login-subtitle">Exclusive recruitment platform</p>
+      <div id="loginError" class="login-error">Invalid credentials. Please try again.</div>
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input id="loginEmail" type="email" class="form-input" required placeholder="your@company.com">
         </div>
-    </div>
-
-    <!-- Main Application -->
-    <div id="mainApp" class="main-app">
-        <!-- Header -->
-        <header class="header">
-            <div class="header-content">
-                <div class="logo" onclick="goHome()">
-                    <img src="https://ik.imagekit.io/golfjobs/Golf%20Jobs%20logo%20white.png?updatedAt=1758280288759" alt="Golf Jobs">
-                </div>
-                <nav class="nav-tabs">
-                    <button class="nav-tab active" onclick="switchView('pools')">Talent Pools</button>
-                    <button class="nav-tab" onclick="switchView('shortlist')">
-                        Shortlist <span id="shortlistBadge" class="shortlist-badge" style="display: none;">0</span>
-                    </button>
-                    <button class="nav-tab" onclick="switchView('account')">My Account</button>
-                    <button class="nav-tab" onclick="switchView('requests')">My Requests</button>
-                    <button id="adminTab" class="nav-tab" onclick="switchView('admin')" style="display:none;">Admin</button>
-                </nav>
-                <div class="user-info">
-                    <span id="userName">Welcome</span>
-                    <div class="credits-badge">
-                        Credits: <span id="creditsCount">0</span>
-                    </div>
-                    <button class="btn-logout" onclick="handleLogout()">Sign Out</button>
-                </div>
-            </div>
-        </header>
-
-        <div class="container">
-            <!-- Pools View -->
-            <div id="poolsView" class="view-section active">
-                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Your Talent Pools</h1>
-                <p style="color: var(--rough-gray); margin-bottom: 2rem; font-size: 1.1rem;">Select a talent pool to browse candidates</p>
-                <div class="pools-grid" id="poolsGrid">
-                    <!-- Loading skeletons -->
-                    <div class="skeleton skeleton-card"></div>
-                    <div class="skeleton skeleton-card"></div>
-                    <div class="skeleton skeleton-card"></div>
-                </div>
-                
-                <div class="section-box">
-                    <h2 style="font-size: 1.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Unlock More Talent Pools</h2>
-                    <p style="color: var(--rough-gray); margin-bottom: 1.5rem;">Expand your recruitment reach with access to additional regions</p>
-                    <button class="btn btn-primary" onclick="alert('Contact graham@golf-jobs.com for access to additional pools')">Request Access</button>
-                </div>
-            </div>
-
-            <!-- Pool Detail View -->
-            <div id="poolDetailView" class="view-section">
-                <div class="breadcrumb">
-                    <a href="#" onclick="switchView('pools')">Talent Pools</a>
-                    <span>→</span>
-                    <span id="currentPoolName">Pool Name</span>
-                </div>
-                
-                <!-- Filter Panel -->
-                <div class="section-box filter-panel" id="filterPanel">
-                    <button class="filter-close-mobile" onclick="toggleFilterPanel()" style="display: none; position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
-                    
-                    <input type="text" id="searchInput" placeholder="Search by name, role, skills, or location..." 
-                           style="width: 100%; padding: 0.875rem; border: 2px solid #e1e8e4; border-radius: 12px; font-size: 1rem; margin-bottom: 1rem;">
-                    
-                    <!-- Filters -->
-                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start;">
-                        <select id="salaryFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
-                            <option value="">All Salaries</option>
-                            <option value="0-30000">£20-30k</option>
-                            <option value="30000-40000">£30-40k</option>
-                            <option value="40000-50000">£40-50k</option>
-                            <option value="50000-60000">£50-60k</option>
-                            <option value="60000-70000">£60-70k</option>
-                            <option value="70000+">£70k+</option>
-                        </select>
-                        
-                        <select id="noticeFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
-                            <option value="">All Notice Periods</option>
-                            <option value="immediately">Available Immediately</option>
-                            <option value="1 week">1 Week</option>
-                            <option value="1 month">1 Month</option>
-                            <option value="2 months">2 Months</option>
-                            <option value="3 months">3 Months</option>
-                        </select>
-                        
-                        <select id="lookingFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
-                            <option value="">Active/Passive</option>
-                            <option value="YES">Actively Looking</option>
-                            <option value="NO">Not Actively Looking</option>
-                        </select>
-                        
-                        <select id="categoryFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
-                            <option value="">All Categories</option>
-                            <option value="greenkeeping">Greenkeeping</option>
-                            <option value="management">Management</option>
-                            <option value="sales">Sales & Business Dev</option>
-                            <option value="marketing">Marketing & PR</option>
-                            <option value="fandB">F&B / Hospitality</option>
-                            <option value="professional">Golf Professional</option>
-                            <option value="operations">Operations</option>
-                            <option value="retail">Retail & Pro Shop</option>
-                            <option value="maintenance">Maintenance & Facilities</option>
-                            <option value="admin">Admin & Support</option>
-                            <option value="other">Other</option>
-                        </select>
-                        
-                        <!-- Location Filter Dropdown -->
-                        <div style="position: relative;">
-                            <button onclick="toggleLocationDropdown()" 
-                                    style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; 
-                                           font-size: 0.95rem; background: white; cursor: pointer; 
-                                           min-width: 150px; text-align: left; display: flex; 
-                                           justify-content: space-between; align-items: center;">
-                                <span id="locationFilterText">All Locations</span>
-                                <span style="font-size: 0.8rem;">▼</span>
-                            </button>
-                            <div id="locationDropdown" style="display: none; position: absolute; top: 100%; 
-                                                              left: 0; right: 0; background: white; 
-                                                              border: 2px solid #e1e8e4; border-radius: 8px; 
-                                                              margin-top: 0.25rem; max-height: 300px; 
-                                                              overflow-y: auto; z-index: 1000; min-width: 200px;">
-                                <div style="padding: 0.5rem; border-bottom: 1px solid #e1e8e4;">
-                                    <button onclick="selectAllLocations()" 
-                                            style="margin-right: 0.5rem; padding: 0.25rem 0.5rem; 
-                                                   border: 1px solid #e1e8e4; border-radius: 4px; 
-                                                   background: white; cursor: pointer; font-size: 0.85rem;">
-                                        Select All
-                                    </button>
-                                    <button onclick="clearAllLocations()" 
-                                            style="padding: 0.25rem 0.5rem; border: 1px solid #e1e8e4; 
-                                                   border-radius: 4px; background: white; cursor: pointer; 
-                                                   font-size: 0.85rem;">
-                                        Clear All
-                                    </button>
-                                </div>
-                                <div id="locationCheckboxes" style="padding: 0.5rem;">
-                                    <!-- Populated dynamically -->
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <button onclick="clearFilters()" class="btn btn-small" style="background: #e5e7eb; color: var(--rough-gray);">
-                            Clear All
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Filter Toggle Mobile -->
-                <button class="filter-toggle-mobile" onclick="toggleFilterPanel()">
-                    ⚙️
-                </button>
-                <div class="filter-overlay" id="filterOverlay" onclick="toggleFilterPanel()"></div>
-                
-                <!-- Sorting and Bulk Actions -->
-                <div class="sorting-bar">
-                    <div class="sort-options">
-                        <label style="margin-right: 0.5rem; color: var(--rough-gray);">Sort by:</label>
-                        <select id="sortSelect" onchange="applySort()" style="padding: 0.5rem; border: 1px solid #e1e8e4; border-radius: 8px;">
-                            <option value="relevance">Best Match</option>
-                            <option value="newest">Newest First</option>
-                            <option value="salary-high">Salary (High to Low)</option>
-                            <option value="salary-low">Salary (Low to High)</option>
-                        </select>
-                    </div>
-                    
-                    <div class="bulk-actions">
-                        <button class="btn btn-small btn-secondary" onclick="selectAll()">Select All</button>
-                        <button class="btn btn-small btn-secondary" onclick="deselectAll()">Clear Selection</button>
-                        <button class="btn btn-small btn-primary" onclick="bulkAddToShortlist()">Add Selected to Shortlist</button>
-                        <button class="btn btn-small btn-primary" onclick="exportCandidates()">Export</button>
-                    </div>
-                </div>
-                
-                <div id="candidateCount" style="margin-bottom: 1rem; color: var(--rough-gray);"></div>
-                
-                <!-- Candidates Grid with Pagination -->
-                <div class="candidates-grid" id="candidatesGrid">
-                    <!-- Loading skeletons -->
-                    <div class="skeleton skeleton-card"></div>
-                    <div class="skeleton skeleton-card"></div>
-                    <div class="skeleton skeleton-card"></div>
-                </div>
-                
-                <!-- Load More -->
-                <div class="load-more-container" id="loadMoreContainer" style="display: none;">
-                    <button class="load-more-btn" onclick="loadMore()">Load More Candidates</button>
-                </div>
-            </div>
-
-            <!-- Shortlist View -->
-            <div id="shortlistView" class="view-section">
-                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Your Shortlist</h1>
-                <div style="margin-bottom: 2rem;">
-                    <button class="btn btn-primary" onclick="exportShortlist()">Export Shortlist</button>
-                </div>
-                <div id="shortlistContent"></div>
-            </div>
-
-            <!-- Account View -->
-            <div id="accountView" class="view-section">
-                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">My Account</h1>
-                <div class="section-box">
-                    <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">Account Overview</h2>
-                    <p style="margin-bottom: 1rem;"><strong>Name:</strong> <span id="accountName">-</span></p>
-                    <p style="margin-bottom: 1rem;"><strong>Email:</strong> <span id="accountEmail">-</span></p>
-                    <p style="margin-bottom: 1rem;"><strong>Credits Balance:</strong> <span id="accountCredits">0</span></p>
-                    <p><strong>Total Requests:</strong> <span id="totalRequests">0</span></p>
-                </div>
-                
-                <div class="section-box">
-                    <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">Credits History</h2>
-                    <div id="creditsHistory"></div>
-                </div>
-            </div>
-
-            <!-- Requests View -->
-            <div id="requestsView" class="view-section">
-                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">My Requests</h1>
-                <div class="section-box">
-                    <div id="requestsList"></div>
-                </div>
-            </div>
-
-            <!-- Admin View -->
-            <div id="adminView" class="view-section">
-                <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">Admin Panel</h1>
-                
-                <div class="section-box">
-                    <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">All Users</h2>
-                    <div id="adminUsersList"></div>
-                </div>
-                
-                <div class="section-box">
-                    <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">All Requests</h2>
-                    <div id="adminRequestsList"></div>
-                </div>
-            </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input id="loginPassword" type="password" class="form-input" required placeholder="••••••••">
         </div>
+        <button class="btn-login" type="submit">Sign In</button>
+      </form>
+      <div style="text-align:center;margin-top:2rem;padding-top:2rem;border-top:1px solid #e1e8e4;">
+        <p style="color:var(--rough-gray);font-size:.85rem;">© 2025 Golf Jobs.</p>
+        <p style="margin-top:.5rem;color:var(--rough-gray);font-size:.85rem;">Need access? Contact <strong>graham@golf-jobs.com</strong></p>
+      </div>
     </div>
+  </div>
 
-    <!-- Candidate Modal -->
-    <div id="candidateModal" class="modal">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeModal()">×</button>
-            <h2 id="modalTitle" style="color: var(--augusta-green); margin-bottom: 1rem;"></h2>
-            <div id="modalBody"></div>
-            
-            <!-- Notes Section -->
-            <div class="notes-panel">
-                <h4 style="color: var(--augusta-green); margin-bottom: 0.5rem;">📝 Private Notes</h4>
-                <textarea class="note-textarea" id="candidateNotes" placeholder="Add your notes about this candidate..."></textarea>
-                <button class="btn btn-small" onclick="saveNotes()" style="margin-top: 0.5rem;">Save Notes</button>
-            </div>
-            
-            <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end; flex-wrap: wrap;">
-                <button class="btn btn-secondary" onclick="addToShortlist()">Save to Shortlist</button>
-                <button class="btn btn-primary" onclick="showCreditConfirmation()">Request Contact Details (1 Credit)</button>
-            </div>
+  <!-- App -->
+  <div id="mainApp" class="main-app">
+    <header class="header">
+      <div class="header-content">
+        <div class="logo" onclick="goHome()">
+          <img src="https://ik.imagekit.io/golfjobs/Golf%20Jobs%20logo%20white.png?updatedAt=1758280288759" alt="Golf Jobs">
         </div>
-    </div>
-    
-    <!-- Confirmation Dialog -->
-    <div class="dialog-overlay" id="dialogOverlay"></div>
-    <div class="confirmation-dialog" id="confirmationDialog">
-        <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Confirm Credit Use</h3>
-        <p style="margin-bottom: 1rem;">You are about to use <strong>1 credit</strong> to reveal:</p>
-        <ul style="margin-left: 1.5rem; margin-bottom: 1.5rem;">
-            <li>Email address</li>
-            <li>Phone number</li>
-            <li>LinkedIn profile</li>
-        </ul>
-        <p style="margin-bottom: 1.5rem;">Current balance: <strong id="currentCredits">0</strong> credits</p>
-        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-            <button class="btn btn-secondary" onclick="hideConfirmation()">Cancel</button>
-            <button class="btn btn-primary" onclick="confirmCreditUse()">Confirm</button>
+        <nav class="nav-tabs">
+          <button class="nav-tab active" onclick="switchView('pools')">Talent Pools</button>
+          <button class="nav-tab" onclick="switchView('shortlist')">Shortlist <span id="shortlistBadge" class="shortlist-badge" style="display:none;">0</span></button>
+          <button class="nav-tab" onclick="switchView('account')">My Account</button>
+          <button class="nav-tab" onclick="switchView('requests')">My Requests</button>
+          <button id="adminTab" class="nav-tab" onclick="switchView('admin')" style="display:none;">Admin</button>
+        </nav>
+        <div class="user-info">
+          <span id="userName">Welcome</span>
+          <div class="credits-badge">Credits: <span id="creditsCount">0</span></div>
+          <button class="btn-logout" onclick="handleLogout()">Sign Out</button>
         </div>
+      </div>
+    </header>
+
+    <div class="container">
+      <!-- POOLS -->
+      <div id="poolsView" class="view-section active">
+        <h1 style="font-size:2.25rem;color:var(--augusta-green);margin-bottom:.5rem;">Your Talent Pools</h1>
+        <p style="color:var(--rough-gray);margin-bottom:1.25rem;font-size:1.05rem;">Select a talent pool to browse candidates</p>
+        <div id="poolsGrid" class="pools-grid">
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+        </div>
+      </div>
+
+      <!-- CANDIDATES (filled on pool click) -->
+      <div id="poolDetail" class="view-section">
+        <div class="section-box">
+          <div id="poolHeader"></div>
+          <div class="candidates-grid" id="candidatesGrid">
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+          </div>
+          <div id="loadMoreContainer" class="load-more-container" style="display:none;margin-top:1rem;">
+            <button class="btn btn-secondary" onclick="loadMore()">Load More Candidates</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SHORTLIST -->
+      <div id="shortlistView" class="view-section">
+        <h1 style="font-size:2.25rem;color:var(--augusta-green);margin-bottom:1rem;">Your Shortlist</h1>
+        <div style="margin-bottom:1rem;">
+          <button class="btn btn-primary" onclick="exportShortlist()">Export Shortlist</button>
+        </div>
+        <div id="shortlistContent"></div>
+      </div>
+
+      <!-- ACCOUNT -->
+      <div id="accountView" class="view-section">
+        <h1 style="font-size:2.25rem;color:var(--augusta-green);margin-bottom:1rem;">My Account</h1>
+        <div class="section-box">
+          <h2 style="color:var(--augusta-green);margin-bottom:.75rem;">Account Overview</h2>
+          <p><strong>Name:</strong> <span id="accountName">-</span></p>
+          <p><strong>Email:</strong> <span id="accountEmail">-</span></p>
+          <p><strong>Credits Balance:</strong> <span id="accountCredits">0</span></p>
+          <p><strong>Total Requests:</strong> <span id="totalRequests">0</span></p>
+        </div>
+        <div class="section-box">
+          <h2 style="color:var(--augusta-green);margin-bottom:.75rem;">Credits History</h2>
+          <div id="creditsHistory"></div>
+        </div>
+      </div>
+
+      <!-- REQUESTS -->
+      <div id="requestsView" class="view-section">
+        <h1 style="font-size:2.25rem;color:var(--augusta-green);margin-bottom:1rem;">My Requests</h1>
+        <div class="section-box">
+          <p style="margin-bottom:1rem;color:var(--rough-gray);">
+            Your contact requests are processed within 24 hours. Graham will contact candidates on your behalf and share introductions by email.
+          </p>
+          <div id="requestsList"></div>
+        </div>
+      </div>
+
+      <!-- ADMIN -->
+      <div id="adminView" class="view-section">
+        <h1 style="font-size:2.25rem;color:var(--augusta-green);margin-bottom:1rem;">Admin Panel</h1>
+        <div class="section-box">
+          <h2 style="color:var(--augusta-green);margin-bottom:.75rem;">All Users</h2>
+          <div id="adminUsersList"></div>
+        </div>
+        <div class="section-box">
+          <h2 style="color:var(--augusta-green);margin-bottom:.75rem;">All Requests</h2>
+          <div id="adminRequestsList"></div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <script>
-        // Initialize Supabase
-        const SUPABASE_URL = 'https://kbadedwbcjetxiertztv.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiYWRlZHdiY2pldHhpZXJ0enR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzMDAyNDMsImV4cCI6MjA3Mzg3NjI0M30.igm3XjM8l1OXfilQaAHtmJyCDe9eXILV_P9B3_sUzwg';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <!-- Candidate Modal -->
+  <div id="candidateModal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">×</button>
+      <h2 id="modalTitle" style="color:var(--augusta-green);margin-bottom:.75rem;"></h2>
+      <div id="modalBody"></div>
+      <div class="section-box" style="padding:1rem;margin-top:1rem;">
+        <h4 style="color:var(--augusta-green);margin:.25rem 0 .5rem;">📝 Private Notes</h4>
+        <textarea id="candidateNotes" class="note-textarea" placeholder="Add your notes about this candidate."></textarea>
+        <button class="btn btn-small btn-secondary" style="margin-top:.5rem" onclick="saveNotes()">Save Notes</button>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="addToShortlist()">Save to Shortlist</button>
+        <button class="btn btn-primary" onclick="showCreditConfirmation()">Request Contact Details (1 Credit)</button>
+      </div>
+    </div>
+  </div>
 
-        // Global state
-        let currentUser = null;
-        let currentPool = null;
-        let currentCandidate = null;
-        let userProfile = null;
-        let userPools = [];
-        let shortlist = [];
-        let allCandidates = [];
-        let filteredCandidates = [];
-        let displayedCandidates = [];
-        let selectedLocations = new Set();
-        let availableLocations = new Set();
-        let selectedCandidates = new Set();
-        let candidateNotes = {};
-        let searchTimeout = null;
-        let currentPage = 0;
-        const candidatesPerPage = 20;
-        let searchTerm = '';
+  <!-- Confirmation Dialog -->
+  <div id="dialogOverlay" class="dialog-overlay"></div>
+  <div id="confirmationDialog" class="confirmation-dialog">
+    <h3 style="color:var(--augusta-green);margin-bottom:.5rem;">Confirm Contact Request</h3>
+    <p style="margin-bottom:1rem;">You are about to use <strong>1 credit</strong> to request contact for this candidate.</p>
+    <div style="background:#f0f8f4;padding:1rem;border-radius:8px;margin-bottom:1rem;">
+      <p style="font-size:.95rem;line-height:1.6;">
+        <strong>What happens next:</strong><br>
+        • Graham will personally contact the candidate<br>
+        • You'll receive their full contact details via email<br>
+        • A tailored introduction will be facilitated<br>
+        • Response typically within 24 hours
+      </p>
+    </div>
+    <p style="margin-bottom:1rem;">Current balance: <strong id="currentCredits">0</strong> credits</p>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="hideConfirmation()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmCreditUse()">Confirm Request</button>
+    </div>
+  </div>
 
-        // Utility functions
-        function toTitleCase(str) {
-            if (!str) return str;
-            
-            const acronyms = ['UK', 'USA', 'US', 'CEO', 'CFO', 'COO', 'CTO', 'CIO', 'CMO', 
-                             'PGA', 'PR', 'HR', 'IT', 'SEO', 'SEM', 'EMEA', 'APAC', 'B2B', 
-                             'B2C', 'VP', 'SVP', 'EVP', 'GM', 'MD', 'PA', 'EA', 'F&B', 
-                             'R&D', 'QA', 'UI', 'UX', 'API', 'CRM', 'ERP', 'KPI', 'ROI',
-                             'P&L', 'M&A', 'IPO', 'MBA', 'PhD', 'CPA', 'LLP', 'LLC'];
-            
-            return str.toLowerCase().split(/(\s+|-)/).map(word => {
-                const cleanWord = word.replace(/[.,;:!?]/g, '');
-                const upperClean = cleanWord.toUpperCase();
-                
-                if (acronyms.includes(upperClean)) {
-                    return word.replace(cleanWord, upperClean);
-                }
-                
-                if (word.length > 0) {
-                    return word.charAt(0).toUpperCase() + word.slice(1);
-                }
-                return word;
-            }).join('');
+  <script>
+    // ===== Supabase =====
+    const SUPABASE_URL = 'https://kbadedwbcjetxiertztv.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiYWRlZHdiY2pldHhpZXJ0enR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzMDAyNDMsImV4cCI6MjA3Mzg3NjI0M30.igm3XjM8l1OXfilQaAHtmJyCDe9eXILV_P9B3_sUzwg';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ===== State =====
+    let currentUser = null;
+    let userProfile = null;
+    let userPools = [];
+    let shortlist = [];
+    let currentPool = null;
+    let allCandidates = [];
+    let displayedCandidates = [];
+    let filteredCandidates = [];
+    let currentCandidate = null;
+    let selectedLocations = new Set();
+    let availableLocations = new Set();
+    let candidateNotes = {};
+    let searchTimeout = null;
+    let currentPage = 0;
+    const candidatesPerPage = 20;
+
+    // ===== Auth / Login =====
+    async function handleLogin(e){
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error){
+        document.getElementById('loginError').style.display = 'block';
+        setTimeout(()=>document.getElementById('loginError').style.display='none', 2500);
+        return;
+      }
+      await loadUserData(data.user);
+      showApp();
+    }
+
+    async function loadUserData(user){
+      currentUser = user;
+      const { data: profile } = await supabase.from('users').select('*').eq('id', user.id).single();
+      if (profile){
+        userProfile = profile;
+        document.getElementById('userName').textContent = profile.name || user.email;
+        document.getElementById('creditsCount').textContent = profile.credits || 0;
+        if (profile.role === 'admin'){ document.getElementById('adminTab').style.display = 'block'; }
+      }
+
+      const { data: access } = await supabase.from('user_pool_access').select('pool_id').eq('user_id', user.id);
+      userPools = access ? access.map(p=>p.pool_id) : [];
+
+      const { data: shortlistData } = await supabase.from('shortlists').select('*, candidates(*)').eq('user_id', user.id);
+      shortlist = shortlistData || [];
+      updateShortlistBadge();
+
+      const savedNotes = localStorage.getItem('candidateNotes_' + user.id);
+      if (savedNotes){ candidateNotes = JSON.parse(savedNotes); }
+    }
+
+    function showApp(){
+      document.getElementById('loginScreen').style.display='none';
+      document.getElementById('mainApp').classList.add('active');
+      loadPools();
+    }
+
+    async function handleLogout(){
+      await supabase.auth.signOut();
+      location.reload();
+    }
+
+    // ===== Navigation =====
+    function switchView(view){
+      document.querySelectorAll('.view-section').forEach(s=>s.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+      document.getElementById(view+'View')?.classList.add('active');
+      if (event && event.target) event.target.classList.add('active');
+
+      if (view==='pools') loadPools();
+      else if (view==='shortlist') loadShortlist();
+      else if (view==='account') loadAccount();
+      else if (view==='requests') loadRequests();
+      else if (view==='admin' && userProfile?.role==='admin') loadAdmin();
+
+      const url = new URL(window.location);
+      url.searchParams.set('view', view);
+      history.pushState({}, '', url);
+    }
+    function goHome(){ switchView('pools'); }
+
+    // ===== Pools / Candidates =====
+    async function loadPools(){
+      const grid = document.getElementById('poolsGrid');
+      grid.innerHTML = `<div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div>`;
+
+      const { data: pools } = await supabase.from('talent_pools').select('*');
+      const myPools = (pools||[]).filter(p => userPools.includes(p.id));
+      grid.innerHTML = myPools.length ? myPools.map(p=>`
+        <div class="pool-card" onclick='openPool(${JSON.stringify(p)})'>
+          <h3 style="color:var(--augusta-green);margin:.25rem 0;">${p.name}</h3>
+          <p style="color:var(--rough-gray);margin:.25rem 0;">${p.description||''}</p>
+        </div>`).join('') : `<div class="section-box">You have no pools assigned yet.</div>`;
+    }
+
+    async function openPool(pool){
+      currentPool = pool;
+      document.getElementById('poolsView').classList.remove('active');
+      document.getElementById('poolDetail').classList.add('active');
+      document.getElementById('poolHeader').innerHTML = `
+        <div class="breadcrumb"><a href="#" onclick="switchView('pools')">Talent Pools</a> › <span>${pool.name}</span></div>
+        <h2 style="color:var(--augusta-green);margin:.25rem 0 1rem;">${pool.name}</h2>
+      `;
+      currentPage = 0; allCandidates = []; displayedCandidates = [];
+      await loadCandidatesPage();
+    }
+
+    async function loadCandidatesPage(){
+      const { data: candidates } = await supabase
+        .from('candidates')
+        .select('*')
+        .eq('pool_id', currentPool.id)
+        .range(currentPage*candidatesPerPage, (currentPage+1)*candidatesPerPage-1);
+
+      const grid = document.getElementById('candidatesGrid');
+      if (candidates && candidates.length){
+        allCandidates = allCandidates.concat(candidates);
+        displayedCandidates = displayedCandidates.concat(candidates);
+        grid.innerHTML = displayedCandidates.map(renderCandidateCard).join('');
+        currentPage++;
+        document.getElementById('loadMoreContainer').style.display = candidates.length === candidatesPerPage ? 'block' : 'none';
+      } else {
+        if (currentPage===0){ grid.innerHTML = `<div class="section-box">No candidates in this pool yet.</div>`; }
+        document.getElementById('loadMoreContainer').style.display = 'none';
+      }
+    }
+    function loadMore(){ loadCandidatesPage(); }
+
+    function renderCandidateCard(c){
+      const jobTitle = toTitleCase(c["Current Job Title"] || c["Job Title"] || c.Name || `Candidate #${c.ID}`);
+      const location = cleanAndFormatLocation(c["Town/City"], c.Country);
+      return `
+        <div class="candidate-card" onclick='openCandidate(${JSON.stringify(c).replace(/'/g,"&apos;")})'>
+          <h3 style="color:var(--augusta-green);margin:.2rem 0;">${jobTitle}</h3>
+          <p style="color:var(--rough-gray);margin:.2rem 0;">${location}</p>
+        </div>`;
+    }
+
+    function openCandidate(candidate){
+      currentCandidate = candidate;
+      const title = toTitleCase(candidate["Current Job Title"] || candidate["Job Title"] || candidate.Name || `Candidate #${candidate.ID}`);
+      const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+      const summary = candidate.Summary || 'No summary provided.';
+      const salary = candidate["Salary Expectations"] || '—';
+      const notice = candidate["Notice Period"] || '—';
+      const activelyLooking = candidate["Actively Looking?"] || '—';
+      const skills = candidate.Skills ? `<div style="margin-top:1rem;"><strong>Skills:</strong> ${candidate.Skills}</div>` : '';
+
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').innerHTML = `
+        <p style="color:var(--rough-gray);">${location}</p>
+        <div style="margin-top:.75rem;line-height:1.6">${summary}</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:1rem;">
+          <div style="background:var(--morning-mist);padding:1rem;border-radius:10px;"><div style="font-size:.8rem;color:var(--rough-gray);text-transform:uppercase;margin-bottom:.25rem;">Salary Expectations</div><div style="font-weight:600">${salary}</div></div>
+          <div style="background:var(--morning-mist);padding:1rem;border-radius:10px;"><div style="font-size:.8rem;color:var(--rough-gray);text-transform:uppercase;margin-bottom:.25rem;">Notice Period</div><div style="font-weight:600">${notice}</div></div>
+          <div style="background:var(--morning-mist);padding:1rem;border-radius:10px;"><div style="font-size:.8rem;color:var(--rough-gray);text-transform:uppercase;margin-bottom:.25rem;">Actively Looking</div><div style="font-weight:600">${activelyLooking}</div></div>
+        </div>
+        ${skills}
+        <div style="background:#e6f2ff;border:1px solid var(--augusta-green);border-radius:12px;padding:1rem;margin-top:1rem;">
+          <p style="color:var(--augusta-green);font-weight:600;">💼 To connect with this candidate, request their contact details and Graham will facilitate a personalized introduction.</p>
+        </div>
+      `;
+      const notes = candidateNotes[candidate.ID] || '';
+      document.getElementById('candidateNotes').value = notes;
+      document.getElementById('candidateModal').classList.add('active');
+    }
+
+    // ===== Utilities =====
+    function toTitleCase(str){ return (str||'').toString().toLowerCase().replace(/(^|[\s\-_/])([a-z])/g, s=>s.toUpperCase()); }
+    function cleanAndFormatLocation(city, country){
+      const c = (city||'').toString().trim();
+      const k = (country||'').toString().trim();
+      return [c,k].filter(Boolean).join(', ') || 'Location not specified';
+    }
+
+    // ===== Notes / Shortlist =====
+    function saveNotes(){
+      if (!currentCandidate) return;
+      const notes = document.getElementById('candidateNotes').value;
+      candidateNotes[currentCandidate.ID] = notes;
+      localStorage.setItem('candidateNotes_' + currentUser.id, JSON.stringify(candidateNotes));
+      alert('Notes saved!');
+    }
+    function closeModal(){ document.getElementById('candidateModal').classList.remove('active'); }
+    function updateShortlistBadge(){
+      const b = document.getElementById('shortlistBadge');
+      if (shortlist.length > 0){ b.style.display='inline'; b.textContent = shortlist.length; }
+      else { b.style.display='none'; }
+    }
+
+    async function addToShortlist(){
+      if (!currentCandidate) return;
+      try{
+        const { count } = await supabase.from('shortlists').select('*', { count:'exact', head:true })
+          .eq('user_id', currentUser.id).eq('candidate_id', currentCandidate.ID);
+        if ((count||0) > 0){ alert('This candidate is already in your shortlist'); return; }
+
+        const { data, error } = await supabase.from('shortlists').insert({
+          user_id: currentUser.id, candidate_id: currentCandidate.ID, saved_from_pool: currentPool?.id
+        }).select();
+        if (error) throw error;
+
+        closeModal();
+        const { data: s2 } = await supabase.from('shortlists').select('*, candidates(*)').eq('user_id', currentUser.id);
+        shortlist = s2 || []; updateShortlistBadge();
+        alert('Added to shortlist!');
+      }catch(err){
+        console.error('Shortlist error', err);
+        alert('Error adding to shortlist. Please try again.');
+      }
+    }
+
+    async function loadShortlist(){
+      const content = document.getElementById('shortlistContent');
+      if (!shortlist || shortlist.length===0){
+        content.innerHTML = `
+          <div class="section-box" style="text-align:center;">
+            <h2>No candidates saved yet</h2>
+            <p style="color:var(--rough-gray);margin-bottom:1rem;">Browse talent pools and save candidates you're interested in.</p>
+            <button class="btn btn-primary" onclick="switchView('pools')">Browse Talent Pools</button>
+          </div>`;
+        return;
+      }
+      content.innerHTML = '<div class="candidates-grid" id="shortlistGrid"></div>';
+      const grid = document.getElementById('shortlistGrid');
+      grid.innerHTML = shortlist.map(item=>{
+        const c = item.candidates; if (!c) return '';
+        const jobTitle = toTitleCase(c["Current Job Title"]||c["Job Title"]||c.Name||`Candidate #${c.ID}`);
+        const loc = cleanAndFormatLocation(c["Town/City"], c.Country);
+        const notes = candidateNotes[c.ID] || '';
+        return `
+          <div class="candidate-card" style="position:relative;">
+            <button onclick="removeFromShortlist(${item.id})" style="position:absolute;top:1rem;right:1rem;background:#fee;color:var(--hazard-red);border:none;padding:.4rem .7rem;border-radius:8px;cursor:pointer;z-index:1;">Remove</button>
+            <div onclick='openCandidate(${JSON.stringify(c).replace(/'/g,"&apos;")})'>
+              <h3 style="color:var(--augusta-green);margin:.2rem 0;">${jobTitle}</h3>
+              <p style="color:var(--rough-gray);margin:.2rem 0;">${loc}</p>
+              ${notes ? `<p style="margin-top:.3rem;font-size:.9rem;color:var(--club-gold);">📝 ${notes.substring(0,60)}...</p>`:''}
+            </div>
+          </div>`;
+      }).join('');
+    }
+    async function removeFromShortlist(id){
+      await supabase.from('shortlists').delete().eq('id', id);
+      const { data: s2 } = await supabase.from('shortlists').select('*, candidates(*)').eq('user_id', currentUser.id);
+      shortlist = s2 || []; updateShortlistBadge(); loadShortlist();
+    }
+    function exportShortlist(){
+      const rows = shortlist.map(i=>{
+        const c = i.candidates||{};
+        return {
+          id:c.ID, name:c.Name||'', job_title:c["Current Job Title"]||c["Job Title"]||'',
+          city:(c["Town/City"]||''), country:(c.Country||''), summary:(c.Summary||'')
+        }
+      });
+      const csv = 'ID,Name,Job Title,City,Country,Summary\n' + rows.map(r=>
+        [r.id,r.name,r.job_title,r.city,r.country,('"'+(r.summary.replace(/"/g,'""')||'')+'"')].join(',')
+      ).join('\n');
+      const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download='shortlist.csv'; a.click(); URL.revokeObjectURL(url);
+    }
+
+    // ===== Credit Confirmation & Request Contact (no auto-reveal) =====
+    function showCreditConfirmation(){
+      document.getElementById('currentCredits').textContent = userProfile.credits || 0;
+      document.getElementById('confirmationDialog').classList.add('active');
+      document.getElementById('dialogOverlay').classList.add('active');
+    }
+    function hideConfirmation(){
+      document.getElementById('confirmationDialog').classList.remove('active');
+      document.getElementById('dialogOverlay').classList.remove('active');
+    }
+    async function confirmCreditUse(){
+      hideConfirmation();
+      await requestContact();
+    }
+
+    async function requestContact(){
+      if (!currentCandidate) return;
+      if ((userProfile.credits||0) < 1){
+        alert('Insufficient credits! Contact graham@golf-jobs.com to purchase more.');
+        return;
+      }
+      try{
+        // Deduct credit
+        const newBalance = (userProfile.credits||0) - 1;
+        const { error: profileError } = await supabase.from('users').update({ credits: newBalance }).eq('id', currentUser.id);
+        if (profileError){ throw profileError; }
+
+        // Insert request with status
+        const payload = {
+          user_id: currentUser.id,
+          candidate_id: currentCandidate.ID,
+          credits_used: 1,
+          request_date: new Date().toISOString(),
+          status: 'pending'
+        };
+        const { data: requestData, error: requestError } = await supabase.from('requests').insert(payload).select();
+        if (requestError){ 
+          // rollback
+          await supabase.from('users').update({ credits: userProfile.credits }).eq('id', currentUser.id);
+          throw requestError;
         }
 
-        function cleanAndFormatLocation(townCity, country) {
-            const excludeTerms = ['England', 'United Kingdom', 'UK', 'Scotland', 'Wales', 'Northern Ireland', 
-                                 'Great Britain', 'GB', 'Uk', 'england', 'united kingdom'];
-            
-            let cleanedTown = townCity ? townCity.trim() : '';
-            
-            if (cleanedTown.includes(',')) {
-                cleanedTown = cleanedTown.split(',')[0].trim();
-            }
-            
-            let cleanedCountry = country ? country.trim() : '';
-            
-            if (excludeTerms.some(term => cleanedCountry.toLowerCase() === term.toLowerCase())) {
-                cleanedCountry = '';
-            }
-            
-            if (cleanedCountry && cleanedCountry.includes(',')) {
-                const parts = cleanedCountry.split(',');
-                const firstPart = parts[0].trim();
-                if (!excludeTerms.some(term => firstPart.toLowerCase() === term.toLowerCase())) {
-                    if (!cleanedTown) {
-                        cleanedTown = firstPart;
-                    }
-                    cleanedCountry = '';
-                }
-            }
-            
-            if (cleanedTown === cleanedTown.toUpperCase() && cleanedTown.length > 2) {
-                cleanedTown = toTitleCase(cleanedTown);
-            } else {
-                cleanedTown = toTitleCase(cleanedTown);
-            }
-            
-            if (cleanedTown) {
-                return cleanedTown;
-            }
-            
-            return 'Location Not Specified';
-        }
+        // Update local credits
+        userProfile.credits = newBalance;
+        document.getElementById('creditsCount').textContent = newBalance;
 
-        function formatSalaryExact(salary) {
-            if (!salary) return 'Salary Negotiable';
-            const num = parseFloat(salary);
-            if (isNaN(num)) return 'Salary Negotiable';
-            return `£${num.toLocaleString()}`;
-        }
+        // Success message inside modal (do NOT reveal details)
+        const currentModalBody = document.getElementById('modalBody').innerHTML;
+        const successHtml = `
+          <div style="margin-top:1rem;padding:1rem;border-radius:12px;border:2px solid var(--augusta-green);background:#d4edda;">
+            <h4 style="color:var(--augusta-green);margin:.25rem 0 .5rem;">✅ Contact Request Submitted!</h4>
+            <p><strong>What happens next:</strong></p>
+            <ul style="margin-left:1.25rem;line-height:1.6;">
+              <li>Graham has been notified of your request</li>
+              <li>He will contact the candidate</li>
+              <li>You'll receive full contact details by email</li>
+              <li>A tailored introduction will be facilitated</li>
+            </ul>
+            <p style="margin-top:.5rem;font-size:.9rem;color:#155724;"><strong>Reference ID:</strong> #${requestData[0].id}</p>
+          </div>`;
+        document.getElementById('modalBody').innerHTML = currentModalBody.replace(/<div style="background: #e6f2ff;[\s\S]*?<\/div>/, successHtml);
+        alert('Contact request submitted successfully!');
 
-        function formatNoticePeriod(notice) {
-            if (!notice) return 'Unknown Notice Period';
-            const lowerNotice = notice.toLowerCase();
-            if (lowerNotice.includes('immediately') || lowerNotice.includes('immediate')) return 'Available immediately';
-            if (lowerNotice.includes('1 week')) return '1 week notice';
-            if (lowerNotice.includes('2 week')) return '2 weeks notice';
-            if (lowerNotice.includes('1 month')) return '1 month notice';
-            if (lowerNotice.includes('2 month')) return '2 months notice';
-            if (lowerNotice.includes('3 month')) return '3 months notice';
-            return notice + ' notice';
-        }
+        // Try to email Graham (Edge Function -> fallback to email_queue)
+        const emailSubject = `New Contact Request #${requestData[0].id}`;
+        const candidateName = currentCandidate["Current Job Title"] || currentCandidate.Name || `Candidate #${currentCandidate.ID}`;
+        const location = cleanAndFormatLocation(currentCandidate["Town/City"], currentCandidate.Country);
+        const emailBody = `
+New contact request submitted.
 
-        // Function to add line breaks to text (for summaries)
-        function formatWithLineBreaks(text) {
-            if (!text) return '';
-            // Split on sentence endings and rejoin with <br><br> for clear paragraph breaks
-            return text.replace(/\. /g, '.<br><br>');
-        }
+Request ID: ${requestData[0].id}
+Candidate: ${candidateName} (ID: ${currentCandidate.ID})
+Location: ${location}
 
-        function generateSummaryPreview(text, maxLength = 120) {
-            if (!text) return '';
-            
-            const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-            
-            if (sentences.length === 0) return text.substring(0, maxLength) + '...';
-            
-            const keyPhrases = ['years experience', 'specializing in', 'expertise in', 'responsible for', 
-                               'passionate about', 'skilled in', 'background in', 'focused on'];
-            
-            let bestSentence = sentences[0];
-            for (let sentence of sentences) {
-                if (keyPhrases.some(phrase => sentence.toLowerCase().includes(phrase))) {
-                    bestSentence = sentence;
-                    break;
-                }
-            }
-            
-            const summary = bestSentence.trim();
-            if (summary.length > maxLength) {
-                return summary.substring(0, maxLength) + '...';
-            }
-            return summary;
-        }
+Requested by: ${userProfile.name || currentUser.email}
+User ID: ${currentUser.id}
 
-        function formatSkillsDisplay(skillsString) {
-            if (!skillsString) return '';
-            
-            // Return as plain text - no green highlights
-            if (skillsString.length > 150) {
-                return `<p style="color: var(--rough-gray); font-size: 0.9rem; line-height: 1.4; margin-bottom: 0.5rem;">
-                        ${skillsString.substring(0, 120)}...</p>`;
-            }
-            
-            return `<p style="color: var(--rough-gray); font-size: 0.9rem; line-height: 1.4; margin-bottom: 0.5rem;">
-                    ${skillsString}</p>`;
-        }
+Please contact the candidate and then reply to the client with details.
+        `.trim();
 
-        // Profile score calculation
-        function calculateProfileScore(candidate) {
-            let score = 0;
-            let maxScore = 100;
-            
-            // Professional Summary - 30 points max
-            const aboutYou = candidate["About You"] || '';
-            if (aboutYou.length > 200) {
-                score += 30;
-            } else if (aboutYou.length > 100) {
-                score += 20;
-            } else if (aboutYou.length > 50) {
-                score += 10;
-            }
-            
-            // Skills - 20 points
-            const skills = candidate["Your Skills"] || '';
-            if (skills.length > 100) {
-                score += 20;
-            } else if (skills.length > 50) {
-                score += 15;
-            } else if (skills.length > 20) {
-                score += 10;
-            }
-            
-            // Job Title - 10 points
-            if (candidate["Current Job Title"] || candidate["Job Title"]) {
-                score += 10;
-            }
-            
-            // Salary expectations - 10 points
-            if (candidate["What are your salary expectations?"] || candidate["Salary Expectations"]) {
-                score += 10;
-            }
-            
-            // Notice period - 10 points
-            if (candidate["Notice Period"]) {
-                score += 10;
-            }
-            
-            // Location - 5 points
-            if (candidate["Town/City"]) {
-                score += 5;
-            }
-            
-            // Contact info - 5 points each
-            if (candidate["Email"]) score += 5;
-            if (candidate["LinkedIn"]) score += 5;
-            if (candidate["GitHub"]) score += 5;
-            
-            return Math.min((score / maxScore) * 100, 100);
-        }
-
-        function isNewCandidate(candidate) {
-            if (!candidate.created_at) return false;
-            const createdDate = new Date(candidate.created_at);
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            return createdDate > sevenDaysAgo;
-        }
-
-        function highlightSearchTerms(text, term) {
-            if (!term || !text) return text;
-            const regex = new RegExp(`(${term})`, 'gi');
-            return text.replace(regex, '<span class="highlight">$1</span>');
-        }
-
-        function detectJobCategory(jobTitle) {
-            if (!jobTitle) return 'other';
-            
-            const title = jobTitle.toLowerCase();
-            
-            const greenkeepingKeywords = [
-                'greenkeep', 'green keep', 'course manager', 'turf', 'agronomist', 'superintendent',
-                'groundsman', 'grounds', 'course maintenance', 'irrigation', 'horticultur',
-                'course care', 'course condition', 'grounds crew', 'greens staff', 'deputy course',
-                'assistant greenkeeper', 'head greenkeeper', 'spray technician', 'mechanic greenkeep'
-            ];
-            if (greenkeepingKeywords.some(keyword => title.includes(keyword))) {
-                return 'greenkeeping';
-            }
-            
-            const managementKeywords = [
-                'director', 'manager', 'head of', 'chief', 'ceo', 'coo', 'cfo', 'cto', 'cio',
-                'president', 'vice president', 'vp ', 'svp', 'evp', 'executive', 'partner',
-                'managing director', 'general manager', 'gm ', 'regional manager', 'area manager',
-                'operations director', 'commercial director', 'finance director', 'managing partner',
-                'owner', 'proprietor', 'chairman', 'board member', 'trustee', 'committee'
-            ];
-            if (managementKeywords.some(keyword => title.includes(keyword))) {
-                return 'management';
-            }
-            
-            const salesKeywords = [
-                'sales', 'business development', 'account manager', 'commercial', 'revenue',
-                'client manager', 'customer success', 'relationship manager', 'account executive',
-                'sales representative', 'sales exec', 'biz dev', 'partnerships', 'corporate sales',
-                'membership sales', 'sales consultant', 'sales advisor', 'telesales', 'inside sales',
-                'field sales', 'sales support', 'sales coordinator', 'key account', 'national account',
-                'territory manager', 'district manager', 'business manager', 'development manager'
-            ];
-            if (salesKeywords.some(keyword => title.includes(keyword))) {
-                return 'sales';
-            }
-            
-            const marketingKeywords = [
-                'marketing', 'pr ', 'public relations', 'communications', 'social media', 'brand',
-                'digital marketing', 'content', 'copywriter', 'graphic design', 'designer',
-                'creative', 'advertising', 'media', 'campaign', 'seo', 'sem', 'ppc', 'email marketing',
-                'marketing exec', 'marketing assistant', 'marketing coordinator', 'marketing manager',
-                'community manager', 'influence', 'affiliate', 'growth', 'acquisition', 'retention',
-                'engagement', 'events', 'event manager', 'event coordinator', 'conference'
-            ];
-            if (marketingKeywords.some(keyword => title.includes(keyword))) {
-                return 'marketing';
-            }
-            
-            const fandBKeywords = [
-                'chef', 'food', 'beverage', 'f&b', 'f & b', 'restaurant', 'bar', 'catering',
-                'hospitality', 'waiter', 'waitress', 'server', 'barista', 'sommelier', 'kitchen',
-                'cook', 'sous chef', 'head chef', 'pastry', 'baker', 'dining', 'banquet',
-                'room service', 'food service', 'maitre', 'host', 'hostess', 'steward',
-                'breakfast', 'lunch', 'dinner', 'cafe', 'bistro', 'clubhouse', 'halfway house',
-                'beverage cart', 'snack bar', 'concession', 'catering manager', 'food manager'
-            ];
-            if (fandBKeywords.some(keyword => title.includes(keyword))) {
-                return 'fandB';
-            }
-            
-            const professionalKeywords = [
-                'golf professional', 'pga', 'teaching pro', 'head pro', 'assistant pro',
-                'golf coach', 'golf instructor', 'golf teacher', 'club professional',
-                'touring pro', 'tour professional', 'golf director', 'director of golf',
-                'first assistant', 'second assistant', 'golf services', 'lesson', 'academy',
-                'instruction', 'fitting', 'club fitter', 'custom fitting', 'golf shop'
-            ];
-            if (professionalKeywords.some(keyword => title.includes(keyword))) {
-                return 'professional';
-            }
-            
-            const operationsKeywords = [
-                'operations', 'coordinator', 'administrator', 'duty manager', 'shift manager',
-                'logistics', 'planning', 'scheduling', 'procurement', 'purchasing', 'buyer',
-                'supply chain', 'inventory', 'warehouse', 'distribution', 'facilities manager',
-                'office manager', 'project manager', 'program manager', 'compliance', 'quality',
-                'health and safety', 'h&s', 'risk', 'audit', 'process', 'improvement', 'efficiency'
-            ];
-            if (operationsKeywords.some(keyword => title.includes(keyword)) && !title.includes('it ')) {
-                return 'operations';
-            }
-            
-            const retailKeywords = [
-                'retail', 'pro shop', 'golf shop', 'shop', 'merchandis', 'buyer', 'visual',
-                'store manager', 'shop manager', 'retail manager', 'retail assistant',
-                'shop assistant', 'sales assistant', 'cashier', 'till', 'stock', 'inventory',
-                'display', 'window', 'fashion', 'apparel', 'clothing', 'equipment',
-                'club sales', 'golf sales', 'retail supervisor', 'shop supervisor'
-            ];
-            if (retailKeywords.some(keyword => title.includes(keyword))) {
-                return 'retail';
-            }
-            
-            const maintenanceKeywords = [
-                'maintenance', 'mechanic', 'facilities', 'technician', 'engineer', 'electrical',
-                'electrician', 'plumber', 'plumbing', 'hvac', 'carpenter', 'joiner', 'painter',
-                'decorator', 'handyman', 'repair', 'service', 'workshop', 'machinery',
-                'equipment tech', 'golf car', 'golf cart', 'buggy', 'vehicle', 'fleet',
-                'building', 'property', 'estate', 'security', 'groundswork', 'landscap'
-            ];
-            if (maintenanceKeywords.some(keyword => title.includes(keyword))) {
-                return 'maintenance';
-            }
-            
-            const adminKeywords = [
-                'admin', 'assistant', 'reception', 'secretary', 'clerk', 'support', 'office',
-                'pa ', 'personal assistant', 'executive assistant', 'ea ', 'bookkeep',
-                'accounts', 'finance assistant', 'payroll', 'hr assistant', 'data entry',
-                'customer service', 'call center', 'help desk', 'front desk', 'concierge',
-                'coordinator', 'junior', 'trainee', 'apprentice', 'intern', 'entry level'
-            ];
-            if (adminKeywords.some(keyword => title.includes(keyword))) {
-                return 'admin';
-            }
-            
-            return 'other';
-        }
-
-        // Enhanced filter functions with debounce
-        function debounce(func, delay) {
-            return function() {
-                const context = this;
-                const args = arguments;
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => func.apply(context, args), delay);
-            }
-        }
-
-        function updateFiltersWithCounts() {
-            const categories = {};
-            const salaryRanges = {
-                '0-30000': 0,
-                '30000-40000': 0,
-                '40000-50000': 0,
-                '50000-60000': 0,
-                '60000-70000': 0,
-                '70000+': 0
-            };
-            
-            allCandidates.forEach(candidate => {
-                const category = detectJobCategory(candidate["Current Job Title"] || candidate["Job Title"]);
-                categories[category] = (categories[category] || 0) + 1;
-                
-                const salary = parseFloat(candidate["What are your salary expectations?"]) || 0;
-                if (salary >= 70000) salaryRanges['70000+']++;
-                else if (salary >= 60000) salaryRanges['60000-70000']++;
-                else if (salary >= 50000) salaryRanges['50000-60000']++;
-                else if (salary >= 40000) salaryRanges['40000-50000']++;
-                else if (salary >= 30000) salaryRanges['30000-40000']++;
-                else if (salary > 0) salaryRanges['0-30000']++;
+        // Edge Function attempt (optional — create 'send_email' in Supabase if desired)
+        try{
+          const { data: fnRes, error: fnErr } = await supabase.functions.invoke('send_email', {
+            body: { to: 'graham@golf-jobs.com', subject: emailSubject, text: emailBody }
+          });
+          if (fnErr) throw fnErr;
+        }catch(_){
+          // Fallback table insert (create table email_queue(to,subject,body,meta,status,created_at))
+          try{
+            await supabase.from('email_queue').insert({
+              to: 'graham@golf-jobs.com',
+              subject: emailSubject,
+              body: emailBody,
+              meta: { user_id: currentUser.id, request_id: requestData[0].id, candidate_id: currentCandidate.ID }
             });
-            
-            // Update category filter with counts
-            const categoryFilter = document.getElementById('categoryFilter');
-            if (categoryFilter) {
-                const currentValue = categoryFilter.value;
-                categoryFilter.innerHTML = `
-                    <option value="">All Categories (${allCandidates.length})</option>
-                    ${categories.greenkeeping ? `<option value="greenkeeping">Greenkeeping (${categories.greenkeeping})</option>` : ''}
-                    ${categories.management ? `<option value="management">Management (${categories.management})</option>` : ''}
-                    ${categories.sales ? `<option value="sales">Sales & Business Dev (${categories.sales})</option>` : ''}
-                    ${categories.marketing ? `<option value="marketing">Marketing & PR (${categories.marketing})</option>` : ''}
-                    ${categories.fandB ? `<option value="fandB">F&B / Hospitality (${categories.fandB})</option>` : ''}
-                    ${categories.professional ? `<option value="professional">Golf Professional (${categories.professional})</option>` : ''}
-                    ${categories.operations ? `<option value="operations">Operations (${categories.operations})</option>` : ''}
-                    ${categories.retail ? `<option value="retail">Retail & Pro Shop (${categories.retail})</option>` : ''}
-                    ${categories.maintenance ? `<option value="maintenance">Maintenance & Facilities (${categories.maintenance})</option>` : ''}
-                    ${categories.admin ? `<option value="admin">Admin & Support (${categories.admin})</option>` : ''}
-                    ${categories.other ? `<option value="other">Other (${categories.other})</option>` : ''}
-                `;
-                categoryFilter.value = currentValue;
-            }
+          }catch(errQueue){
+            console.warn('Email not queued; please wire email method.', errQueue);
+          }
         }
 
-        // Location filter functions
-        function populateLocationFilter(candidates) {
-            availableLocations.clear();
-            let unspecifiedCount = 0;
-            
-            candidates.forEach(candidate => {
-                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-                if (location && location !== 'Location Not Specified') {
-                    availableLocations.add(location);
-                } else {
-                    unspecifiedCount++;
-                }
-            });
-            
-            const sortedLocations = Array.from(availableLocations).sort();
-            const checkboxesDiv = document.getElementById('locationCheckboxes');
-            
-            let html = sortedLocations.map(location => {
-                const count = candidates.filter(c => 
-                    cleanAndFormatLocation(c["Town/City"], c.Country) === location
-                ).length;
-                
-                return `
-                    <div style="margin-bottom: 0.5rem;">
-                        <label style="display: flex; align-items: center; cursor: pointer;">
-                            <input type="checkbox" value="${location}" 
-                                   onchange="updateLocationSelection(this)" 
-                                   style="margin-right: 0.5rem;">
-                            <span style="font-size: 0.9rem;">${location} (${count})</span>
-                        </label>
-                    </div>
-                `;
-            }).join('');
-            
-            // Add Unspecified at the bottom if there are any
-            if (unspecifiedCount > 0) {
-                html += `
-                    <div style="margin-bottom: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #e5e7eb;">
-                        <label style="display: flex; align-items: center; cursor: pointer;">
-                            <input type="checkbox" value="Location Not Specified" 
-                                   onchange="updateLocationSelection(this)" 
-                                   style="margin-right: 0.5rem;">
-                            <span style="font-size: 0.9rem; color: var(--rough-gray);">Unspecified (${unspecifiedCount})</span>
-                        </label>
-                    </div>
-                `;
-            }
-            
-            checkboxesDiv.innerHTML = html;
-        }
+        // Refresh lists
+        loadRequests();
+        if (userProfile.role==='admin'){ loadAdmin(); }
 
-        function toggleLocationDropdown() {
-            const dropdown = document.getElementById('locationDropdown');
-            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-        }
+      }catch(err){
+        console.error('requestContact error', err);
+        alert('There was a problem processing your request. If credits were deducted, they have been refunded.');
+      }
+    }
 
-        function toggleFilterPanel() {
-            const panel = document.getElementById('filterPanel');
-            const overlay = document.getElementById('filterOverlay');
-            
-            if (window.innerWidth <= 768) {
-                panel.classList.toggle('active');
-                overlay.classList.toggle('active');
-            }
-        }
+    // ===== Account / Requests / Admin =====
+    async function loadAccount(){
+      document.getElementById('accountName').textContent = userProfile?.name || '-';
+      document.getElementById('accountEmail').textContent = currentUser?.email || '-';
+      document.getElementById('accountCredits').textContent = userProfile?.credits || 0;
 
-        document.addEventListener('click', function(e) {
-            const dropdown = document.getElementById('locationDropdown');
-            const button = e.target.closest('button');
-            if (dropdown && !dropdown.contains(e.target) && 
-                (!button || button.getAttribute('onclick') !== 'toggleLocationDropdown()')) {
-                dropdown.style.display = 'none';
-            }
-        });
+      const { count } = await supabase.from('requests').select('*', { count:'exact', head:true }).eq('user_id', currentUser.id);
+      document.getElementById('totalRequests').textContent = count || 0;
 
-        function updateLocationSelection(checkbox) {
-            if (checkbox.checked) {
-                selectedLocations.add(checkbox.value);
-            } else {
-                selectedLocations.delete(checkbox.value);
-            }
-            updateLocationFilterText();
-            applyFiltersDebounced();
-        }
+      const { data: requests } = await supabase.from('requests').select('*, candidates(*)')
+        .eq('user_id', currentUser.id).order('request_date', { ascending:false }).limit(10);
 
-        function updateLocationFilterText() {
-            const text = document.getElementById('locationFilterText');
-            if (selectedLocations.size === 0) {
-                text.textContent = 'All Locations';
-            } else if (selectedLocations.size === 1) {
-                text.textContent = Array.from(selectedLocations)[0];
-            } else {
-                text.textContent = `${selectedLocations.size} locations selected`;
-            }
-        }
+      const historyDiv = document.getElementById('creditsHistory');
+      if (requests && requests.length){
+        historyDiv.innerHTML = `
+          <table style="width:100%;border-collapse:collapse;">
+            <thead><tr style="background:#f9fafb;">
+              <th style="padding:.5rem;text-align:left;">Date</th>
+              <th style="padding:.5rem;text-align:left;">Candidate</th>
+              <th style="padding:.5rem;text-align:left;">Credits</th>
+            </tr></thead>
+            <tbody>
+              ${requests.map(req=>{
+                const jt = req.candidates ? toTitleCase(req.candidates["Current Job Title"]||req.candidates.Name) : 'Unknown';
+                return `<tr style="border-bottom:1px solid #e5e7eb;">
+                  <td style="padding:.5rem;">${new Date(req.request_date).toLocaleDateString()}</td>
+                  <td style="padding:.5rem;">${jt}</td>
+                  <td style="padding:.5rem;">-${req.credits_used||1}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>`;
+      }else{
+        historyDiv.innerHTML = '<p style="text-align:center;color:var(--rough-gray);">No credit history yet.</p>';
+      }
+    }
 
-        function selectAllLocations() {
-            const checkboxes = document.querySelectorAll('#locationCheckboxes input[type="checkbox"]');
-            checkboxes.forEach(cb => {
-                cb.checked = true;
-                selectedLocations.add(cb.value);
-            });
-            updateLocationFilterText();
-            applyFiltersDebounced();
-        }
+    async function loadRequests(){
+      const { data: requests } = await supabase.from('requests').select('*, candidates(*)')
+        .eq('user_id', currentUser.id).order('request_date', { ascending:false });
 
-        function clearAllLocations() {
-            const checkboxes = document.querySelectorAll('#locationCheckboxes input[type="checkbox"]');
-            checkboxes.forEach(cb => {
-                cb.checked = false;
-            });
-            selectedLocations.clear();
-            updateLocationFilterText();
-            applyFiltersDebounced();
-        }
+      const content = document.getElementById('requestsList');
+      if (!requests || !requests.length){
+        content.innerHTML = '<p style="text-align:center;color:var(--rough-gray);">No requests made yet.</p>';
+        return;
+      }
+      content.innerHTML = `
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr style="background:#f9fafb;">
+            <th style="padding:1rem;text-align:left;">Date</th>
+            <th style="padding:1rem;text-align:left;">Candidate</th>
+            <th style="padding:1rem;text-align:left;">Location</th>
+            <th style="padding:1rem;text-align:left;">Status</th>
+            <th style="padding:1rem;text-align:left;">Credits</th>
+          </tr></thead>
+          <tbody>
+            ${requests.map(req=>{
+              const c = req.candidates;
+              const jt = c ? toTitleCase(c["Current Job Title"]||c.Name||`Candidate #${req.candidate_id}`) : `Candidate #${req.candidate_id}`;
+              const loc = c ? cleanAndFormatLocation(c["Town/City"], c.Country) : 'N/A';
+              const status = req.status || 'pending';
+              const cls = status === 'completed' ? 'completed' : 'pending';
+              const text = status === 'completed' ? 'Completed' : 'Processing';
+              return `<tr style="border-bottom:1px solid #e5e7eb;">
+                <td style="padding:1rem;">${new Date(req.request_date).toLocaleDateString()}</td>
+                <td style="padding:1rem;">${jt}</td>
+                <td style="padding:1rem;">${loc}</td>
+                <td style="padding:1rem;"><span class="request-status ${cls}">${text}</span></td>
+                <td style="padding:1rem;">${req.credits_used||1}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>`;
+    }
 
-        // Debounced filter application
-        const applyFiltersDebounced = debounce(applyFilters, 300);
+    async function loadAdmin(){
+      const { data: allUsers } = await supabase.from('users').select('*').order('created_at',{ascending:false});
 
-        // Enhanced authentication and data loading
-        window.onload = async function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('search')) {
-                searchTerm = urlParams.get('search');
-            }
-            
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                await loadUserData(session.user);
-                showApp();
-            } else {
-                document.getElementById('loginScreen').style.display = 'flex';
-            }
-            
-            document.addEventListener('keydown', handleKeyboardShortcuts);
-        }
+      const usersList = document.getElementById('adminUsersList');
+      usersList.innerHTML = (allUsers&&allUsers.length) ? `
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr style="background:#f9fafb;">
+            <th style="padding:1rem;text-align:left;">Name</th>
+            <th style="padding:1rem;text-align:left;">Email</th>
+            <th style="padding:1rem;text-align:left;">Role</th>
+            <th style="padding:1rem;text-align:left;">Credits</th>
+            <th style="padding:1rem;text-align:left;">Created</th>
+          </tr></thead>
+          <tbody>
+          ${(allUsers||[]).map(u=>`
+            <tr style="border-bottom:1px solid #e5e7eb;">
+              <td style="padding:1rem;">${u.name||'Not set'}</td>
+              <td style="padding:1rem;">${u.email}</td>
+              <td style="padding:1rem;">${u.role||'viewer'}</td>
+              <td style="padding:1rem;">${u.credits||0}</td>
+              <td style="padding:1rem;">${new Date(u.created_at).toLocaleDateString()}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>` : '<p style="text-align:center;color:var(--rough-gray);">No users found.</p>';
 
-        function handleKeyboardShortcuts(e) {
-            if (e.key === 'Escape') {
-                closeModal();
-                hideConfirmation();
-            }
-            
-            if (e.ctrlKey || e.metaKey) {
-                if (e.key === 'a' && document.getElementById('poolDetailView').classList.contains('active')) {
-                    e.preventDefault();
-                    selectAll();
-                }
-                if (e.key === 'e') {
-                    e.preventDefault();
-                    exportCandidates();
-                }
-            }
-        }
+      const { data: allRequests } = await supabase
+        .from('requests')
+        .select('*, users(name,email), candidates(*)')
+        .order('request_date', { ascending:false })
+        .limit(100);
 
-        // Handle login
-        async function handleLogin(event) {
-            event.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email: email,
-                password: password
-            });
-            
-            if (error) {
-                document.getElementById('loginError').style.display = 'block';
-                setTimeout(() => {
-                    document.getElementById('loginError').style.display = 'none';
-                }, 3000);
-            } else {
-                await loadUserData(data.user);
-                showApp();
-            }
-        }
+      const requestsList = document.getElementById('adminRequestsList');
+      requestsList.innerHTML = (allRequests&&allRequests.length) ? `
+        <p style="margin-bottom:1rem;padding:1rem;background:#fff3cd;border-radius:8px;">
+          <strong>📧 Action Required:</strong> Contact candidates for pending requests and update status to 'completed'.
+        </p>
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr style="background:#f9fafb;">
+            <th style="padding:1rem;text-align:left;">Date</th>
+            <th style="padding:1rem;text-align:left;">User</th>
+            <th style="padding:1rem;text-align:left;">Candidate</th>
+            <th style="padding:1rem;text-align:left;">Location</th>
+            <th style="padding:1rem;text-align:left;">Status</th>
+            <th style="padding:1rem;text-align:left;">Credits</th>
+          </tr></thead>
+          <tbody>
+            ${allRequests.map(req=>{
+              const c = req.candidates;
+              const jt = c ? toTitleCase(c["Current Job Title"]||c.Name||`Candidate #${req.candidate_id}`) : `Candidate #${req.candidate_id}`;
+              const loc = c ? cleanAndFormatLocation(c["Town/City"], c.Country) : 'N/A';
+              const status = req.status || 'pending';
+              const cls = status === 'completed' ? 'completed' : 'pending';
+              return `<tr style="border-bottom:1px solid #e5e7eb;">
+                <td style="padding:1rem;">${new Date(req.request_date).toLocaleDateString()}</td>
+                <td style="padding:1rem;">${req.users?.name || req.users?.email || 'Unknown'}</td>
+                <td style="padding:1rem;">${jt}</td>
+                <td style="padding:1rem;">${loc}</td>
+                <td style="padding:1rem;"><span class="request-status ${cls}">${status}</span></td>
+                <td style="padding:1rem;">${req.credits_used||1}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>` : '<p style="text-align:center;color:var(--rough-gray);">No requests found.</p>';
+    }
 
-        // Load user data with local storage for notes
-        async function loadUserData(user) {
-            currentUser = user;
-            
-            const { data: profile, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', user.id)
-                .single();
-            
-            if (profile) {
-                userProfile = profile;
-                document.getElementById('userName').textContent = profile.name || user.email;
-                document.getElementById('creditsCount').textContent = profile.credits || 0;
-                
-                if (profile.role === 'admin') {
-                    document.getElementById('adminTab').style.display = 'block';
-                }
-            }
-            
-            const { data: poolAccess } = await supabase
-                .from('user_pool_access')
-                .select('pool_id')
-                .eq('user_id', user.id);
-            
-            userPools = poolAccess ? poolAccess.map(p => p.pool_id) : [];
-            
-            const { data: shortlistData } = await supabase
-                .from('shortlists')
-                .select('*, candidates(*)')
-                .eq('user_id', user.id);
-            
-            shortlist = shortlistData || [];
-            updateShortlistBadge();
-            
-            // Load saved notes from localStorage
-            const savedNotes = localStorage.getItem('candidateNotes_' + user.id);
-            if (savedNotes) {
-                candidateNotes = JSON.parse(savedNotes);
-            }
-        }
-
-        // Show main app
-        function showApp() {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('mainApp').classList.add('active');
-            loadPools();
-        }
-
-        // Handle logout
-        async function handleLogout() {
-            await supabase.auth.signOut();
-            location.reload();
-        }
-
-        // Switch views with URL state
-        function switchView(view) {
-            document.querySelectorAll('.view-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            document.getElementById(view + 'View').classList.add('active');
-            if (event && event.target) event.target.classList.add('active');
-            
-            if (view === 'pools') loadPools();
-            else if (view === 'shortlist') loadShortlist();
-            else if (view === 'account') loadAccount();
-            else if (view === 'requests') loadRequests();
-            else if (view === 'admin' && userProfile?.role === 'admin') loadAdmin();
-            
-            const url = new URL(window.location);
-            url.searchParams.set('view', view);
-            window.history.pushState({}, '', url);
-        }
-
-        // Load talent pools with loading state and sort by count
-        async function loadPools() {
-            const poolsGrid = document.getElementById('poolsGrid');
-            
-            poolsGrid.innerHTML = `
-                <div class="skeleton skeleton-card"></div>
-                <div class="skeleton skeleton-card"></div>
-                <div class="skeleton skeleton-card"></div>
-            `;
-            
-            const { data: pools } = await supabase
-                .from('talent_pools')
-                .select('*');
-            
-            for (let pool of pools) {
-                const { count } = await supabase
-                    .from('candidates')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('pool_id', pool.id);
-                
-                pool.total_candidates = count || 0;
-            }
-            
-            // Sort pools by candidate count (highest first)
-            pools.sort((a, b) => b.total_candidates - a.total_candidates);
-            
-            poolsGrid.innerHTML = '';
-            
-            for (const pool of pools) {
-                const hasAccess = userPools.includes(pool.id);
-                
-                const poolCard = document.createElement('div');
-                poolCard.className = hasAccess ? 'pool-card' : 'pool-card locked';
-                poolCard.innerHTML = `
-                    <div class="pool-header">
-                        <div class="pool-title">${pool.name}</div>
-                        <div class="pool-badge">${hasAccess ? 'Available' : 'Locked'}</div>
-                    </div>
-                    <div class="pool-stats">
-                        <div class="pool-stat">
-                            <span>Total Candidates</span>
-                            <span style="font-size: 1.25rem; font-weight: 700; color: var(--augusta-green);">
-                                ${pool.total_candidates}
-                            </span>
-                        </div>
-                    </div>
-                `;
-                
-                if (hasAccess) {
-                    poolCard.onclick = () => openPool(pool);
-                }
-                
-                poolsGrid.appendChild(poolCard);
-            }
-        }
-
-        // Open a pool and show candidates with pagination
-        async function openPool(pool) {
-            currentPool = pool;
-            currentPage = 0;
-            document.getElementById('currentPoolName').textContent = pool.name;
-            
-            // Show loading state
-            const candidatesGrid = document.getElementById('candidatesGrid');
-            candidatesGrid.innerHTML = `
-                <div class="skeleton skeleton-card"></div>
-                <div class="skeleton skeleton-card"></div>
-                <div class="skeleton skeleton-card"></div>
-            `;
-            
-            const { data: candidates, error } = await supabase
-                .from('candidates')
-                .select('*')
-                .eq('pool_id', pool.id);
-            
-            console.log(`Loading candidates for ${pool.id}:`, candidates?.length, error);
-            
-            // Sort by profile completeness score (now called "Best Match")
-            allCandidates = (candidates || []).sort((a, b) => {
-                const scoreA = calculateProfileScore(a);
-                const scoreB = calculateProfileScore(b);
-                
-                const hasSummaryA = a["About You"] && a["About You"].length > 50;
-                const hasSummaryB = b["About You"] && b["About You"].length > 50;
-                
-                if (hasSummaryA && !hasSummaryB) return -1;
-                if (!hasSummaryA && hasSummaryB) return 1;
-                
-                return scoreB - scoreA;
-            });
-            
-            populateLocationFilter(allCandidates);
-            updateFiltersWithCounts();
-            
-            // Apply initial filters and display
-            filteredCandidates = [...allCandidates];
-            displayCandidatesPage();
-            
-            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
-            document.getElementById('poolDetailView').classList.add('active');
-        }
-
-        // Display candidates with pagination
-        function displayCandidatesPage() {
-            const startIdx = currentPage * candidatesPerPage;
-            const endIdx = startIdx + candidatesPerPage;
-            displayedCandidates = filteredCandidates.slice(0, endIdx);
-            
-            displayCandidates(displayedCandidates);
-            
-            // Show/hide load more button
-            const loadMoreContainer = document.getElementById('loadMoreContainer');
-            if (endIdx < filteredCandidates.length) {
-                loadMoreContainer.style.display = 'block';
-            } else {
-                loadMoreContainer.style.display = 'none';
-            }
-        }
-
-        function loadMore() {
-            currentPage++;
-            displayCandidatesPage();
-        }
-
-        // Display candidates in grid with enhancements
-        function displayCandidates(candidates) {
-            const candidatesGrid = document.getElementById('candidatesGrid');
-            
-            if (!candidates || candidates.length === 0) {
-                candidatesGrid.innerHTML = `
-                    <div class="empty-state" style="grid-column: 1/-1;">
-                        <h3>No candidates match your criteria</h3>
-                        <p>Try adjusting your filters or search terms</p>
-                        <button class="btn btn-primary" onclick="clearFilters()">Clear All Filters</button>
-                    </div>
-                `;
-                updateCandidateCount(0);
-                return;
-            }
-            
-            updateCandidateCount(filteredCandidates.length);
-            
-            candidatesGrid.innerHTML = candidates.map(candidate => {
-                const jobTitle = toTitleCase(candidate["Current Job Title"] || 
-                               candidate["Job Title"] || 
-                               candidate.Name || 
-                               `Candidate #${candidate.ID}`);
-                
-                let displayTitle = jobTitle;
-                if (searchTerm) {
-                    displayTitle = highlightSearchTerms(jobTitle, searchTerm);
-                }
-                
-                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-                const salary = formatSalaryExact(candidate["What are your salary expectations?"] || 
-                                               candidate["Salary Expectations"]);
-                const noticeRaw = candidate["Notice Period"];
-                const notice = noticeRaw ? formatNoticePeriod(noticeRaw) : 'Unknown Notice Period';
-                const activelyLooking = (candidate["Actively looking for work"] || '').toUpperCase() === 'YES';
-                
-                const about = candidate["About You"] || candidate.Summary || '';
-                const summary = generateSummaryPreview(about);
-                
-                const skillsDisplay = formatSkillsDisplay(candidate["Your Skills"] || candidate.Skills || '');
-                
-                // Only show "Top Pick" for profiles with 85%+ completeness
-                const profileScore = calculateProfileScore(candidate);
-                const isTopPick = profileScore >= 85;
-                const isNew = isNewCandidate(candidate);
-                
-                const isSelected = selectedCandidates.has(candidate.ID);
-                
-                return `
-                    <div class="candidate-card ${isSelected ? 'selected' : ''}" 
-                         id="card-${candidate.ID}">
-                        <input type="checkbox" 
-                               class="candidate-checkbox" 
-                               ${isSelected ? 'checked' : ''}
-                               onchange="toggleCandidateSelection(${candidate.ID})"
-                               onclick="event.stopPropagation()">
-                        
-                        ${isTopPick ? '<div class="top-pick-badge">⭐ Top Pick</div>' : ''}
-                        ${isNew ? '<div class="new-badge">New</div>' : ''}
-                        
-                        ${activelyLooking ? `
-                            <div style="position: absolute; top: 0.75rem; right: 0.75rem; 
-                                       background: linear-gradient(135deg, var(--masters-green), var(--putting-green)); 
-                                       color: white; padding: 0.2rem 0.5rem; 
-                                       border-radius: 15px; font-size: 0.65rem; 
-                                       font-weight: 600; text-transform: uppercase; 
-                                       letter-spacing: 0.3px;">
-                                Actively Looking
-                            </div>
-                        ` : ''}
-                        
-                        <div onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'
-                             style="cursor: pointer; padding-left: 2rem;">
-                            <h3 style="color: var(--augusta-green); margin-bottom: 0.5rem; ${activelyLooking ? 'padding-right: 140px;' : ''}">
-                                ${displayTitle}
-                            </h3>
-                            <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 1rem;">
-                                ${location}
-                            </p>
-                            ${summary ? `<p style="margin-bottom: 1rem; font-size: 0.95rem; color: var(--pro-shop-navy);">${summary}</p>` : ''}
-                            ${skillsDisplay}
-                            <div style="display: flex; justify-content: space-between; align-items: center; 
-                                        padding-top: 1rem; border-top: 1px solid #e5e7eb;">
-                                <span style="color: var(--rough-gray); font-size: 0.9rem;">
-                                    ${salary} • ${notice}
-                                </span>
-                                <span style="color: var(--masters-green); font-weight: 600;">View →</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        // Update candidate count display
-        function updateCandidateCount(count) {
-            const countElement = document.getElementById('candidateCount');
-            if (countElement) {
-                const showing = Math.min(displayedCandidates.length, count);
-                if (count > candidatesPerPage && showing < count) {
-                    countElement.textContent = `Showing ${showing} of ${count} candidates`;
-                } else {
-                    countElement.textContent = count > 0 ? `Showing ${count} candidate${count !== 1 ? 's' : ''}` : '';
-                }
-            }
-        }
-
-        // Apply filters with automatic update
-        function applyFilters() {
-            searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const salaryFilter = document.getElementById('salaryFilter').value;
-            const noticeFilter = document.getElementById('noticeFilter').value;
-            const lookingFilter = document.getElementById('lookingFilter').value;
-            const categoryFilter = document.getElementById('categoryFilter').value;
-            
-            let filtered = [...allCandidates];
-            
-            if (searchTerm) {
-                filtered = filtered.filter(c => 
-                    (c.Name || '').toLowerCase().includes(searchTerm) ||
-                    (c["Current Job Title"] || '').toLowerCase().includes(searchTerm) ||
-                    (c["Town/City"] || '').toLowerCase().includes(searchTerm) ||
-                    (c["Your Skills"] || '').toLowerCase().includes(searchTerm) ||
-                    (c["About You"] || '').toLowerCase().includes(searchTerm)
-                );
-            }
-            
-            if (salaryFilter) {
-                filtered = filtered.filter(c => {
-                    const salary = parseFloat(c["What are your salary expectations?"]) || 0;
-                    if (salaryFilter === '70000+') return salary >= 70000;
-                    const [min, max] = salaryFilter.split('-').map(Number);
-                    return salary >= min && salary <= max;
-                });
-            }
-            
-            if (noticeFilter) {
-                filtered = filtered.filter(c => {
-                    const notice = (c["Notice Period"] || '').toLowerCase();
-                    return notice.includes(noticeFilter.toLowerCase());
-                });
-            }
-            
-            if (lookingFilter) {
-                filtered = filtered.filter(c => 
-                    (c["Actively looking for work"] || '').toUpperCase() === lookingFilter
-                );
-            }
-            
-            if (categoryFilter) {
-                filtered = filtered.filter(c => {
-                    const jobTitle = c["Current Job Title"] || c["Job Title"] || '';
-                    return detectJobCategory(jobTitle) === categoryFilter;
-                });
-            }
-            
-            if (selectedLocations.size > 0) {
-                filtered = filtered.filter(c => {
-                    const location = cleanAndFormatLocation(c["Town/City"], c.Country);
-                    return selectedLocations.has(location);
-                });
-            }
-            
-            filteredCandidates = filtered;
-            currentPage = 0;
-            displayCandidatesPage();
-            
-            const url = new URL(window.location);
-            if (searchTerm) {
-                url.searchParams.set('search', searchTerm);
-            } else {
-                url.searchParams.delete('search');
-            }
-            window.history.pushState({}, '', url);
-        }
-
-        // Apply sort
-        function applySort() {
-            const sortValue = document.getElementById('sortSelect').value;
-            
-            switch (sortValue) {
-                case 'relevance':
-                    filteredCandidates.sort((a, b) => calculateProfileScore(b) - calculateProfileScore(a));
-                    break;
-                case 'newest':
-                    filteredCandidates.sort((a, b) => {
-                        const dateA = new Date(a.created_at || 0);
-                        const dateB = new Date(b.created_at || 0);
-                        return dateB - dateA;
-                    });
-                    break;
-                case 'salary-high':
-                    filteredCandidates.sort((a, b) => {
-                        const salaryA = parseFloat(a["What are your salary expectations?"]) || 0;
-                        const salaryB = parseFloat(b["What are your salary expectations?"]) || 0;
-                        return salaryB - salaryA;
-                    });
-                    break;
-                case 'salary-low':
-                    filteredCandidates.sort((a, b) => {
-                        const salaryA = parseFloat(a["What are your salary expectations?"]) || 0;
-                        const salaryB = parseFloat(b["What are your salary expectations?"]) || 0;
-                        return salaryA - salaryB;
-                    });
-                    break;
-            }
-            
-            currentPage = 0;
-            displayCandidatesPage();
-        }
-
-        // Clear filters
-        function clearFilters() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('salaryFilter').value = '';
-            document.getElementById('noticeFilter').value = '';
-            document.getElementById('lookingFilter').value = '';
-            document.getElementById('categoryFilter').value = '';
-            clearAllLocations();
-            searchTerm = '';
-            filteredCandidates = [...allCandidates];
-            currentPage = 0;
-            displayCandidatesPage();
-            
-            const url = new URL(window.location);
-            url.searchParams.delete('search');
-            window.history.pushState({}, '', url);
-        }
-
-        // Bulk selection functions - FIXED
-        function toggleCandidateSelection(candidateId) {
-            if (selectedCandidates.has(candidateId)) {
-                selectedCandidates.delete(candidateId);
-                const card = document.getElementById(`card-${candidateId}`);
-                if (card) card.classList.remove('selected');
-            } else {
-                selectedCandidates.add(candidateId);
-                const card = document.getElementById(`card-${candidateId}`);
-                if (card) card.classList.add('selected');
-            }
-        }
-
-        function selectAll() {
-            displayedCandidates.forEach(candidate => {
-                selectedCandidates.add(candidate.ID);
-                const card = document.getElementById(`card-${candidate.ID}`);
-                if (card) {
-                    card.classList.add('selected');
-                    const checkbox = card.querySelector('.candidate-checkbox');
-                    if (checkbox) checkbox.checked = true;
-                }
-            });
-        }
-
-        function deselectAll() {
-            selectedCandidates.clear();
-            document.querySelectorAll('.candidate-card').forEach(card => {
-                card.classList.remove('selected');
-                const checkbox = card.querySelector('.candidate-checkbox');
-                if (checkbox) checkbox.checked = false;
-            });
-        }
-
-        // FIXED Bulk Add to Shortlist
-        async function bulkAddToShortlist() {
-            if (selectedCandidates.size === 0) {
-                alert('Please select candidates first');
-                return;
-            }
-            
-            let added = 0;
-            let skipped = 0;
-            let errors = 0;
-            
-            for (const candidateId of selectedCandidates) {
-                try {
-                    // Check if already in shortlist using count
-                    const { count } = await supabase
-                        .from('shortlists')
-                        .select('*', { count: 'exact', head: true })
-                        .eq('user_id', currentUser.id)
-                        .eq('candidate_id', candidateId);
-                    
-                    if (count > 0) {
-                        skipped++;
-                        continue;
-                    }
-                    
-                    const { data, error } = await supabase
-                        .from('shortlists')
-                        .insert({
-                            user_id: currentUser.id,
-                            candidate_id: candidateId,
-                            saved_from_pool: currentPool.id
-                        })
-                        .select();
-                    
-                    if (!error && data) {
-                        added++;
-                    } else if (error) {
-                        console.error('Error adding to shortlist:', error);
-                        errors++;
-                    }
-                } catch (err) {
-                    console.error('Error in bulk add:', err);
-                    errors++;
-                }
-            }
-            
-            let message = '';
-            if (added > 0) message += `Added ${added} candidates to shortlist. `;
-            if (skipped > 0) message += `${skipped} already in shortlist. `;
-            if (errors > 0) message += `${errors} errors occurred.`;
-            
-            if (message) {
-                alert(message);
-            } else {
-                alert('No candidates were added to shortlist');
-            }
-            
-            deselectAll();
-            
-            // Refresh shortlist
-            const { data: shortlistData } = await supabase
-                .from('shortlists')
-                .select('*, candidates(*)')
-                .eq('user_id', currentUser.id);
-            
-            shortlist = shortlistData || [];
-            updateShortlistBadge();
-        }
-
-        // Export functions
-        function exportCandidates() {
-            const toExport = selectedCandidates.size > 0 ? 
-                filteredCandidates.filter(c => selectedCandidates.has(c.ID)) : 
-                filteredCandidates;
-            
-            if (toExport.length === 0) {
-                alert('No candidates to export');
-                return;
-            }
-            
-            let csv = 'Job Title,Location,Salary Expectations,Notice Period,Actively Looking,Match Quality\n';
-            
-            toExport.forEach(candidate => {
-                const jobTitle = candidate["Current Job Title"] || candidate["Job Title"] || '';
-                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-                const salary = candidate["What are your salary expectations?"] || 'Negotiable';
-                const notice = candidate["Notice Period"] || 'Unknown';
-                const looking = candidate["Actively looking for work"] || 'Unknown';
-                const score = calculateProfileScore(candidate).toFixed(0);
-                
-                csv += `"${jobTitle}","${location}","${salary}","${notice}","${looking}","${score}%"\n`;
-            });
-            
-            downloadCSV(csv, 'candidates_export.csv');
-        }
-
-        function exportShortlist() {
-            if (shortlist.length === 0) {
-                alert('No candidates in shortlist');
-                return;
-            }
-            
-            let csv = 'Job Title,Location,Salary Expectations,Notice Period,Notes\n';
-            
-            shortlist.forEach(item => {
-                const candidate = item.candidates;
-                if (!candidate) return;
-                
-                const jobTitle = candidate["Current Job Title"] || candidate["Job Title"] || '';
-                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-                const salary = candidate["What are your salary expectations?"] || 'Negotiable';
-                const notice = candidate["Notice Period"] || 'Unknown';
-                const notes = candidateNotes[candidate.ID] || '';
-                
-                csv += `"${jobTitle}","${location}","${salary}","${notice}","${notes}"\n`;
-            });
-            
-            downloadCSV(csv, 'shortlist_export.csv');
-        }
-
-        function downloadCSV(csv, filename) {
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.setAttribute('href', url);
-            a.setAttribute('download', filename);
-            a.click();
-            window.URL.revokeObjectURL(url);
-        }
-
-        // Search functionality with debounce
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                searchInput.addEventListener('input', applyFiltersDebounced);
-            }
-            
-            // Auto-apply filters on change
-            ['salaryFilter', 'noticeFilter', 'lookingFilter', 'categoryFilter'].forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.addEventListener('change', applyFiltersDebounced);
-                }
-            });
-        });
-
-        // Open candidate modal with enhancements and line breaks
-        function openCandidate(candidate) {
-            currentCandidate = candidate;
-            
-            const jobTitle = toTitleCase(candidate["Current Job Title"] || 
-                           candidate["Job Title"] || 
-                           candidate.Name || 
-                           `Candidate #${candidate.ID}`);
-            
-            const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-            const aboutRaw = candidate["About You"] || candidate.Summary || 'No summary provided';
-            
-            const profileScore = calculateProfileScore(candidate);
-            const isTopPick = profileScore >= 85;
-            
-            // Create expandable summary with line breaks
-            let aboutHtml = '';
-            const formattedAbout = formatWithLineBreaks(aboutRaw);
-            if (aboutRaw.length > 300) {
-                aboutHtml = `
-                    <div id="summaryContainer">
-                        <p id="summaryText" class="expandable-text collapsed" style="line-height: 1.8;">
-                            ${formattedAbout}
-                        </p>
-                        <span class="show-more-btn" onclick="toggleSummary()">Show More</span>
-                    </div>
-                `;
-            } else {
-                aboutHtml = `<p style="line-height: 1.8;">${formattedAbout}</p>`;
-            }
-            
-            const skillsString = candidate["Your Skills"] || candidate.Skills || '';
-            let skillsHtml = '';
-            
-            if (skillsString) {
-                if (skillsString.includes('•') || skillsString.includes('–')) {
-                    const bulletPoints = skillsString.split(/[•–-]/).map(s => s.trim()).filter(s => s && s.length > 3);
-                    skillsHtml = `
-                        <div style="margin-bottom: 2rem;">
-                            <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
-                            <ul style="margin-left: 1.5rem; line-height: 1.8;">
-                                ${bulletPoints.map(point => `<li>${point}</li>`).join('')}
-                            </ul>
-                        </div>
-                    `;
-                } else {
-                    skillsHtml = `
-                        <div style="margin-bottom: 2rem;">
-                            <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
-                            <p style="line-height: 1.6;">${skillsString}</p>
-                        </div>
-                    `;
-                }
-            }
-            
-            const noticeRaw = candidate["Notice Period"];
-            const notice = noticeRaw ? formatNoticePeriod(noticeRaw) : 'Unknown Notice Period';
-            const salary = formatSalaryExact(candidate["What are your salary expectations?"] || 
-                                           candidate["Salary Expectations"]);
-            const activelyLooking = candidate["Actively looking for work"] || 'Not specified';
-            
-            document.getElementById('modalTitle').innerHTML = `
-                ${jobTitle}
-                ${isTopPick ? `
-                    <span class="tooltip" style="margin-left: 1rem;">
-                        <span class="top-pick-badge" style="position: static; display: inline-block;">
-                            ⭐ Top Pick
-                        </span>
-                        <span class="tooltiptext">Match quality: ${profileScore.toFixed(0)}%</span>
-                    </span>
-                ` : ''}
-            `;
-            
-            document.getElementById('modalBody').innerHTML = `
-                <div style="margin-bottom: 2rem;">
-                    <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Professional Summary</h3>
-                    ${aboutHtml}
-                </div>
-                
-                <div style="margin-bottom: 2rem;">
-                    <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Key Information</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                        <div style="background: var(--morning-mist); padding: 1rem; border-radius: 8px;">
-                            <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">
-                                Location
-                            </div>
-                            <div style="font-weight: 600;">${location}</div>
-                        </div>
-                        <div style="background: var(--morning-mist); padding: 1rem; border-radius: 8px;">
-                            <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">
-                                Salary Expectations
-                            </div>
-                            <div style="font-weight: 600;">${salary}</div>
-                        </div>
-                        <div style="background: var(--morning-mist); padding: 1rem; border-radius: 8px;">
-                            <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">
-                                Notice Period
-                            </div>
-                            <div style="font-weight: 600;">${notice}</div>
-                        </div>
-                        <div style="background: var(--morning-mist); padding: 1rem; border-radius: 8px;">
-                            <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">
-                                Actively Looking
-                            </div>
-                            <div style="font-weight: 600;">${activelyLooking}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                ${skillsHtml}
-                
-                <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 1rem; margin-top: 2rem;">
-                    <p style="color: var(--hazard-red); font-weight: 600; text-align: center;">
-                        Full contact details (Email, Phone, LinkedIn) available upon request (1 credit)
-                    </p>
-                </div>
-            `;
-            
-            // Load saved notes
-            const notes = candidateNotes[candidate.ID] || '';
-            document.getElementById('candidateNotes').value = notes;
-            
-            document.getElementById('candidateModal').classList.add('active');
-        }
-
-        function toggleSummary() {
-            const summaryText = document.getElementById('summaryText');
-            const btn = document.querySelector('.show-more-btn');
-            
-            if (summaryText.classList.contains('collapsed')) {
-                summaryText.classList.remove('collapsed');
-                summaryText.style.maxHeight = 'none';
-                btn.textContent = 'Show Less';
-            } else {
-                summaryText.classList.add('collapsed');
-                btn.textContent = 'Show More';
-            }
-        }
-
-        // Notes functions
-        function saveNotes() {
-            if (!currentCandidate) return;
-            
-            const notes = document.getElementById('candidateNotes').value;
-            candidateNotes[currentCandidate.ID] = notes;
-            
-            // Save to localStorage
-            localStorage.setItem('candidateNotes_' + currentUser.id, JSON.stringify(candidateNotes));
-            
-            alert('Notes saved!');
-        }
-
-        // Close modal
-        function closeModal() {
-            document.getElementById('candidateModal').classList.remove('active');
-        }
-
-        // Credit confirmation
-        function showCreditConfirmation() {
-            document.getElementById('currentCredits').textContent = userProfile.credits;
-            document.getElementById('confirmationDialog').classList.add('active');
-            document.getElementById('dialogOverlay').classList.add('active');
-        }
-
-        function hideConfirmation() {
-            document.getElementById('confirmationDialog').classList.remove('active');
-            document.getElementById('dialogOverlay').classList.remove('active');
-        }
-
-        // FIXED confirmCreditUse function
-        async function confirmCreditUse() {
-            hideConfirmation();
-            await requestContact();
-        }
-
-        // FIXED Add to shortlist - Now properly handles checking for duplicates
-        async function addToShortlist() {
-            if (!currentCandidate) return;
-            
-            try {
-                // Check if already in shortlist using count instead of single()
-                const { count } = await supabase
-                    .from('shortlists')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('user_id', currentUser.id)
-                    .eq('candidate_id', currentCandidate.ID);
-                
-                if (count > 0) {
-                    alert('This candidate is already in your shortlist');
-                    return;
-                }
-                
-                const { data, error } = await supabase
-                    .from('shortlists')
-                    .insert({
-                        user_id: currentUser.id,
-                        candidate_id: currentCandidate.ID,
-                        saved_from_pool: currentPool.id
-                    })
-                    .select();
-                
-                if (!error && data) {
-                    alert('Added to shortlist!');
-                    closeModal();
-                    
-                    // Refresh shortlist
-                    const { data: shortlistData } = await supabase
-                        .from('shortlists')
-                        .select('*, candidates(*)')
-                        .eq('user_id', currentUser.id);
-                    
-                    shortlist = shortlistData || [];
-                    updateShortlistBadge();
-                } else if (error) {
-                    console.error('Shortlist error:', error);
-                    alert('Error adding to shortlist. Please try again.');
-                }
-            } catch (err) {
-                console.error('Error in addToShortlist:', err);
-                alert('Error adding to shortlist. Please try again.');
-            }
-        }
-
-        // Request contact details
-        async function requestContact() {
-            if (!currentCandidate) return;
-            
-            if (userProfile.credits < 1) {
-                alert('Insufficient credits! Contact graham@golf-jobs.com to purchase more.');
-                return;
-            }
-            
-            const { error: profileError } = await supabase
-                .from('users')
-                .update({ credits: userProfile.credits - 1 })
-                .eq('id', currentUser.id);
-            
-            const { error: requestError } = await supabase
-                .from('requests')
-                .insert({
-                    user_id: currentUser.id,
-                    candidate_id: currentCandidate.ID,
-                    credits_used: 1
-                });
-            
-            if (!profileError && !requestError) {
-                userProfile.credits--;
-                document.getElementById('creditsCount').textContent = userProfile.credits;
-                
-                const currentModalBody = document.getElementById('modalBody').innerHTML;
-                const detailsHtml = `
-                    <div style="margin-top: 1rem; padding: 1rem; background: #d4edda; border-radius: 8px;">
-                        <h4 style="color: var(--augusta-green); margin-bottom: 0.5rem;">Contact Details Revealed:</h4>
-                        <p><strong>Email:</strong> ${currentCandidate.Email || 'Not provided'}</p>
-                        <p><strong>Phone:</strong> ${currentCandidate.Phone || 'Not provided'}</p>
-                        <p><strong>LinkedIn:</strong> ${currentCandidate.LinkedIn || 'Not provided'}</p>
-                    </div>
-                `;
-                
-                document.getElementById('modalBody').innerHTML = currentModalBody.replace(
-                    /<div style="background: #fef2f2;.*?<\/div>/s,
-                    detailsHtml
-                );
-                
-                alert('Contact details revealed! 1 credit used.');
-            }
-        }
-
-        // Load shortlist
-        async function loadShortlist() {
-            const content = document.getElementById('shortlistContent');
-            
-            if (!shortlist || shortlist.length === 0) {
-                content.innerHTML = `
-                    <div class="section-box" style="text-align: center;">
-                        <h2>No candidates saved yet</h2>
-                        <p style="color: var(--rough-gray); margin-bottom: 1rem;">Browse talent pools and save candidates you're interested in.</p>
-                        <button class="btn btn-primary" onclick="switchView('pools')">Browse Talent Pools</button>
-                    </div>
-                `;
-            } else {
-                content.innerHTML = '<div class="candidates-grid" id="shortlistGrid"></div>';
-                const grid = document.getElementById('shortlistGrid');
-                
-                grid.innerHTML = shortlist.map(item => {
-                    const candidate = item.candidates;
-                    if (!candidate) return '';
-                    
-                    const jobTitle = toTitleCase(candidate["Current Job Title"] || 
-                                   candidate["Job Title"] || 
-                                   candidate.Name || 
-                                   `Candidate #${candidate.ID}`);
-                    const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-                    const notes = candidateNotes[candidate.ID] || '';
-                    
-                    return `
-                        <div class="candidate-card" style="position: relative;">
-                            <button onclick="removeFromShortlist(${item.id})" 
-                                    style="position: absolute; top: 1rem; right: 1rem; 
-                                           background: #fee; color: var(--hazard-red); 
-                                           border: none; padding: 0.5rem 1rem; 
-                                           border-radius: 8px; cursor: pointer; z-index: 10;">
-                                Remove
-                            </button>
-                            <div onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'> 
-                                <h3 style="color: var(--augusta-green);">${jobTitle}</h3>
-                                <p style="color: var(--rough-gray);">${location}</p>
-                                ${notes ? `<p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--club-gold);">📝 ${notes.substring(0, 50)}...</p>` : ''}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-        }
-
-        async function removeFromShortlist(shortlistId) {
-            if (!confirm('Remove this candidate from your shortlist?')) return;
-            
-            const { error } = await supabase
-                .from('shortlists')
-                .delete()
-                .eq('id', shortlistId);
-            
-            if (!error) {
-                const { data: shortlistData } = await supabase
-                    .from('shortlists')
-                    .select('*, candidates(*)')
-                    .eq('user_id', currentUser.id);
-                
-                shortlist = shortlistData || [];
-                updateShortlistBadge();
-                loadShortlist();
-            }
-        }
-
-        function updateShortlistBadge() {
-            const badge = document.getElementById('shortlistBadge');
-            if (shortlist.length > 0) {
-                badge.style.display = 'inline';
-                badge.textContent = shortlist.length;
-            } else {
-                badge.style.display = 'none';
-            }
-        }
-
-        async function loadAccount() {
-            document.getElementById('accountName').textContent = userProfile?.name || '-';
-            document.getElementById('accountEmail').textContent = currentUser?.email || '-';
-            document.getElementById('accountCredits').textContent = userProfile?.credits || 0;
-            
-            const { count } = await supabase
-                .from('requests')
-                .select('*', { count: 'exact', head: true })
-                .eq('user_id', currentUser.id);
-            
-            document.getElementById('totalRequests').textContent = count || 0;
-            
-            // Load credits history
-            const { data: requests } = await supabase
-                .from('requests')
-                .select('*, candidates(*)')
-                .eq('user_id', currentUser.id)
-                .order('request_date', { ascending: false })
-                .limit(10);
-            
-            const historyDiv = document.getElementById('creditsHistory');
-            if (requests && requests.length > 0) {
-                historyDiv.innerHTML = `
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f9fafb;">
-                                <th style="padding: 0.5rem; text-align: left;">Date</th>
-                                <th style="padding: 0.5rem; text-align: left;">Candidate</th>
-                                <th style="padding: 0.5rem; text-align: left;">Credits</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${requests.map(req => {
-                                const jobTitle = req.candidates ? toTitleCase(req.candidates["Current Job Title"] || 
-                                               req.candidates.Name) : 'Unknown';
-                                return `
-                                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                                        <td style="padding: 0.5rem;">${new Date(req.request_date).toLocaleDateString()}</td>
-                                        <td style="padding: 0.5rem;">${jobTitle}</td>
-                                        <td style="padding: 0.5rem;">-${req.credits_used || 1}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                `;
-            } else {
-                historyDiv.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No credit history yet.</p>';
-            }
-        }
-
-        async function loadRequests() {
-            const { data: requests } = await supabase
-                .from('requests')
-                .select('*, candidates(*)')
-                .eq('user_id', currentUser.id)
-                .order('request_date', { ascending: false });
-            
-            const content = document.getElementById('requestsList');
-            
-            if (!requests || requests.length === 0) {
-                content.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No requests made yet.</p>';
-            } else {
-                content.innerHTML = `
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f9fafb;">
-                                <th style="padding: 1rem; text-align: left;">Date</th>
-                                <th style="padding: 1rem; text-align: left;">Candidate</th>
-                                <th style="padding: 1rem; text-align: left;">Contact Details</th>
-                                <th style="padding: 1rem; text-align: left;">Credits Used</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${requests.map(req => {
-                                const candidate = req.candidates;
-                                const jobTitle = candidate ? toTitleCase(candidate["Current Job Title"] || 
-                                               candidate.Name || 
-                                               `Candidate #${req.candidate_id}`) : `Candidate #${req.candidate_id}`;
-                                
-                                const contactInfo = candidate ? `
-                                    Email: ${candidate.Email || 'N/A'}<br>
-                                    LinkedIn: ${candidate.LinkedIn || 'N/A'}
-                                ` : 'Not available';
-                                
-                                return `
-                                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                                        <td style="padding: 1rem;">${new Date(req.request_date).toLocaleDateString()}</td>
-                                        <td style="padding: 1rem;">${jobTitle}</td>
-                                        <td style="padding: 1rem; font-size: 0.9rem;">${contactInfo}</td>
-                                        <td style="padding: 1rem;">${req.credits_used || 1}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                `;
-            }
-        }
-
-        async function loadAdmin() {
-            const { data: allUsers } = await supabase
-                .from('users')
-                .select('*')
-                .order('created_at', { ascending: false });
-            
-            const usersList = document.getElementById('adminUsersList');
-            if (allUsers && allUsers.length > 0) {
-                usersList.innerHTML = `
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f9fafb;">
-                                <th style="padding: 1rem; text-align: left;">Name</th>
-                                <th style="padding: 1rem; text-align: left;">Email</th>
-                                <th style="padding: 1rem; text-align: left;">Role</th>
-                                <th style="padding: 1rem; text-align: left;">Credits</th>
-                                <th style="padding: 1rem; text-align: left;">Created</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${allUsers.map(user => `
-                                <tr style="border-bottom: 1px solid #e5e7eb;">
-                                    <td style="padding: 1rem;">${user.name || 'Not set'}</td>
-                                    <td style="padding: 1rem;">${user.email}</td>
-                                    <td style="padding: 1rem;">${user.role || 'viewer'}</td>
-                                    <td style="padding: 1rem;">${user.credits || 0}</td>
-                                    <td style="padding: 1rem;">${new Date(user.created_at).toLocaleDateString()}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-            } else {
-                usersList.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No users found.</p>';
-            }
-            
-            const { data: allRequests } = await supabase
-                .from('requests')
-                .select('*, users(name, email), candidates(*)')
-                .order('request_date', { ascending: false })
-                .limit(50);
-            
-            const requestsList = document.getElementById('adminRequestsList');
-            if (allRequests && allRequests.length > 0) {
-                requestsList.innerHTML = `
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f9fafb;">
-                                <th style="padding: 1rem; text-align: left;">Date</th>
-                                <th style="padding: 1rem; text-align: left;">User</th>
-                                <th style="padding: 1rem; text-align: left;">Candidate</th>
-                                <th style="padding: 1rem; text-align: left;">Credits</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${allRequests.map(req => {
-                                const jobTitle = req.candidates ? toTitleCase(req.candidates["Current Job Title"] || 
-                                               req.candidates.Name || 
-                                               `Candidate #${req.candidate_id}`) : `Candidate #${req.candidate_id}`;
-                                return `
-                                    <tr style="border-bottom: 1px solid #e5e7eb;">
-                                        <td style="padding: 1rem;">${new Date(req.request_date).toLocaleDateString()}</td>
-                                        <td style="padding: 1rem;">${req.users?.name || req.users?.email || 'Unknown'}</td>
-                                        <td style="padding: 1rem;">${jobTitle}</td>
-                                        <td style="padding: 1rem;">${req.credits_used || 1}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                `;
-            } else {
-                requestsList.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No requests found.</p>';
-            }
-        }
-
-        function goHome() {
-            switchView('pools');
-        }
-
-        document.getElementById('candidateModal')?.addEventListener('click', function(e) {
-            if (e.target === this) closeModal();
-        });
-    </script>
+    // ===== Misc =====
+    document.getElementById('candidateModal')?.addEventListener('click', e => { if (e.target===e.currentTarget) closeModal(); });
+    window.addEventListener('popstate', ()=>{
+      const view = new URL(window.location).searchParams.get('view') || 'pools';
+      switchView(view);
+    });
+  </script>
 </body>
 </html>

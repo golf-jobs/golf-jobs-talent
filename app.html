@@ -856,7 +856,7 @@
             
             <div style="text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e1e8e4;">
                 <p style="color: var(--rough-gray); font-size: 0.85rem;">© 2024 Golf Jobs. Professional recruitment excellence.</p>
-                <p style="margin-top: 0.5rem; color: var(--rough-gray); font-size: 0.85rem;">Need access? Contact <strong>talent@golf-jobs.com</strong></p>
+                <p style="margin-top: 0.5rem; color: var(--rough-gray); font-size: 0.85rem;">Need access? Contact <strong>graham@golf-jobs.com</strong></p>
             </div>
         </div>
     </div>
@@ -903,7 +903,7 @@
                 <div class="section-box">
                     <h2 style="font-size: 1.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Unlock More Talent Pools</h2>
                     <p style="color: var(--rough-gray); margin-bottom: 1.5rem;">Expand your recruitment reach with access to additional regions</p>
-                    <button class="btn btn-primary" onclick="alert('Contact talent@golf-jobs.com for access to additional pools')">Request Access</button>
+                    <button class="btn btn-primary" onclick="alert('Contact graham@golf-jobs.com for access to additional pools')">Request Access</button>
                 </div>
             </div>
 
@@ -1016,7 +1016,7 @@
                     <div class="sort-options">
                         <label style="margin-right: 0.5rem; color: var(--rough-gray);">Sort by:</label>
                         <select id="sortSelect" onchange="applySort()" style="padding: 0.5rem; border: 1px solid #e1e8e4; border-radius: 8px;">
-                            <option value="completeness">Profile Completeness</option>
+                            <option value="relevance">Best Match</option>
                             <option value="newest">Newest First</option>
                             <option value="salary-high">Salary (High to Low)</option>
                             <option value="salary-low">Salary (Low to High)</option>
@@ -1128,7 +1128,6 @@
             <li>Email address</li>
             <li>Phone number</li>
             <li>LinkedIn profile</li>
-            <li>GitHub profile (if available)</li>
         </ul>
         <p style="margin-bottom: 1.5rem;">Current balance: <strong id="currentCredits">0</strong> credits</p>
         <div style="display: flex; gap: 1rem; justify-content: flex-end;">
@@ -1859,7 +1858,7 @@
             
             console.log(`Loading candidates for ${pool.id}:`, candidates?.length, error);
             
-            // Sort by profile completeness score
+            // Sort by profile completeness score (now called "Best Match")
             allCandidates = (candidates || []).sort((a, b) => {
                 const scoreA = calculateProfileScore(a);
                 const scoreB = calculateProfileScore(b);
@@ -2087,7 +2086,7 @@
             const sortValue = document.getElementById('sortSelect').value;
             
             switch (sortValue) {
-                case 'completeness':
+                case 'relevance':
                     filteredCandidates.sort((a, b) => calculateProfileScore(b) - calculateProfileScore(a));
                     break;
                 case 'newest':
@@ -2135,14 +2134,16 @@
             window.history.pushState({}, '', url);
         }
 
-        // Bulk selection functions
+        // Bulk selection functions - FIXED
         function toggleCandidateSelection(candidateId) {
             if (selectedCandidates.has(candidateId)) {
                 selectedCandidates.delete(candidateId);
-                document.getElementById(`card-${candidateId}`).classList.remove('selected');
+                const card = document.getElementById(`card-${candidateId}`);
+                if (card) card.classList.remove('selected');
             } else {
                 selectedCandidates.add(candidateId);
-                document.getElementById(`card-${candidateId}`).classList.add('selected');
+                const card = document.getElementById(`card-${candidateId}`);
+                if (card) card.classList.add('selected');
             }
         }
 
@@ -2167,6 +2168,7 @@
             });
         }
 
+        // FIXED Bulk Add to Shortlist
         async function bulkAddToShortlist() {
             if (selectedCandidates.size === 0) {
                 alert('Please select candidates first');
@@ -2175,33 +2177,58 @@
             
             let added = 0;
             let skipped = 0;
+            let errors = 0;
             
             for (const candidateId of selectedCandidates) {
-                // Check if already in shortlist
-                const existing = shortlist.find(s => s.candidate_id === candidateId);
-                if (existing) {
-                    skipped++;
-                    continue;
+                try {
+                    // Check if already in shortlist
+                    const { data: existing } = await supabase
+                        .from('shortlists')
+                        .select('id')
+                        .eq('user_id', currentUser.id)
+                        .eq('candidate_id', candidateId)
+                        .single();
+                    
+                    if (existing) {
+                        skipped++;
+                        continue;
+                    }
+                    
+                    const { data, error } = await supabase
+                        .from('shortlists')
+                        .insert({
+                            user_id: currentUser.id,
+                            candidate_id: candidateId,
+                            saved_from_pool: currentPool.id
+                        })
+                        .select();
+                    
+                    if (!error && data) {
+                        added++;
+                    } else if (error) {
+                        console.error('Error adding to shortlist:', error);
+                        errors++;
+                    }
+                } catch (err) {
+                    console.error('Error in bulk add:', err);
+                    errors++;
                 }
-                
-                const { error } = await supabase
-                    .from('shortlists')
-                    .insert({
-                        user_id: currentUser.id,
-                        candidate_id: candidateId,
-                        saved_from_pool: currentPool.id
-                    });
-                
-                if (!error) added++;
             }
             
-            let message = `Added ${added} candidates to shortlist!`;
-            if (skipped > 0) {
-                message += ` (${skipped} already in shortlist)`;
+            let message = '';
+            if (added > 0) message += `Added ${added} candidates to shortlist. `;
+            if (skipped > 0) message += `${skipped} already in shortlist. `;
+            if (errors > 0) message += `${errors} errors occurred.`;
+            
+            if (message) {
+                alert(message);
+            } else {
+                alert('No candidates were added to shortlist');
             }
-            alert(message);
+            
             deselectAll();
             
+            // Refresh shortlist
             const { data: shortlistData } = await supabase
                 .from('shortlists')
                 .select('*, candidates(*)')
@@ -2222,7 +2249,7 @@
                 return;
             }
             
-            let csv = 'Job Title,Location,Salary Expectations,Notice Period,Actively Looking,Profile Score\n';
+            let csv = 'Job Title,Location,Salary Expectations,Notice Period,Actively Looking,Match Quality\n';
             
             toExport.forEach(candidate => {
                 const jobTitle = candidate["Current Job Title"] || candidate["Job Title"] || '';
@@ -2355,7 +2382,7 @@
                         <span class="top-pick-badge" style="position: static; display: inline-block;">
                             ⭐ Top Pick
                         </span>
-                        <span class="tooltiptext">Profile completeness: ${profileScore.toFixed(0)}%</span>
+                        <span class="tooltiptext">Match quality: ${profileScore.toFixed(0)}%</span>
                     </span>
                 ` : ''}
             `;
@@ -2400,7 +2427,7 @@
                 
                 <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 1rem; margin-top: 2rem;">
                     <p style="color: var(--hazard-red); font-weight: 600; text-align: center;">
-                        Full contact details (Email, Phone, LinkedIn, GitHub) available upon request (1 credit)
+                        Full contact details (Email, Phone, LinkedIn) available upon request (1 credit)
                     </p>
                 </div>
             `;
@@ -2456,50 +2483,58 @@
             document.getElementById('dialogOverlay').classList.remove('active');
         }
 
+        // FIXED confirmCreditUse function
         async function confirmCreditUse() {
             hideConfirmation();
             await requestContact();
         }
 
-        // Add to shortlist - Fixed with duplicate check
+        // FIXED Add to shortlist
         async function addToShortlist() {
             if (!currentCandidate) return;
             
-            // First check if already in shortlist
-            const existing = shortlist.find(s => s.candidate_id === currentCandidate.ID);
-            if (existing) {
-                alert('This candidate is already in your shortlist');
-                return;
-            }
-            
-            const { data, error } = await supabase
-                .from('shortlists')
-                .insert({
-                    user_id: currentUser.id,
-                    candidate_id: currentCandidate.ID,
-                    saved_from_pool: currentPool.id
-                })
-                .select();
-            
-            if (error) {
-                console.error('Shortlist error:', error);
-                if (error.code === '23505') { // Unique constraint violation
+            try {
+                // First check if already in shortlist
+                const { data: existing } = await supabase
+                    .from('shortlists')
+                    .select('id')
+                    .eq('user_id', currentUser.id)
+                    .eq('candidate_id', currentCandidate.ID)
+                    .single();
+                
+                if (existing) {
                     alert('This candidate is already in your shortlist');
-                } else {
+                    return;
+                }
+                
+                const { data, error } = await supabase
+                    .from('shortlists')
+                    .insert({
+                        user_id: currentUser.id,
+                        candidate_id: currentCandidate.ID,
+                        saved_from_pool: currentPool.id
+                    })
+                    .select();
+                
+                if (!error && data) {
+                    alert('Added to shortlist!');
+                    closeModal();
+                    
+                    // Refresh shortlist
+                    const { data: shortlistData } = await supabase
+                        .from('shortlists')
+                        .select('*, candidates(*)')
+                        .eq('user_id', currentUser.id);
+                    
+                    shortlist = shortlistData || [];
+                    updateShortlistBadge();
+                } else if (error) {
+                    console.error('Shortlist error:', error);
                     alert('Error adding to shortlist. Please try again.');
                 }
-            } else {
-                alert('Added to shortlist!');
-                closeModal();
-                
-                // Refresh shortlist
-                const { data: shortlistData } = await supabase
-                    .from('shortlists')
-                    .select('*, candidates(*)')
-                    .eq('user_id', currentUser.id);
-                
-                shortlist = shortlistData || [];
-                updateShortlistBadge();
+            } catch (err) {
+                console.error('Error in addToShortlist:', err);
+                alert('Error adding to shortlist. Please try again.');
             }
         }
 
@@ -2508,7 +2543,7 @@
             if (!currentCandidate) return;
             
             if (userProfile.credits < 1) {
-                alert('Insufficient credits! Contact talent@golf-jobs.com to purchase more.');
+                alert('Insufficient credits! Contact graham@golf-jobs.com to purchase more.');
                 return;
             }
             
@@ -2536,7 +2571,6 @@
                         <p><strong>Email:</strong> ${currentCandidate.Email || 'Not provided'}</p>
                         <p><strong>Phone:</strong> ${currentCandidate.Phone || 'Not provided'}</p>
                         <p><strong>LinkedIn:</strong> ${currentCandidate.LinkedIn || 'Not provided'}</p>
-                        <p><strong>GitHub:</strong> ${currentCandidate.GitHub || 'Not provided'}</p>
                     </div>
                 `;
                 

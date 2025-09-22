@@ -803,6 +803,26 @@
             opacity: 1;
         }
 
+        /* Request Status Badge */
+        .request-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .request-status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .request-status.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .pools-grid, .candidates-grid {
@@ -1077,6 +1097,9 @@
             <div id="requestsView" class="view-section">
                 <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">My Requests</h1>
                 <div class="section-box">
+                    <p style="margin-bottom: 1.5rem; color: var(--rough-gray);">
+                        Your contact requests are processed within 24 hours. Graham will reach out to candidates on your behalf and provide detailed introductions.
+                    </p>
                     <div id="requestsList"></div>
                 </div>
             </div>
@@ -1122,17 +1145,21 @@
     <!-- Confirmation Dialog -->
     <div class="dialog-overlay" id="dialogOverlay"></div>
     <div class="confirmation-dialog" id="confirmationDialog">
-        <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Confirm Credit Use</h3>
-        <p style="margin-bottom: 1rem;">You are about to use <strong>1 credit</strong> to reveal:</p>
-        <ul style="margin-left: 1.5rem; margin-bottom: 1.5rem;">
-            <li>Email address</li>
-            <li>Phone number</li>
-            <li>LinkedIn profile</li>
-        </ul>
+        <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Confirm Contact Request</h3>
+        <p style="margin-bottom: 1rem;">You are about to use <strong>1 credit</strong> to request contact with this candidate.</p>
+        <div style="background: #f0f8f4; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+            <p style="font-size: 0.9rem; line-height: 1.6;">
+                <strong>What happens next:</strong><br>
+                • Graham will personally contact the candidate<br>
+                • You'll receive their full contact details via email<br>
+                • A tailored introduction will be facilitated<br>
+                • Response typically within 24 hours
+            </p>
+        </div>
         <p style="margin-bottom: 1.5rem;">Current balance: <strong id="currentCredits">0</strong> credits</p>
         <div style="display: flex; gap: 1rem; justify-content: flex-end;">
             <button class="btn btn-secondary" onclick="hideConfirmation()">Cancel</button>
-            <button class="btn btn-primary" onclick="confirmCreditUse()">Confirm</button>
+            <button class="btn btn-primary" onclick="confirmCreditUse()">Confirm Request</button>
         </div>
     </div>
 
@@ -1746,7 +1773,7 @@
             updateShortlistBadge();
             
             // Load saved notes from localStorage
-            const savedNotes = localStorage.getItem('candidateNotes_' + user.id);
+            const savedNotes = localStorage.getItem('candidateNotes_' + currentUser.id);
             if (savedNotes) {
                 candidateNotes = JSON.parse(savedNotes);
             }
@@ -2432,9 +2459,9 @@
                 
                 ${skillsHtml}
                 
-                <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 1rem; margin-top: 2rem;">
-                    <p style="color: var(--hazard-red); font-weight: 600; text-align: center;">
-                        Full contact details (Email, Phone, LinkedIn) available upon request (1 credit)
+                <div style="background: #e6f2ff; border: 1px solid #3a7858; border-radius: 12px; padding: 1rem; margin-top: 2rem;">
+                    <p style="color: var(--augusta-green); font-weight: 600;">
+                        💼 To connect with this candidate, request their contact details and Graham will facilitate a personalized introduction.
                     </p>
                 </div>
             `;
@@ -2496,7 +2523,98 @@
             await requestContact();
         }
 
-        // FIXED Add to shortlist - Now properly handles checking for duplicates
+        // MODIFIED Request contact details - No longer reveals details automatically
+        async function requestContact() {
+            if (!currentCandidate) return;
+            
+            if (userProfile.credits < 1) {
+                alert('Insufficient credits! Contact graham@golf-jobs.com to purchase more.');
+                return;
+            }
+            
+            try {
+                // First, deduct the credit
+                const { error: profileError } = await supabase
+                    .from('users')
+                    .update({ credits: userProfile.credits - 1 })
+                    .eq('id', currentUser.id);
+                
+                if (profileError) {
+                    console.error('Error updating credits:', profileError);
+                    alert('Error processing request. Please try again.');
+                    return;
+                }
+                
+                // Then, insert the request with timestamp and status
+                const { data: requestData, error: requestError } = await supabase
+                    .from('requests')
+                    .insert({
+                        user_id: currentUser.id,
+                        candidate_id: currentCandidate.ID,
+                        credits_used: 1,
+                        request_date: new Date().toISOString(),
+                        status: 'pending' // Add status field
+                    })
+                    .select();
+                
+                if (requestError) {
+                    console.error('Error inserting request:', requestError);
+                    // Refund the credit if request insert fails
+                    await supabase
+                        .from('users')
+                        .update({ credits: userProfile.credits })
+                        .eq('id', currentUser.id);
+                    alert('Error recording request. Your credit has been refunded. Please try again.');
+                    return;
+                }
+                
+                // Update local state
+                userProfile.credits--;
+                document.getElementById('creditsCount').textContent = userProfile.credits;
+                
+                // Update the modal to show request submitted message
+                const currentModalBody = document.getElementById('modalBody').innerHTML;
+                const successHtml = `
+                    <div style="margin-top: 1rem; padding: 1.5rem; background: #d4edda; border-radius: 12px; border: 2px solid var(--augusta-green);">
+                        <h4 style="color: var(--augusta-green); margin-bottom: 0.75rem;">✅ Contact Request Submitted!</h4>
+                        <p style="margin-bottom: 0.75rem;"><strong>What happens next:</strong></p>
+                        <ul style="margin-left: 1.5rem; line-height: 1.8;">
+                            <li>Graham has been notified of your request</li>
+                            <li>He will personally contact the candidate within 24 hours</li>
+                            <li>You'll receive their full contact details via email</li>
+                            <li>A tailored introduction will be facilitated</li>
+                        </ul>
+                        <p style="margin-top: 1rem; font-size: 0.9rem; color: #155724;">
+                            <strong>Reference ID:</strong> #${requestData[0].id}
+                        </p>
+                    </div>
+                `;
+                
+                // Replace the request button area with success message
+                document.getElementById('modalBody').innerHTML = currentModalBody.replace(
+                    /<div style="background: #e6f2ff;.*?<\/div>/s,
+                    successHtml
+                );
+                
+                alert('Contact request submitted successfully! Graham will reach out within 24 hours.');
+                
+                // In a real implementation, this would trigger an email to Graham
+                // For now, we'll just log it
+                console.log('Email notification would be sent to graham@golf-jobs.com with request details:', {
+                    requestId: requestData[0].id,
+                    candidateId: currentCandidate.ID,
+                    candidateName: currentCandidate["Current Job Title"] || currentCandidate.Name,
+                    requestedBy: userProfile.name || currentUser.email,
+                    timestamp: new Date().toISOString()
+                });
+                
+            } catch (err) {
+                console.error('Unexpected error in requestContact:', err);
+                alert('An unexpected error occurred. Please contact support.');
+            }
+        }
+
+        // FIXED Add to shortlist
         async function addToShortlist() {
             if (!currentCandidate) return;
             
@@ -2541,51 +2659,6 @@
             } catch (err) {
                 console.error('Error in addToShortlist:', err);
                 alert('Error adding to shortlist. Please try again.');
-            }
-        }
-
-        // Request contact details
-        async function requestContact() {
-            if (!currentCandidate) return;
-            
-            if (userProfile.credits < 1) {
-                alert('Insufficient credits! Contact graham@golf-jobs.com to purchase more.');
-                return;
-            }
-            
-            const { error: profileError } = await supabase
-                .from('users')
-                .update({ credits: userProfile.credits - 1 })
-                .eq('id', currentUser.id);
-            
-            const { error: requestError } = await supabase
-                .from('requests')
-                .insert({
-                    user_id: currentUser.id,
-                    candidate_id: currentCandidate.ID,
-                    credits_used: 1
-                });
-            
-            if (!profileError && !requestError) {
-                userProfile.credits--;
-                document.getElementById('creditsCount').textContent = userProfile.credits;
-                
-                const currentModalBody = document.getElementById('modalBody').innerHTML;
-                const detailsHtml = `
-                    <div style="margin-top: 1rem; padding: 1rem; background: #d4edda; border-radius: 8px;">
-                        <h4 style="color: var(--augusta-green); margin-bottom: 0.5rem;">Contact Details Revealed:</h4>
-                        <p><strong>Email:</strong> ${currentCandidate.Email || 'Not provided'}</p>
-                        <p><strong>Phone:</strong> ${currentCandidate.Phone || 'Not provided'}</p>
-                        <p><strong>LinkedIn:</strong> ${currentCandidate.LinkedIn || 'Not provided'}</p>
-                    </div>
-                `;
-                
-                document.getElementById('modalBody').innerHTML = currentModalBody.replace(
-                    /<div style="background: #fef2f2;.*?<\/div>/s,
-                    detailsHtml
-                );
-                
-                alert('Contact details revealed! 1 credit used.');
             }
         }
 
@@ -2717,6 +2790,7 @@
             }
         }
 
+        // UPDATED Load Requests with status
         async function loadRequests() {
             const { data: requests } = await supabase
                 .from('requests')
@@ -2735,8 +2809,9 @@
                             <tr style="background: #f9fafb;">
                                 <th style="padding: 1rem; text-align: left;">Date</th>
                                 <th style="padding: 1rem; text-align: left;">Candidate</th>
-                                <th style="padding: 1rem; text-align: left;">Contact Details</th>
-                                <th style="padding: 1rem; text-align: left;">Credits Used</th>
+                                <th style="padding: 1rem; text-align: left;">Location</th>
+                                <th style="padding: 1rem; text-align: left;">Status</th>
+                                <th style="padding: 1rem; text-align: left;">Credits</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2745,17 +2820,19 @@
                                 const jobTitle = candidate ? toTitleCase(candidate["Current Job Title"] || 
                                                candidate.Name || 
                                                `Candidate #${req.candidate_id}`) : `Candidate #${req.candidate_id}`;
-                                
-                                const contactInfo = candidate ? `
-                                    Email: ${candidate.Email || 'N/A'}<br>
-                                    LinkedIn: ${candidate.LinkedIn || 'N/A'}
-                                ` : 'Not available';
+                                const location = candidate ? cleanAndFormatLocation(candidate["Town/City"], candidate.Country) : 'N/A';
+                                const status = req.status || 'pending';
+                                const statusClass = status === 'completed' ? 'completed' : 'pending';
+                                const statusText = status === 'completed' ? 'Completed' : 'Processing';
                                 
                                 return `
                                     <tr style="border-bottom: 1px solid #e5e7eb;">
                                         <td style="padding: 1rem;">${new Date(req.request_date).toLocaleDateString()}</td>
                                         <td style="padding: 1rem;">${jobTitle}</td>
-                                        <td style="padding: 1rem; font-size: 0.9rem;">${contactInfo}</td>
+                                        <td style="padding: 1rem;">${location}</td>
+                                        <td style="padding: 1rem;">
+                                            <span class="request-status ${statusClass}">${statusText}</span>
+                                        </td>
                                         <td style="padding: 1rem;">${req.credits_used || 1}</td>
                                     </tr>
                                 `;
@@ -2766,6 +2843,7 @@
             }
         }
 
+        // UPDATED Load Admin with better request details
         async function loadAdmin() {
             const { data: allUsers } = await supabase
                 .from('users')
@@ -2811,13 +2889,18 @@
             const requestsList = document.getElementById('adminRequestsList');
             if (allRequests && allRequests.length > 0) {
                 requestsList.innerHTML = `
+                    <p style="margin-bottom: 1rem; padding: 1rem; background: #fff3cd; border-radius: 8px;">
+                        <strong>📧 Action Required:</strong> Contact candidates for pending requests and update status to 'completed' in database.
+                    </p>
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="background: #f9fafb;">
                                 <th style="padding: 1rem; text-align: left;">Date</th>
                                 <th style="padding: 1rem; text-align: left;">User</th>
                                 <th style="padding: 1rem; text-align: left;">Candidate</th>
-                                <th style="padding: 1rem; text-align: left;">Credits</th>
+                                <th style="padding: 1rem; text-align: left;">Location</th>
+                                <th style="padding: 1rem; text-align: left;">Status</th>
+                                <th style="padding: 1rem; text-align: left;">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2825,12 +2908,32 @@
                                 const jobTitle = req.candidates ? toTitleCase(req.candidates["Current Job Title"] || 
                                                req.candidates.Name || 
                                                `Candidate #${req.candidate_id}`) : `Candidate #${req.candidate_id}`;
+                                const location = req.candidates ? cleanAndFormatLocation(req.candidates["Town/City"], req.candidates.Country) : 'N/A';
+                                const status = req.status || 'pending';
+                                const statusClass = status === 'completed' ? 'completed' : 'pending';
+                                const statusText = status === 'completed' ? '✅ Completed' : '⏳ Pending';
+                                
                                 return `
                                     <tr style="border-bottom: 1px solid #e5e7eb;">
                                         <td style="padding: 1rem;">${new Date(req.request_date).toLocaleDateString()}</td>
-                                        <td style="padding: 1rem;">${req.users?.name || req.users?.email || 'Unknown'}</td>
+                                        <td style="padding: 1rem;">
+                                            ${req.users?.name || 'Unknown'}<br>
+                                            <small style="color: var(--rough-gray);">${req.users?.email || ''}</small>
+                                        </td>
                                         <td style="padding: 1rem;">${jobTitle}</td>
-                                        <td style="padding: 1rem;">${req.credits_used || 1}</td>
+                                        <td style="padding: 1rem;">${location}</td>
+                                        <td style="padding: 1rem;">
+                                            <span class="request-status ${statusClass}">${statusText}</span>
+                                        </td>
+                                        <td style="padding: 1rem;">
+                                            ${status === 'pending' ? `
+                                                <button onclick="markRequestComplete(${req.id})" 
+                                                        class="btn btn-small btn-primary"
+                                                        style="font-size: 0.75rem; padding: 0.25rem 0.75rem;">
+                                                    Mark Complete
+                                                </button>
+                                            ` : ''}
+                                        </td>
                                     </tr>
                                 `;
                             }).join('')}
@@ -2839,6 +2942,23 @@
                 `;
             } else {
                 requestsList.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No requests found.</p>';
+            }
+        }
+
+        // Mark request as complete (admin function)
+        async function markRequestComplete(requestId) {
+            if (!confirm('Mark this request as complete?')) return;
+            
+            const { error } = await supabase
+                .from('requests')
+                .update({ status: 'completed' })
+                .eq('id', requestId);
+            
+            if (!error) {
+                alert('Request marked as complete!');
+                loadAdmin(); // Reload admin view
+            } else {
+                alert('Error updating request status');
             }
         }
 

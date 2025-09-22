@@ -33,10 +33,6 @@
             --rough-gray: #6c757d;
             --hazard-red: #c9302c;
             --water-hazard: #2c5aa0;
-            --profile-platinum: #e5e4e2;
-            --profile-gold: #ffd700;
-            --profile-silver: #c0c0c0;
-            --profile-bronze: #cd7f32;
         }
 
         body {
@@ -460,43 +456,16 @@
             background: white;
             border-radius: 16px;
             padding: 1.75rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
             transition: all 0.3s ease;
-            border: 2px solid transparent;
+            border: 1px solid #e5e7eb;
             position: relative;
-            overflow: visible;
             cursor: pointer;
-        }
-
-        .candidate-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            border-radius: 16px 0 0 16px;
-        }
-
-        .candidate-card.platinum::before {
-            background: linear-gradient(180deg, var(--profile-platinum), var(--profile-gold));
-        }
-
-        .candidate-card.gold::before {
-            background: var(--profile-gold);
-        }
-
-        .candidate-card.silver::before {
-            background: var(--profile-silver);
-        }
-
-        .candidate-card.bronze::before {
-            background: var(--profile-bronze);
         }
 
         .candidate-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.1);
             border-color: var(--masters-green);
         }
 
@@ -514,37 +483,19 @@
             cursor: pointer;
         }
 
-        .profile-badge {
+        .top-pick-badge {
             position: absolute;
-            top: -8px;
-            right: 1rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
+            top: -10px;
+            right: 15px;
+            background: linear-gradient(135deg, #2d5f3f, #3a7858);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
             font-size: 0.7rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .profile-badge.platinum {
-            background: linear-gradient(135deg, var(--profile-platinum), var(--profile-gold));
-            color: var(--pro-shop-navy);
-        }
-
-        .profile-badge.gold {
-            background: var(--profile-gold);
-            color: var(--pro-shop-navy);
-        }
-
-        .profile-badge.silver {
-            background: var(--profile-silver);
-            color: var(--pro-shop-navy);
-        }
-
-        .profile-badge.bronze {
-            background: var(--profile-bronze);
-            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
         .new-badge {
@@ -1069,7 +1020,6 @@
                             <option value="newest">Newest First</option>
                             <option value="salary-high">Salary (High to Low)</option>
                             <option value="salary-low">Salary (Low to High)</option>
-                            <option value="name">Name (A-Z)</option>
                         </select>
                     </div>
                     
@@ -1212,14 +1162,6 @@
         const candidatesPerPage = 20;
         let searchTerm = '';
 
-        // Profile Badge Levels
-        const PROFILE_LEVELS = {
-            PLATINUM: { name: 'Top Profile', threshold: 95, class: 'platinum' },
-            GOLD: { name: 'Gold Profile', threshold: 85, class: 'gold' },
-            SILVER: { name: 'Silver Profile', threshold: 70, class: 'silver' },
-            BRONZE: { name: 'Bronze Profile', threshold: 50, class: 'bronze' }
-        };
-
         // Utility functions
         function toTitleCase(str) {
             if (!str) return str;
@@ -1342,7 +1284,7 @@
                     ${skillsString}</p>`;
         }
 
-        // Enhanced completeness calculation with profile badges
+        // Profile score calculation
         function calculateProfileScore(candidate) {
             let score = 0;
             let maxScore = 100;
@@ -1350,7 +1292,7 @@
             // Professional Summary - 30 points max
             const aboutYou = candidate["About You"] || '';
             if (aboutYou.length > 200) {
-                score += 30; // Full points for detailed summary
+                score += 30;
             } else if (aboutYou.length > 100) {
                 score += 20;
             } else if (aboutYou.length > 50) {
@@ -1395,19 +1337,7 @@
             return Math.min((score / maxScore) * 100, 100);
         }
 
-        function getProfileBadge(candidate) {
-            const score = calculateProfileScore(candidate);
-            
-            if (score >= PROFILE_LEVELS.PLATINUM.threshold) return PROFILE_LEVELS.PLATINUM;
-            if (score >= PROFILE_LEVELS.GOLD.threshold) return PROFILE_LEVELS.GOLD;
-            if (score >= PROFILE_LEVELS.SILVER.threshold) return PROFILE_LEVELS.SILVER;
-            if (score >= PROFILE_LEVELS.BRONZE.threshold) return PROFILE_LEVELS.BRONZE;
-            
-            return null;
-        }
-
         function isNewCandidate(candidate) {
-            // Check if candidate was added in last 7 days
             if (!candidate.created_at) return false;
             const createdDate = new Date(candidate.created_at);
             const sevenDaysAgo = new Date();
@@ -1600,18 +1530,21 @@
         // Location filter functions
         function populateLocationFilter(candidates) {
             availableLocations.clear();
+            let unspecifiedCount = 0;
             
             candidates.forEach(candidate => {
                 const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
                 if (location && location !== 'Location Not Specified') {
                     availableLocations.add(location);
+                } else {
+                    unspecifiedCount++;
                 }
             });
             
             const sortedLocations = Array.from(availableLocations).sort();
             const checkboxesDiv = document.getElementById('locationCheckboxes');
             
-            checkboxesDiv.innerHTML = sortedLocations.map(location => {
+            let html = sortedLocations.map(location => {
                 const count = candidates.filter(c => 
                     cleanAndFormatLocation(c["Town/City"], c.Country) === location
                 ).length;
@@ -1627,6 +1560,22 @@
                     </div>
                 `;
             }).join('');
+            
+            // Add Unspecified at the bottom if there are any
+            if (unspecifiedCount > 0) {
+                html += `
+                    <div style="margin-bottom: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #e5e7eb;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" value="Location Not Specified" 
+                                   onchange="updateLocationSelection(this)" 
+                                   style="margin-right: 0.5rem;">
+                            <span style="font-size: 0.9rem; color: var(--rough-gray);">Unspecified (${unspecifiedCount})</span>
+                        </label>
+                    </div>
+                `;
+            }
+            
+            checkboxesDiv.innerHTML = html;
         }
 
         function toggleLocationDropdown() {
@@ -1699,7 +1648,6 @@
 
         // Enhanced authentication and data loading
         window.onload = async function() {
-            // Check URL parameters for filter state
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('search')) {
                 searchTerm = urlParams.get('search');
@@ -1713,7 +1661,6 @@
                 document.getElementById('loginScreen').style.display = 'flex';
             }
             
-            // Set up keyboard shortcuts
             document.addEventListener('keydown', handleKeyboardShortcuts);
         }
 
@@ -1830,17 +1777,15 @@
             else if (view === 'requests') loadRequests();
             else if (view === 'admin' && userProfile?.role === 'admin') loadAdmin();
             
-            // Update URL without reload
             const url = new URL(window.location);
             url.searchParams.set('view', view);
             window.history.pushState({}, '', url);
         }
 
-        // Load talent pools with loading state
+        // Load talent pools with loading state and sort by count
         async function loadPools() {
             const poolsGrid = document.getElementById('poolsGrid');
             
-            // Show loading skeletons
             poolsGrid.innerHTML = `
                 <div class="skeleton skeleton-card"></div>
                 <div class="skeleton skeleton-card"></div>
@@ -1860,6 +1805,9 @@
                 pool.total_candidates = count || 0;
             }
             
+            // Sort pools by candidate count (highest first)
+            pools.sort((a, b) => b.total_candidates - a.total_candidates);
+            
             poolsGrid.innerHTML = '';
             
             for (const pool of pools) {
@@ -1875,7 +1823,9 @@
                     <div class="pool-stats">
                         <div class="pool-stat">
                             <span>Total Candidates</span>
-                            <span>${pool.total_candidates}</span>
+                            <span style="font-size: 1.25rem; font-weight: 700; color: var(--augusta-green);">
+                                ${pool.total_candidates}
+                            </span>
                         </div>
                     </div>
                 `;
@@ -1997,13 +1947,15 @@
                 
                 const skillsDisplay = formatSkillsDisplay(candidate["Your Skills"] || candidate.Skills || '');
                 
-                const profileBadge = getProfileBadge(candidate);
+                // Only show "Top Pick" for profiles with 85%+ completeness
+                const profileScore = calculateProfileScore(candidate);
+                const isTopPick = profileScore >= 85;
                 const isNew = isNewCandidate(candidate);
                 
                 const isSelected = selectedCandidates.has(candidate.ID);
                 
                 return `
-                    <div class="candidate-card ${profileBadge ? profileBadge.class : ''} ${isSelected ? 'selected' : ''}" 
+                    <div class="candidate-card ${isSelected ? 'selected' : ''}" 
                          id="card-${candidate.ID}">
                         <input type="checkbox" 
                                class="candidate-checkbox" 
@@ -2011,12 +1963,7 @@
                                onchange="toggleCandidateSelection(${candidate.ID})"
                                onclick="event.stopPropagation()">
                         
-                        ${profileBadge ? `
-                            <div class="profile-badge ${profileBadge.class}">
-                                ${profileBadge.name}
-                            </div>
-                        ` : ''}
-                        
+                        ${isTopPick ? '<div class="top-pick-badge">⭐ Top Pick</div>' : ''}
                         ${isNew ? '<div class="new-badge">New</div>' : ''}
                         
                         ${activelyLooking ? `
@@ -2126,7 +2073,6 @@
             currentPage = 0;
             displayCandidatesPage();
             
-            // Update URL with filter state
             const url = new URL(window.location);
             if (searchTerm) {
                 url.searchParams.set('search', searchTerm);
@@ -2165,13 +2111,6 @@
                         return salaryA - salaryB;
                     });
                     break;
-                case 'name':
-                    filteredCandidates.sort((a, b) => {
-                        const nameA = (a.Name || a["Current Job Title"] || '').toLowerCase();
-                        const nameB = (b.Name || b["Current Job Title"] || '').toLowerCase();
-                        return nameA.localeCompare(nameB);
-                    });
-                    break;
             }
             
             currentPage = 0;
@@ -2191,7 +2130,6 @@
             currentPage = 0;
             displayCandidatesPage();
             
-            // Clear URL parameters
             const url = new URL(window.location);
             url.searchParams.delete('search');
             window.history.pushState({}, '', url);
@@ -2236,7 +2174,16 @@
             }
             
             let added = 0;
+            let skipped = 0;
+            
             for (const candidateId of selectedCandidates) {
+                // Check if already in shortlist
+                const existing = shortlist.find(s => s.candidate_id === candidateId);
+                if (existing) {
+                    skipped++;
+                    continue;
+                }
+                
                 const { error } = await supabase
                     .from('shortlists')
                     .insert({
@@ -2248,7 +2195,11 @@
                 if (!error) added++;
             }
             
-            alert(`Added ${added} candidates to shortlist!`);
+            let message = `Added ${added} candidates to shortlist!`;
+            if (skipped > 0) {
+                message += ` (${skipped} already in shortlist)`;
+            }
+            alert(message);
             deselectAll();
             
             const { data: shortlistData } = await supabase
@@ -2349,8 +2300,8 @@
             const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
             const aboutRaw = candidate["About You"] || candidate.Summary || 'No summary provided';
             
-            const profileBadge = getProfileBadge(candidate);
             const profileScore = calculateProfileScore(candidate);
+            const isTopPick = profileScore >= 85;
             
             // Create expandable summary
             let aboutHtml = '';
@@ -2399,10 +2350,10 @@
             
             document.getElementById('modalTitle').innerHTML = `
                 ${jobTitle}
-                ${profileBadge ? `
+                ${isTopPick ? `
                     <span class="tooltip" style="margin-left: 1rem;">
-                        <span class="profile-badge ${profileBadge.class}" style="position: static; display: inline-block;">
-                            ${profileBadge.name}
+                        <span class="top-pick-badge" style="position: static; display: inline-block;">
+                            ⭐ Top Pick
                         </span>
                         <span class="tooltiptext">Profile completeness: ${profileScore.toFixed(0)}%</span>
                     </span>
@@ -2510,24 +2461,38 @@
             await requestContact();
         }
 
-        // Add to shortlist
+        // Add to shortlist - Fixed with duplicate check
         async function addToShortlist() {
             if (!currentCandidate) return;
             
-            const { error } = await supabase
+            // First check if already in shortlist
+            const existing = shortlist.find(s => s.candidate_id === currentCandidate.ID);
+            if (existing) {
+                alert('This candidate is already in your shortlist');
+                return;
+            }
+            
+            const { data, error } = await supabase
                 .from('shortlists')
                 .insert({
                     user_id: currentUser.id,
                     candidate_id: currentCandidate.ID,
                     saved_from_pool: currentPool.id
-                });
+                })
+                .select();
             
             if (error) {
-                alert('Already in shortlist or error occurred');
+                console.error('Shortlist error:', error);
+                if (error.code === '23505') { // Unique constraint violation
+                    alert('This candidate is already in your shortlist');
+                } else {
+                    alert('Error adding to shortlist. Please try again.');
+                }
             } else {
                 alert('Added to shortlist!');
                 closeModal();
                 
+                // Refresh shortlist
                 const { data: shortlistData } = await supabase
                     .from('shortlists')
                     .select('*, candidates(*)')

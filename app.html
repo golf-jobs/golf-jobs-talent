@@ -530,6 +530,7 @@
         .bulk-actions {
             display: flex;
             gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
         /* Modal */
@@ -2168,7 +2169,7 @@
             window.history.pushState({}, '', url);
         }
 
-        // Bulk selection functions - FIXED
+        // Bulk selection functions
         function toggleCandidateSelection(candidateId) {
             if (selectedCandidates.has(candidateId)) {
                 selectedCandidates.delete(candidateId);
@@ -2202,7 +2203,7 @@
             });
         }
 
-        // FIXED Bulk Add to Shortlist
+        // FIXED Bulk Add to Shortlist - MINIMAL version
         async function bulkAddToShortlist() {
             if (selectedCandidates.size === 0) {
                 alert('Please select candidates first');
@@ -2210,37 +2211,26 @@
             }
             
             let added = 0;
-            let skipped = 0;
             let errors = 0;
             
             for (const candidateId of selectedCandidates) {
                 try {
-                    // Check if already in shortlist using count
-                    const { count } = await supabase
-                        .from('shortlists')
-                        .select('*', { count: 'exact', head: true })
-                        .eq('user_id', currentUser.id)
-                        .eq('candidate_id', candidateId);
-                    
-                    if (count > 0) {
-                        skipped++;
-                        continue;
-                    }
-                    
                     const { data, error } = await supabase
                         .from('shortlists')
                         .insert({
                             user_id: currentUser.id,
-                            candidate_id: candidateId,
-                            saved_from_pool: currentPool.id
+                            candidate_id: candidateId
+                            // Removed pool_id
                         })
                         .select();
                     
-                    if (!error && data) {
+                    if (error) {
+                        if (!error.message?.includes('duplicate')) {
+                            console.error('Error for candidate', candidateId, ':', error);
+                            errors++;
+                        }
+                    } else if (data) {
                         added++;
-                    } else if (error) {
-                        console.error('Error adding to shortlist:', error);
-                        errors++;
                     }
                 } catch (err) {
                     console.error('Error in bulk add:', err);
@@ -2248,17 +2238,10 @@
                 }
             }
             
-            let message = '';
-            if (added > 0) message += `Added ${added} candidates to shortlist. `;
-            if (skipped > 0) message += `${skipped} already in shortlist. `;
-            if (errors > 0) message += `${errors} errors occurred.`;
+            let message = `Added ${added} candidates to shortlist.`;
+            if (errors > 0) message += ` ${errors} errors occurred.`;
             
-            if (message) {
-                alert(message);
-            } else {
-                alert('No candidates were added to shortlist');
-            }
-            
+            alert(message);
             deselectAll();
             
             // Refresh shortlist
@@ -2517,13 +2500,12 @@
             document.getElementById('dialogOverlay').classList.remove('active');
         }
 
-        // FIXED confirmCreditUse function
         async function confirmCreditUse() {
             hideConfirmation();
             await requestContact();
         }
 
-        // MODIFIED Request contact details - No longer reveals details automatically
+        // FIXED Request contact details - MINIMAL version
         async function requestContact() {
             if (!currentCandidate) return;
             
@@ -2545,26 +2527,25 @@
                     return;
                 }
                 
-                // Then, insert the request with timestamp and status
+                // Insert minimal request data - only essential fields
                 const { data: requestData, error: requestError } = await supabase
                     .from('requests')
                     .insert({
                         user_id: currentUser.id,
                         candidate_id: currentCandidate.ID,
-                        credits_used: 1,
-                        request_date: new Date().toISOString(),
-                        status: 'pending' // Add status field
+                        credits_used: 1
+                        // Removed ALL optional fields
                     })
                     .select();
                 
                 if (requestError) {
-                    console.error('Error inserting request:', requestError);
-                    // Refund the credit if request insert fails
+                    console.error('Full request error details:', requestError);
+                    // Refund the credit
                     await supabase
                         .from('users')
                         .update({ credits: userProfile.credits })
                         .eq('id', currentUser.id);
-                    alert('Error recording request. Your credit has been refunded. Please try again.');
+                    alert('Error recording request. Your credit has been refunded. Check console for details.');
                     return;
                 }
                 
@@ -2572,93 +2553,57 @@
                 userProfile.credits--;
                 document.getElementById('creditsCount').textContent = userProfile.credits;
                 
-                // Update the modal to show request submitted message
-                const currentModalBody = document.getElementById('modalBody').innerHTML;
-                const successHtml = `
-                    <div style="margin-top: 1rem; padding: 1.5rem; background: #d4edda; border-radius: 12px; border: 2px solid var(--augusta-green);">
-                        <h4 style="color: var(--augusta-green); margin-bottom: 0.75rem;">✅ Contact Request Submitted!</h4>
-                        <p style="margin-bottom: 0.75rem;"><strong>What happens next:</strong></p>
-                        <ul style="margin-left: 1.5rem; line-height: 1.8;">
-                            <li>Graham has been notified of your request</li>
-                            <li>He will personally contact the candidate within 24 hours</li>
-                            <li>You'll receive their full contact details via email</li>
-                            <li>A tailored introduction will be facilitated</li>
-                        </ul>
-                        <p style="margin-top: 1rem; font-size: 0.9rem; color: #155724;">
-                            <strong>Reference ID:</strong> #${requestData[0].id}
-                        </p>
-                    </div>
-                `;
-                
-                // Replace the request button area with success message
-                document.getElementById('modalBody').innerHTML = currentModalBody.replace(
-                    /<div style="background: #e6f2ff;.*?<\/div>/s,
-                    successHtml
-                );
-                
+                // Show success message
                 alert('Contact request submitted successfully! Graham will reach out within 24 hours.');
-                
-                // In a real implementation, this would trigger an email to Graham
-                // For now, we'll just log it
-                console.log('Email notification would be sent to graham@golf-jobs.com with request details:', {
-                    requestId: requestData[0].id,
-                    candidateId: currentCandidate.ID,
-                    candidateName: currentCandidate["Current Job Title"] || currentCandidate.Name,
-                    requestedBy: userProfile.name || currentUser.email,
-                    timestamp: new Date().toISOString()
-                });
+                closeModal();
                 
             } catch (err) {
-                console.error('Unexpected error in requestContact:', err);
-                alert('An unexpected error occurred. Please contact support.');
+                console.error('Unexpected error:', err);
+                alert('An unexpected error occurred. Please check the console for details.');
             }
         }
 
-        // FIXED Add to shortlist
+        // FIXED Add to shortlist - MINIMAL version
         async function addToShortlist() {
             if (!currentCandidate) return;
             
             try {
-                // Check if already in shortlist using count instead of single()
-                const { count } = await supabase
-                    .from('shortlists')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('user_id', currentUser.id)
-                    .eq('candidate_id', currentCandidate.ID);
-                
-                if (count > 0) {
-                    alert('This candidate is already in your shortlist');
-                    return;
-                }
-                
+                // Just try to insert - let database handle duplicates
                 const { data, error } = await supabase
                     .from('shortlists')
                     .insert({
                         user_id: currentUser.id,
-                        candidate_id: currentCandidate.ID,
-                        saved_from_pool: currentPool.id
+                        candidate_id: currentCandidate.ID
+                        // Removed pool_id as it might not exist
                     })
                     .select();
                 
-                if (!error && data) {
-                    alert('Added to shortlist!');
-                    closeModal();
-                    
-                    // Refresh shortlist
-                    const { data: shortlistData } = await supabase
-                        .from('shortlists')
-                        .select('*, candidates(*)')
-                        .eq('user_id', currentUser.id);
-                    
-                    shortlist = shortlistData || [];
-                    updateShortlistBadge();
-                } else if (error) {
-                    console.error('Shortlist error:', error);
-                    alert('Error adding to shortlist. Please try again.');
+                if (error) {
+                    // Check if it's a duplicate error
+                    if (error.message && error.message.includes('duplicate')) {
+                        alert('This candidate is already in your shortlist');
+                    } else {
+                        console.error('Full shortlist error:', error);
+                        alert('Error adding to shortlist. Check console for details.');
+                    }
+                    return;
                 }
+                
+                alert('Added to shortlist!');
+                closeModal();
+                
+                // Refresh shortlist
+                const { data: shortlistData } = await supabase
+                    .from('shortlists')
+                    .select('*, candidates(*)')
+                    .eq('user_id', currentUser.id);
+                
+                shortlist = shortlistData || [];
+                updateShortlistBadge();
+                
             } catch (err) {
-                console.error('Error in addToShortlist:', err);
-                alert('Error adding to shortlist. Please try again.');
+                console.error('Unexpected error:', err);
+                alert('Error adding to shortlist. Check console for details.');
             }
         }
 
@@ -2756,7 +2701,7 @@
                 .from('requests')
                 .select('*, candidates(*)')
                 .eq('user_id', currentUser.id)
-                .order('request_date', { ascending: false })
+                .order('created_at', { ascending: false })
                 .limit(10);
             
             const historyDiv = document.getElementById('creditsHistory');
@@ -2774,9 +2719,10 @@
                             ${requests.map(req => {
                                 const jobTitle = req.candidates ? toTitleCase(req.candidates["Current Job Title"] || 
                                                req.candidates.Name) : 'Unknown';
+                                const date = req.created_at || 'Unknown';
                                 return `
                                     <tr style="border-bottom: 1px solid #e5e7eb;">
-                                        <td style="padding: 0.5rem;">${new Date(req.request_date).toLocaleDateString()}</td>
+                                        <td style="padding: 0.5rem;">${new Date(date).toLocaleDateString()}</td>
                                         <td style="padding: 0.5rem;">${jobTitle}</td>
                                         <td style="padding: 0.5rem;">-${req.credits_used || 1}</td>
                                     </tr>
@@ -2790,13 +2736,13 @@
             }
         }
 
-        // UPDATED Load Requests with status
+        // FIXED Load Requests
         async function loadRequests() {
             const { data: requests } = await supabase
                 .from('requests')
                 .select('*, candidates(*)')
                 .eq('user_id', currentUser.id)
-                .order('request_date', { ascending: false });
+                .order('created_at', { ascending: false });
             
             const content = document.getElementById('requestsList');
             
@@ -2810,7 +2756,6 @@
                                 <th style="padding: 1rem; text-align: left;">Date</th>
                                 <th style="padding: 1rem; text-align: left;">Candidate</th>
                                 <th style="padding: 1rem; text-align: left;">Location</th>
-                                <th style="padding: 1rem; text-align: left;">Status</th>
                                 <th style="padding: 1rem; text-align: left;">Credits</th>
                             </tr>
                         </thead>
@@ -2821,18 +2766,13 @@
                                                candidate.Name || 
                                                `Candidate #${req.candidate_id}`) : `Candidate #${req.candidate_id}`;
                                 const location = candidate ? cleanAndFormatLocation(candidate["Town/City"], candidate.Country) : 'N/A';
-                                const status = req.status || 'pending';
-                                const statusClass = status === 'completed' ? 'completed' : 'pending';
-                                const statusText = status === 'completed' ? 'Completed' : 'Processing';
+                                const date = req.created_at || 'Unknown';
                                 
                                 return `
                                     <tr style="border-bottom: 1px solid #e5e7eb;">
-                                        <td style="padding: 1rem;">${new Date(req.request_date).toLocaleDateString()}</td>
+                                        <td style="padding: 1rem;">${new Date(date).toLocaleDateString()}</td>
                                         <td style="padding: 1rem;">${jobTitle}</td>
                                         <td style="padding: 1rem;">${location}</td>
-                                        <td style="padding: 1rem;">
-                                            <span class="request-status ${statusClass}">${statusText}</span>
-                                        </td>
                                         <td style="padding: 1rem;">${req.credits_used || 1}</td>
                                     </tr>
                                 `;
@@ -2843,7 +2783,6 @@
             }
         }
 
-        // UPDATED Load Admin with better request details
         async function loadAdmin() {
             const { data: allUsers } = await supabase
                 .from('users')
@@ -2883,24 +2822,19 @@
             const { data: allRequests } = await supabase
                 .from('requests')
                 .select('*, users(name, email), candidates(*)')
-                .order('request_date', { ascending: false })
+                .order('created_at', { ascending: false })
                 .limit(50);
             
             const requestsList = document.getElementById('adminRequestsList');
             if (allRequests && allRequests.length > 0) {
                 requestsList.innerHTML = `
-                    <p style="margin-bottom: 1rem; padding: 1rem; background: #fff3cd; border-radius: 8px;">
-                        <strong>📧 Action Required:</strong> Contact candidates for pending requests and update status to 'completed' in database.
-                    </p>
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="background: #f9fafb;">
                                 <th style="padding: 1rem; text-align: left;">Date</th>
                                 <th style="padding: 1rem; text-align: left;">User</th>
                                 <th style="padding: 1rem; text-align: left;">Candidate</th>
-                                <th style="padding: 1rem; text-align: left;">Location</th>
-                                <th style="padding: 1rem; text-align: left;">Status</th>
-                                <th style="padding: 1rem; text-align: left;">Action</th>
+                                <th style="padding: 1rem; text-align: left;">Credits</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2908,32 +2842,13 @@
                                 const jobTitle = req.candidates ? toTitleCase(req.candidates["Current Job Title"] || 
                                                req.candidates.Name || 
                                                `Candidate #${req.candidate_id}`) : `Candidate #${req.candidate_id}`;
-                                const location = req.candidates ? cleanAndFormatLocation(req.candidates["Town/City"], req.candidates.Country) : 'N/A';
-                                const status = req.status || 'pending';
-                                const statusClass = status === 'completed' ? 'completed' : 'pending';
-                                const statusText = status === 'completed' ? '✅ Completed' : '⏳ Pending';
-                                
+                                const date = req.created_at || 'Unknown';
                                 return `
                                     <tr style="border-bottom: 1px solid #e5e7eb;">
-                                        <td style="padding: 1rem;">${new Date(req.request_date).toLocaleDateString()}</td>
-                                        <td style="padding: 1rem;">
-                                            ${req.users?.name || 'Unknown'}<br>
-                                            <small style="color: var(--rough-gray);">${req.users?.email || ''}</small>
-                                        </td>
+                                        <td style="padding: 1rem;">${new Date(date).toLocaleDateString()}</td>
+                                        <td style="padding: 1rem;">${req.users?.name || req.users?.email || 'Unknown'}</td>
                                         <td style="padding: 1rem;">${jobTitle}</td>
-                                        <td style="padding: 1rem;">${location}</td>
-                                        <td style="padding: 1rem;">
-                                            <span class="request-status ${statusClass}">${statusText}</span>
-                                        </td>
-                                        <td style="padding: 1rem;">
-                                            ${status === 'pending' ? `
-                                                <button onclick="markRequestComplete(${req.id})" 
-                                                        class="btn btn-small btn-primary"
-                                                        style="font-size: 0.75rem; padding: 0.25rem 0.75rem;">
-                                                    Mark Complete
-                                                </button>
-                                            ` : ''}
-                                        </td>
+                                        <td style="padding: 1rem;">${req.credits_used || 1}</td>
                                     </tr>
                                 `;
                             }).join('')}
@@ -2942,23 +2857,6 @@
                 `;
             } else {
                 requestsList.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No requests found.</p>';
-            }
-        }
-
-        // Mark request as complete (admin function)
-        async function markRequestComplete(requestId) {
-            if (!confirm('Mark this request as complete?')) return;
-            
-            const { error } = await supabase
-                .from('requests')
-                .update({ status: 'completed' })
-                .eq('id', requestId);
-            
-            if (!error) {
-                alert('Request marked as complete!');
-                loadAdmin(); // Reload admin view
-            } else {
-                alert('Error updating request status');
             }
         }
 

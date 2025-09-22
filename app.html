@@ -1177,6 +1177,33 @@
         </div>
     </div>
 
+    <!-- Message Confirmation Dialog -->
+    <div class="dialog-overlay" id="messageDialogOverlay"></div>
+    <div class="confirmation-dialog" id="messageConfirmationDialog">
+        <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Confirm Message Send</h3>
+        <div style="background: #fef3e6; border: 2px solid var(--club-gold); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+            <p style="margin-bottom: 0.75rem;"><strong>⚠️ This will use 1 credit</strong></p>
+            <p style="font-size: 0.9rem; line-height: 1.6; margin-bottom: 0.5rem;">
+                By sending this message:
+            </p>
+            <ul style="font-size: 0.9rem; line-height: 1.6; margin-left: 1.5rem;">
+                <li>1 credit will be deducted from your account</li>
+                <li>Your message will be sent directly to the candidate</li>
+                <li>The candidate's email remains private</li>
+                <li>You can continue the conversation for free</li>
+                <li>All messages are logged for quality assurance</li>
+            </ul>
+        </div>
+        <p style="margin-bottom: 1.5rem;">Current balance: <strong id="currentCreditsMsg">0</strong> credits</p>
+        <p style="margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--rough-gray);">
+            After sending: <strong id="afterCreditsMsg">0</strong> credits remaining
+        </p>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button class="btn btn-secondary" onclick="cancelMessage()">Cancel</button>
+            <button class="btn btn-primary" onclick="confirmMessage()">Confirm & Send (1 Credit)</button>
+        </div>
+    </div>
+
     <script>
         // Initialize Supabase
         const SUPABASE_URL = 'https://kbadedwbcjetxiertztv.supabase.co';
@@ -2531,7 +2558,7 @@
             alert('Notes saved!');
         }
 
-        // NEW: Send message function
+        // NEW: Send message function with confirmation
         async function sendMessage() {
             if (!currentCandidate) return;
             
@@ -2541,13 +2568,46 @@
                 return;
             }
             
+            // Store message temporarily for confirmation
+            window.pendingMessage = messageText;
+            
             // Check if this is the first message to this candidate
             const isFirstMessage = !conversations[currentCandidate.ID]?.messages?.length;
             
-            if (isFirstMessage && userProfile.credits < 1) {
-                alert('Insufficient credits! Contact graham@golf-jobs.com to purchase more.');
-                return;
+            if (isFirstMessage) {
+                // Show confirmation dialog for first message
+                if (userProfile.credits < 1) {
+                    alert('Insufficient credits! Contact graham@golf-jobs.com to purchase more.');
+                    return;
+                }
+                
+                document.getElementById('currentCreditsMsg').textContent = userProfile.credits;
+                document.getElementById('afterCreditsMsg').textContent = userProfile.credits - 1;
+                document.getElementById('messageConfirmationDialog').classList.add('active');
+                document.getElementById('messageDialogOverlay').classList.add('active');
+            } else {
+                // Send directly if it's a follow-up message (free)
+                await processMessage();
             }
+        }
+
+        function cancelMessage() {
+            document.getElementById('messageConfirmationDialog').classList.remove('active');
+            document.getElementById('messageDialogOverlay').classList.remove('active');
+            window.pendingMessage = null;
+        }
+
+        async function confirmMessage() {
+            document.getElementById('messageConfirmationDialog').classList.remove('active');
+            document.getElementById('messageDialogOverlay').classList.remove('active');
+            await processMessage();
+        }
+
+        async function processMessage() {
+            if (!currentCandidate || !window.pendingMessage) return;
+            
+            const messageText = window.pendingMessage;
+            const isFirstMessage = !conversations[currentCandidate.ID]?.messages?.length;
             
             // If first message, deduct credit
             if (isFirstMessage) {
@@ -2585,8 +2645,26 @@
             // Save to localStorage
             localStorage.setItem('conversations_' + currentUser.id, JSON.stringify(conversations));
             
-            // Clear the message textarea
+            // Also save to Supabase for admin visibility
+            try {
+                await supabase.from('messages').insert({
+                    employer_id: currentUser.id,
+                    employer_email: currentUser.email,
+                    candidate_id: currentCandidate.ID,
+                    candidate_name: currentCandidate["Current Job Title"] || currentCandidate.Name,
+                    message_text: messageText,
+                    is_first_message: isFirstMessage,
+                    credit_used: isFirstMessage ? 1 : 0,
+                    created_at: new Date().toISOString()
+                });
+            } catch (err) {
+                console.log('Message saved locally but not to database:', err);
+                // Continue even if database save fails
+            }
+            
+            // Clear the message textarea and pending message
             document.getElementById('messageText').value = '';
+            window.pendingMessage = null;
             
             // Update the UI
             const previousMessagesDiv = document.getElementById('previousMessages');
@@ -2666,7 +2744,22 @@
                                    candidate["Job Title"] || 
                                    candidate.Name || 
                                    `Candidate #${candidate.ID}`);
+                    
                     const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+                    const salary = formatSalaryExact(candidate["What are your salary expectations?"] || 
+                                                   candidate["Salary Expectations"]);
+                    const noticeRaw = candidate["Notice Period"];
+                    const notice = noticeRaw ? formatNoticePeriod(noticeRaw) : 'Unknown Notice Period';
+                    const activelyLooking = (candidate["Actively looking for work"] || '').toUpperCase() === 'YES';
+                    
+                    const about = candidate["About You"] || candidate.Summary || '';
+                    const summary = generateSummaryPreview(about);
+                    
+                    const skillsDisplay = formatSkillsDisplay(candidate["Your Skills"] || candidate.Skills || '');
+                    
+                    const profileScore = calculateProfileScore(candidate);
+                    const isTopPick = profileScore >= 85;
+                    const isNew = isNewCandidate(candidate);
                     const notes = candidateNotes[candidate.ID] || '';
                     
                     return `
@@ -2675,13 +2768,50 @@
                                     style="position: absolute; top: 1rem; right: 1rem; 
                                            background: #fee; color: var(--hazard-red); 
                                            border: none; padding: 0.5rem 1rem; 
-                                           border-radius: 8px; cursor: pointer; z-index: 10;">
+                                           border-radius: 8px; cursor: pointer; z-index: 10;
+                                           font-size: 0.85rem;">
                                 Remove
                             </button>
-                            <div onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'> 
-                                <h3 style="color: var(--augusta-green);">${jobTitle}</h3>
-                                <p style="color: var(--rough-gray);">${location}</p>
-                                ${notes ? `<p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--club-gold);">📝 ${notes.substring(0, 50)}...</p>` : ''}
+                            
+                            ${isTopPick ? '<div class="top-pick-badge">⭐ Top Pick</div>' : ''}
+                            ${isNew ? '<div class="new-badge">New</div>' : ''}
+                            
+                            ${activelyLooking ? `
+                                <div style="position: absolute; top: 0.75rem; left: 0.75rem; 
+                                           background: linear-gradient(135deg, var(--masters-green), var(--putting-green)); 
+                                           color: white; padding: 0.2rem 0.5rem; 
+                                           border-radius: 15px; font-size: 0.65rem; 
+                                           font-weight: 600; text-transform: uppercase; 
+                                           letter-spacing: 0.3px;">
+                                    Actively Looking
+                                </div>
+                            ` : ''}
+                            
+                            <div onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'
+                                 style="cursor: pointer;">
+                                <h3 style="color: var(--augusta-green); margin-bottom: 0.5rem; padding-right: 80px;">
+                                    ${jobTitle}
+                                </h3>
+                                <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 1rem;">
+                                    ${location}
+                                </p>
+                                ${summary ? `<p style="margin-bottom: 1rem; font-size: 0.95rem; color: var(--pro-shop-navy);">${summary}</p>` : ''}
+                                ${skillsDisplay}
+                                ${notes ? `
+                                    <div style="background: #fffef5; border-left: 3px solid var(--club-gold); 
+                                               padding: 0.5rem; margin: 0.75rem 0; border-radius: 4px;">
+                                        <p style="font-size: 0.85rem; color: var(--club-gold); margin: 0;">
+                                            📝 Note: ${notes.substring(0, 100)}${notes.length > 100 ? '...' : ''}
+                                        </p>
+                                    </div>
+                                ` : ''}
+                                <div style="display: flex; justify-content: space-between; align-items: center; 
+                                            padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                                    <span style="color: var(--rough-gray); font-size: 0.9rem;">
+                                        ${salary} • ${notice}
+                                    </span>
+                                    <span style="color: var(--masters-green); font-weight: 600;">View →</span>
+                                </div>
                             </div>
                         </div>
                     `;

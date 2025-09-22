@@ -33,6 +33,10 @@
             --rough-gray: #6c757d;
             --hazard-red: #c9302c;
             --water-hazard: #2c5aa0;
+            --profile-platinum: #e5e4e2;
+            --profile-gold: #ffd700;
+            --profile-silver: #c0c0c0;
+            --profile-bronze: #cd7f32;
         }
 
         body {
@@ -46,6 +50,38 @@
         h1, h2, h3, h4, h5, h6 {
             font-family: 'Poppins', sans-serif;
             font-weight: 600;
+        }
+
+        /* Loading States */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton-card {
+            height: 250px;
+            border-radius: 16px;
+            margin-bottom: 1.75rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 77, 38, 0.1);
+            border-top-color: var(--augusta-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         /* Login Screen */
@@ -284,6 +320,64 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* Filter Panel Mobile */
+        .filter-toggle-mobile {
+            display: none;
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            background: var(--augusta-green);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 99;
+            font-size: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .filter-toggle-mobile {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .filter-panel {
+                position: fixed;
+                top: 0;
+                left: -100%;
+                width: 80%;
+                height: 100vh;
+                background: white;
+                z-index: 1000;
+                transition: left 0.3s ease;
+                overflow-y: auto;
+                box-shadow: 2px 0 20px rgba(0,0,0,0.1);
+            }
+            
+            .filter-panel.active {
+                left: 0;
+            }
+            
+            .filter-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 999;
+            }
+            
+            .filter-overlay.active {
+                display: block;
+            }
+        }
+
         /* Pools Grid */
         .pools-grid {
             display: grid;
@@ -370,7 +464,7 @@
             transition: all 0.3s ease;
             border: 2px solid transparent;
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             cursor: pointer;
         }
 
@@ -379,15 +473,112 @@
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--augusta-green), var(--masters-green), var(--club-gold));
+            width: 4px;
+            height: 100%;
+            border-radius: 16px 0 0 16px;
+        }
+
+        .candidate-card.platinum::before {
+            background: linear-gradient(180deg, var(--profile-platinum), var(--profile-gold));
+        }
+
+        .candidate-card.gold::before {
+            background: var(--profile-gold);
+        }
+
+        .candidate-card.silver::before {
+            background: var(--profile-silver);
+        }
+
+        .candidate-card.bronze::before {
+            background: var(--profile-bronze);
         }
 
         .candidate-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 8px 30px rgba(0,0,0,0.12);
             border-color: var(--masters-green);
+        }
+
+        .candidate-card.selected {
+            background: #f0f8f4;
+            border-color: var(--masters-green);
+        }
+
+        .candidate-checkbox {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .profile-badge {
+            position: absolute;
+            top: -8px;
+            right: 1rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .profile-badge.platinum {
+            background: linear-gradient(135deg, var(--profile-platinum), var(--profile-gold));
+            color: var(--pro-shop-navy);
+        }
+
+        .profile-badge.gold {
+            background: var(--profile-gold);
+            color: var(--pro-shop-navy);
+        }
+
+        .profile-badge.silver {
+            background: var(--profile-silver);
+            color: var(--pro-shop-navy);
+        }
+
+        .profile-badge.bronze {
+            background: var(--profile-bronze);
+            color: white;
+        }
+
+        .new-badge {
+            position: absolute;
+            top: -8px;
+            left: 1rem;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        /* Sorting Bar */
+        .sorting-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .sort-options {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 0.5rem;
         }
 
         /* Modal */
@@ -410,12 +601,14 @@
 
         .modal-content {
             background: white;
-            margin: 5% auto;
+            margin: 3% auto;
             padding: 2rem;
             width: 90%;
             max-width: 700px;
             border-radius: 20px;
             position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .modal-close {
@@ -431,6 +624,137 @@
 
         .modal-close:hover {
             color: var(--pro-shop-navy);
+        }
+
+        /* Confirmation Dialog */
+        .confirmation-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 3000;
+            max-width: 400px;
+            display: none;
+        }
+
+        .confirmation-dialog.active {
+            display: block;
+        }
+
+        .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2999;
+            display: none;
+        }
+
+        .dialog-overlay.active {
+            display: block;
+        }
+
+        /* Notes Panel */
+        .notes-panel {
+            background: #fffef5;
+            border: 1px solid var(--club-gold);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .note-textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 0.5rem;
+            border: 1px solid #e1e8e4;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        /* Show More/Less */
+        .expandable-text {
+            position: relative;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .expandable-text.collapsed {
+            max-height: 120px;
+        }
+
+        .show-more-btn {
+            color: var(--masters-green);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        .show-more-btn:hover {
+            color: var(--augusta-green);
+        }
+
+        /* Highlight Search Terms */
+        .highlight {
+            background: yellow;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .empty-state img {
+            width: 200px;
+            opacity: 0.5;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            color: var(--augusta-green);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            color: var(--rough-gray);
+            margin-bottom: 2rem;
+        }
+
+        /* Load More */
+        .load-more-container {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .load-more-btn {
+            padding: 0.875rem 2rem;
+            background: white;
+            color: var(--augusta-green);
+            border: 2px solid var(--augusta-green);
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .load-more-btn:hover {
+            background: var(--augusta-green);
+            color: white;
         }
 
         /* Buttons */
@@ -468,6 +792,11 @@
             color: white;
         }
 
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
         .section-box {
             background: white;
             border-radius: 16px;
@@ -494,11 +823,33 @@
             color: var(--augusta-green);
         }
 
-        .skills-text {
-            color: var(--rough-gray);
-            font-size: 0.9rem;
-            line-height: 1.4;
-            margin-bottom: 1rem;
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--pro-shop-navy);
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+            padding: 0.5rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.875rem;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
         }
 
         /* Responsive */
@@ -514,6 +865,16 @@
             
             .nav-tabs {
                 flex-wrap: wrap;
+            }
+            
+            .sorting-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .modal-content {
+                margin: 10% 1rem;
+                width: calc(100% - 2rem);
             }
         }
     </style>
@@ -581,7 +942,12 @@
             <div id="poolsView" class="view-section active">
                 <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Your Talent Pools</h1>
                 <p style="color: var(--rough-gray); margin-bottom: 2rem; font-size: 1.1rem;">Select a talent pool to browse candidates</p>
-                <div class="pools-grid" id="poolsGrid"></div>
+                <div class="pools-grid" id="poolsGrid">
+                    <!-- Loading skeletons -->
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                </div>
                 
                 <div class="section-box">
                     <h2 style="font-size: 1.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Unlock More Talent Pools</h2>
@@ -598,7 +964,10 @@
                     <span id="currentPoolName">Pool Name</span>
                 </div>
                 
-                <div class="section-box">
+                <!-- Filter Panel -->
+                <div class="section-box filter-panel" id="filterPanel">
+                    <button class="filter-close-mobile" onclick="toggleFilterPanel()" style="display: none; position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+                    
                     <input type="text" id="searchInput" placeholder="Search by name, role, skills, or location..." 
                            style="width: 100%; padding: 0.875rem; border: 2px solid #e1e8e4; border-radius: 12px; font-size: 1rem; margin-bottom: 1rem;">
                     
@@ -679,22 +1048,61 @@
                             </div>
                         </div>
                         
-                        <button onclick="applyFilters()" class="btn" style="padding: 0.5rem 1.25rem; background: var(--masters-green); color: white; font-size: 0.9rem;">
-                            Apply Filters
-                        </button>
-                        <button onclick="clearFilters()" class="btn" style="padding: 0.5rem 1.25rem; background: #e5e7eb; color: var(--rough-gray); font-size: 0.9rem;">
+                        <button onclick="clearFilters()" class="btn btn-small" style="background: #e5e7eb; color: var(--rough-gray);">
                             Clear All
                         </button>
                     </div>
                 </div>
                 
+                <!-- Filter Toggle Mobile -->
+                <button class="filter-toggle-mobile" onclick="toggleFilterPanel()">
+                    ⚙️
+                </button>
+                <div class="filter-overlay" id="filterOverlay" onclick="toggleFilterPanel()"></div>
+                
+                <!-- Sorting and Bulk Actions -->
+                <div class="sorting-bar">
+                    <div class="sort-options">
+                        <label style="margin-right: 0.5rem; color: var(--rough-gray);">Sort by:</label>
+                        <select id="sortSelect" onchange="applySort()" style="padding: 0.5rem; border: 1px solid #e1e8e4; border-radius: 8px;">
+                            <option value="completeness">Profile Completeness</option>
+                            <option value="newest">Newest First</option>
+                            <option value="salary-high">Salary (High to Low)</option>
+                            <option value="salary-low">Salary (Low to High)</option>
+                            <option value="name">Name (A-Z)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="bulk-actions">
+                        <button class="btn btn-small btn-secondary" onclick="selectAll()">Select All</button>
+                        <button class="btn btn-small btn-secondary" onclick="deselectAll()">Clear Selection</button>
+                        <button class="btn btn-small btn-primary" onclick="bulkAddToShortlist()">Add Selected to Shortlist</button>
+                        <button class="btn btn-small btn-primary" onclick="exportCandidates()">Export</button>
+                    </div>
+                </div>
+                
                 <div id="candidateCount" style="margin-bottom: 1rem; color: var(--rough-gray);"></div>
-                <div class="candidates-grid" id="candidatesGrid"></div>
+                
+                <!-- Candidates Grid with Pagination -->
+                <div class="candidates-grid" id="candidatesGrid">
+                    <!-- Loading skeletons -->
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                </div>
+                
+                <!-- Load More -->
+                <div class="load-more-container" id="loadMoreContainer" style="display: none;">
+                    <button class="load-more-btn" onclick="loadMore()">Load More Candidates</button>
+                </div>
             </div>
 
             <!-- Shortlist View -->
             <div id="shortlistView" class="view-section">
                 <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Your Shortlist</h1>
+                <div style="margin-bottom: 2rem;">
+                    <button class="btn btn-primary" onclick="exportShortlist()">Export Shortlist</button>
+                </div>
                 <div id="shortlistContent"></div>
             </div>
 
@@ -707,6 +1115,11 @@
                     <p style="margin-bottom: 1rem;"><strong>Email:</strong> <span id="accountEmail">-</span></p>
                     <p style="margin-bottom: 1rem;"><strong>Credits Balance:</strong> <span id="accountCredits">0</span></p>
                     <p><strong>Total Requests:</strong> <span id="totalRequests">0</span></p>
+                </div>
+                
+                <div class="section-box">
+                    <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">Credits History</h2>
+                    <div id="creditsHistory"></div>
                 </div>
             </div>
 
@@ -741,10 +1154,36 @@
             <button class="modal-close" onclick="closeModal()">×</button>
             <h2 id="modalTitle" style="color: var(--augusta-green); margin-bottom: 1rem;"></h2>
             <div id="modalBody"></div>
-            <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
-                <button class="btn btn-secondary" onclick="addToShortlist()">Save to Shortlist</button>
-                <button class="btn btn-primary" onclick="requestContact()">Request Contact Details (1 Credit)</button>
+            
+            <!-- Notes Section -->
+            <div class="notes-panel">
+                <h4 style="color: var(--augusta-green); margin-bottom: 0.5rem;">📝 Private Notes</h4>
+                <textarea class="note-textarea" id="candidateNotes" placeholder="Add your notes about this candidate..."></textarea>
+                <button class="btn btn-small" onclick="saveNotes()" style="margin-top: 0.5rem;">Save Notes</button>
             </div>
+            
+            <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end; flex-wrap: wrap;">
+                <button class="btn btn-secondary" onclick="addToShortlist()">Save to Shortlist</button>
+                <button class="btn btn-primary" onclick="showCreditConfirmation()">Request Contact Details (1 Credit)</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Confirmation Dialog -->
+    <div class="dialog-overlay" id="dialogOverlay"></div>
+    <div class="confirmation-dialog" id="confirmationDialog">
+        <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Confirm Credit Use</h3>
+        <p style="margin-bottom: 1rem;">You are about to use <strong>1 credit</strong> to reveal:</p>
+        <ul style="margin-left: 1.5rem; margin-bottom: 1.5rem;">
+            <li>Email address</li>
+            <li>Phone number</li>
+            <li>LinkedIn profile</li>
+            <li>GitHub profile (if available)</li>
+        </ul>
+        <p style="margin-bottom: 1.5rem;">Current balance: <strong id="currentCredits">0</strong> credits</p>
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button class="btn btn-secondary" onclick="hideConfirmation()">Cancel</button>
+            <button class="btn btn-primary" onclick="confirmCreditUse()">Confirm</button>
         </div>
     </div>
 
@@ -762,14 +1201,29 @@
         let userPools = [];
         let shortlist = [];
         let allCandidates = [];
+        let filteredCandidates = [];
+        let displayedCandidates = [];
         let selectedLocations = new Set();
         let availableLocations = new Set();
+        let selectedCandidates = new Set();
+        let candidateNotes = {};
+        let searchTimeout = null;
+        let currentPage = 0;
+        const candidatesPerPage = 20;
+        let searchTerm = '';
+
+        // Profile Badge Levels
+        const PROFILE_LEVELS = {
+            PLATINUM: { name: 'Top Profile', threshold: 95, class: 'platinum' },
+            GOLD: { name: 'Gold Profile', threshold: 85, class: 'gold' },
+            SILVER: { name: 'Silver Profile', threshold: 70, class: 'silver' },
+            BRONZE: { name: 'Bronze Profile', threshold: 50, class: 'bronze' }
+        };
 
         // Utility functions
         function toTitleCase(str) {
             if (!str) return str;
             
-            // List of acronyms that should always be uppercase
             const acronyms = ['UK', 'USA', 'US', 'CEO', 'CFO', 'COO', 'CTO', 'CIO', 'CMO', 
                              'PGA', 'PR', 'HR', 'IT', 'SEO', 'SEM', 'EMEA', 'APAC', 'B2B', 
                              'B2C', 'VP', 'SVP', 'EVP', 'GM', 'MD', 'PA', 'EA', 'F&B', 
@@ -777,7 +1231,6 @@
                              'P&L', 'M&A', 'IPO', 'MBA', 'PhD', 'CPA', 'LLP', 'LLC'];
             
             return str.toLowerCase().split(/(\s+|-)/).map(word => {
-                // Check if word (without punctuation) is an acronym
                 const cleanWord = word.replace(/[.,;:!?]/g, '');
                 const upperClean = cleanWord.toUpperCase();
                 
@@ -785,7 +1238,6 @@
                     return word.replace(cleanWord, upperClean);
                 }
                 
-                // Otherwise, title case it
                 if (word.length > 0) {
                     return word.charAt(0).toUpperCase() + word.slice(1);
                 }
@@ -797,23 +1249,18 @@
             const excludeTerms = ['England', 'United Kingdom', 'UK', 'Scotland', 'Wales', 'Northern Ireland', 
                                  'Great Britain', 'GB', 'Uk', 'england', 'united kingdom'];
             
-            // Clean up the town/city field
             let cleanedTown = townCity ? townCity.trim() : '';
             
-            // Remove any duplicates or extra info
             if (cleanedTown.includes(',')) {
                 cleanedTown = cleanedTown.split(',')[0].trim();
             }
             
-            // Check if country field contains useful non-excluded info
             let cleanedCountry = country ? country.trim() : '';
             
-            // If country is in exclude list, ignore it
             if (excludeTerms.some(term => cleanedCountry.toLowerCase() === term.toLowerCase())) {
                 cleanedCountry = '';
             }
             
-            // If country contains a comma, it might have town info
             if (cleanedCountry && cleanedCountry.includes(',')) {
                 const parts = cleanedCountry.split(',');
                 const firstPart = parts[0].trim();
@@ -825,14 +1272,12 @@
                 }
             }
             
-            // Handle all caps
             if (cleanedTown === cleanedTown.toUpperCase() && cleanedTown.length > 2) {
                 cleanedTown = toTitleCase(cleanedTown);
             } else {
                 cleanedTown = toTitleCase(cleanedTown);
             }
             
-            // Final location
             if (cleanedTown) {
                 return cleanedTown;
             }
@@ -887,88 +1332,93 @@
         function formatSkillsDisplay(skillsString) {
             if (!skillsString) return '';
             
-            // Check if it's paragraph-style text
-            if (skillsString.length > 200 && !skillsString.includes(',') && !skillsString.includes('•')) {
-                return `<p class="skills-text">${skillsString.substring(0, 100)}...</p>`;
+            // Return as plain text - no green highlights
+            if (skillsString.length > 150) {
+                return `<p style="color: var(--rough-gray); font-size: 0.9rem; line-height: 1.4; margin-bottom: 0.5rem;">
+                        ${skillsString.substring(0, 120)}...</p>`;
             }
             
-            // Check for bullet points
-            let skills = [];
-            if (skillsString.includes('•') || skillsString.includes('–')) {
-                skills = skillsString.split(/[•–-]/).map(s => s.trim()).filter(s => s && s.length > 3);
-            } else if (skillsString.includes(',')) {
-                skills = skillsString.split(',').map(s => s.trim()).filter(s => s);
-            } else {
-                return `<p class="skills-text">${skillsString}</p>`;
-            }
-            
-            // Return as tags only if we have clear skills
-            if (skills.length > 0 && skills.length < 10) {
-                return skills.slice(0, 3).map(skill => 
-                    `<span style="background: rgba(45, 95, 63, 0.1); color: var(--fairway-green); 
-                           padding: 0.25rem 0.5rem; border-radius: 8px; font-size: 0.875rem; 
-                           display: inline-block; margin-right: 0.5rem; margin-bottom: 0.5rem;">
-                        ${skill.substring(0, 30)}${skill.length > 30 ? '...' : ''}
-                    </span>`
-                ).join('');
-            }
-            
-            return `<p class="skills-text">${skillsString.substring(0, 100)}...</p>`;
+            return `<p style="color: var(--rough-gray); font-size: 0.9rem; line-height: 1.4; margin-bottom: 0.5rem;">
+                    ${skillsString}</p>`;
         }
 
-        function calculateWeightedCompleteness(candidate) {
+        // Enhanced completeness calculation with profile badges
+        function calculateProfileScore(candidate) {
             let score = 0;
+            let maxScore = 100;
             
-            // High priority fields (weight: 10)
-            const highPriority = {
-                'About You': 10,  // Professional Summary
-                'Your Skills': 8
-            };
+            // Professional Summary - 30 points max
+            const aboutYou = candidate["About You"] || '';
+            if (aboutYou.length > 200) {
+                score += 30; // Full points for detailed summary
+            } else if (aboutYou.length > 100) {
+                score += 20;
+            } else if (aboutYou.length > 50) {
+                score += 10;
+            }
             
-            // Medium priority fields (weight: 5)
-            const mediumPriority = {
-                'Current Job Title': 5,
-                'Job Title': 5,
-                'What are your salary expectations?': 5,
-                'Salary Expectations': 5,
-                'Notice Period': 5,
-                'Actively looking for work': 5
-            };
+            // Skills - 20 points
+            const skills = candidate["Your Skills"] || '';
+            if (skills.length > 100) {
+                score += 20;
+            } else if (skills.length > 50) {
+                score += 15;
+            } else if (skills.length > 20) {
+                score += 10;
+            }
             
-            // Low priority fields (weight: 2)
-            const lowPriority = {
-                'Name': 2,
-                'Town/City': 2,
-                'Country': 2,
-                'Email': 2,
-                'LinkedIn': 2,
-                'GitHub': 2
-            };
+            // Job Title - 10 points
+            if (candidate["Current Job Title"] || candidate["Job Title"]) {
+                score += 10;
+            }
             
-            // Calculate weighted score
-            Object.entries(highPriority).forEach(([field, weight]) => {
-                if (candidate[field] && candidate[field].toString().trim().length > 20) {
-                    score += weight;
-                    // Bonus points for longer, more detailed summaries
-                    if (field === 'About You' && candidate[field].length > 200) {
-                        score += 5; // Extra bonus for detailed summary
-                    }
-                }
-            });
+            // Salary expectations - 10 points
+            if (candidate["What are your salary expectations?"] || candidate["Salary Expectations"]) {
+                score += 10;
+            }
             
-            Object.entries(mediumPriority).forEach(([field, weight]) => {
-                if (candidate[field] && candidate[field].toString().trim()) {
-                    score += weight;
-                }
-            });
+            // Notice period - 10 points
+            if (candidate["Notice Period"]) {
+                score += 10;
+            }
             
-            Object.entries(lowPriority).forEach(([field, weight]) => {
-                if (candidate[field] && candidate[field].toString().trim()) {
-                    score += weight;
-                }
-            });
+            // Location - 5 points
+            if (candidate["Town/City"]) {
+                score += 5;
+            }
             
-            return score;
+            // Contact info - 5 points each
+            if (candidate["Email"]) score += 5;
+            if (candidate["LinkedIn"]) score += 5;
+            if (candidate["GitHub"]) score += 5;
+            
+            return Math.min((score / maxScore) * 100, 100);
+        }
+
+        function getProfileBadge(candidate) {
+            const score = calculateProfileScore(candidate);
+            
+            if (score >= PROFILE_LEVELS.PLATINUM.threshold) return PROFILE_LEVELS.PLATINUM;
+            if (score >= PROFILE_LEVELS.GOLD.threshold) return PROFILE_LEVELS.GOLD;
+            if (score >= PROFILE_LEVELS.SILVER.threshold) return PROFILE_LEVELS.SILVER;
+            if (score >= PROFILE_LEVELS.BRONZE.threshold) return PROFILE_LEVELS.BRONZE;
+            
+            return null;
+        }
+
+        function isNewCandidate(candidate) {
+            // Check if candidate was added in last 7 days
+            if (!candidate.created_at) return false;
+            const createdDate = new Date(candidate.created_at);
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            return createdDate > sevenDaysAgo;
+        }
+
+        function highlightSearchTerms(text, term) {
+            if (!term || !text) return text;
+            const regex = new RegExp(`(${term})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
         }
 
         function detectJobCategory(jobTitle) {
@@ -976,7 +1426,6 @@
             
             const title = jobTitle.toLowerCase();
             
-            // Greenkeeping & Course Management
             const greenkeepingKeywords = [
                 'greenkeep', 'green keep', 'course manager', 'turf', 'agronomist', 'superintendent',
                 'groundsman', 'grounds', 'course maintenance', 'irrigation', 'horticultur',
@@ -987,7 +1436,6 @@
                 return 'greenkeeping';
             }
             
-            // Management & Executive
             const managementKeywords = [
                 'director', 'manager', 'head of', 'chief', 'ceo', 'coo', 'cfo', 'cto', 'cio',
                 'president', 'vice president', 'vp ', 'svp', 'evp', 'executive', 'partner',
@@ -999,7 +1447,6 @@
                 return 'management';
             }
             
-            // Sales & Business Development
             const salesKeywords = [
                 'sales', 'business development', 'account manager', 'commercial', 'revenue',
                 'client manager', 'customer success', 'relationship manager', 'account executive',
@@ -1012,7 +1459,6 @@
                 return 'sales';
             }
             
-            // Marketing & PR
             const marketingKeywords = [
                 'marketing', 'pr ', 'public relations', 'communications', 'social media', 'brand',
                 'digital marketing', 'content', 'copywriter', 'graphic design', 'designer',
@@ -1025,7 +1471,6 @@
                 return 'marketing';
             }
             
-            // F&B / Hospitality
             const fandBKeywords = [
                 'chef', 'food', 'beverage', 'f&b', 'f & b', 'restaurant', 'bar', 'catering',
                 'hospitality', 'waiter', 'waitress', 'server', 'barista', 'sommelier', 'kitchen',
@@ -1038,7 +1483,6 @@
                 return 'fandB';
             }
             
-            // Golf Professional
             const professionalKeywords = [
                 'golf professional', 'pga', 'teaching pro', 'head pro', 'assistant pro',
                 'golf coach', 'golf instructor', 'golf teacher', 'club professional',
@@ -1050,7 +1494,6 @@
                 return 'professional';
             }
             
-            // Operations
             const operationsKeywords = [
                 'operations', 'coordinator', 'administrator', 'duty manager', 'shift manager',
                 'logistics', 'planning', 'scheduling', 'procurement', 'purchasing', 'buyer',
@@ -1062,7 +1505,6 @@
                 return 'operations';
             }
             
-            // Retail & Pro Shop
             const retailKeywords = [
                 'retail', 'pro shop', 'golf shop', 'shop', 'merchandis', 'buyer', 'visual',
                 'store manager', 'shop manager', 'retail manager', 'retail assistant',
@@ -1074,7 +1516,6 @@
                 return 'retail';
             }
             
-            // Maintenance & Facilities
             const maintenanceKeywords = [
                 'maintenance', 'mechanic', 'facilities', 'technician', 'engineer', 'electrical',
                 'electrician', 'plumber', 'plumbing', 'hvac', 'carpenter', 'joiner', 'painter',
@@ -1086,7 +1527,6 @@
                 return 'maintenance';
             }
             
-            // Admin & Support
             const adminKeywords = [
                 'admin', 'assistant', 'reception', 'secretary', 'clerk', 'support', 'office',
                 'pa ', 'personal assistant', 'executive assistant', 'ea ', 'bookkeep',
@@ -1099,6 +1539,62 @@
             }
             
             return 'other';
+        }
+
+        // Enhanced filter functions with debounce
+        function debounce(func, delay) {
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => func.apply(context, args), delay);
+            }
+        }
+
+        function updateFiltersWithCounts() {
+            const categories = {};
+            const salaryRanges = {
+                '0-30000': 0,
+                '30000-40000': 0,
+                '40000-50000': 0,
+                '50000-60000': 0,
+                '60000-70000': 0,
+                '70000+': 0
+            };
+            
+            allCandidates.forEach(candidate => {
+                const category = detectJobCategory(candidate["Current Job Title"] || candidate["Job Title"]);
+                categories[category] = (categories[category] || 0) + 1;
+                
+                const salary = parseFloat(candidate["What are your salary expectations?"]) || 0;
+                if (salary >= 70000) salaryRanges['70000+']++;
+                else if (salary >= 60000) salaryRanges['60000-70000']++;
+                else if (salary >= 50000) salaryRanges['50000-60000']++;
+                else if (salary >= 40000) salaryRanges['40000-50000']++;
+                else if (salary >= 30000) salaryRanges['30000-40000']++;
+                else if (salary > 0) salaryRanges['0-30000']++;
+            });
+            
+            // Update category filter with counts
+            const categoryFilter = document.getElementById('categoryFilter');
+            if (categoryFilter) {
+                const currentValue = categoryFilter.value;
+                categoryFilter.innerHTML = `
+                    <option value="">All Categories (${allCandidates.length})</option>
+                    ${categories.greenkeeping ? `<option value="greenkeeping">Greenkeeping (${categories.greenkeeping})</option>` : ''}
+                    ${categories.management ? `<option value="management">Management (${categories.management})</option>` : ''}
+                    ${categories.sales ? `<option value="sales">Sales & Business Dev (${categories.sales})</option>` : ''}
+                    ${categories.marketing ? `<option value="marketing">Marketing & PR (${categories.marketing})</option>` : ''}
+                    ${categories.fandB ? `<option value="fandB">F&B / Hospitality (${categories.fandB})</option>` : ''}
+                    ${categories.professional ? `<option value="professional">Golf Professional (${categories.professional})</option>` : ''}
+                    ${categories.operations ? `<option value="operations">Operations (${categories.operations})</option>` : ''}
+                    ${categories.retail ? `<option value="retail">Retail & Pro Shop (${categories.retail})</option>` : ''}
+                    ${categories.maintenance ? `<option value="maintenance">Maintenance & Facilities (${categories.maintenance})</option>` : ''}
+                    ${categories.admin ? `<option value="admin">Admin & Support (${categories.admin})</option>` : ''}
+                    ${categories.other ? `<option value="other">Other (${categories.other})</option>` : ''}
+                `;
+                categoryFilter.value = currentValue;
+            }
         }
 
         // Location filter functions
@@ -1115,21 +1611,37 @@
             const sortedLocations = Array.from(availableLocations).sort();
             const checkboxesDiv = document.getElementById('locationCheckboxes');
             
-            checkboxesDiv.innerHTML = sortedLocations.map(location => `
-                <div style="margin-bottom: 0.5rem;">
-                    <label style="display: flex; align-items: center; cursor: pointer;">
-                        <input type="checkbox" value="${location}" 
-                               onchange="updateLocationSelection(this)" 
-                               style="margin-right: 0.5rem;">
-                        <span style="font-size: 0.9rem;">${location}</span>
-                    </label>
-                </div>
-            `).join('');
+            checkboxesDiv.innerHTML = sortedLocations.map(location => {
+                const count = candidates.filter(c => 
+                    cleanAndFormatLocation(c["Town/City"], c.Country) === location
+                ).length;
+                
+                return `
+                    <div style="margin-bottom: 0.5rem;">
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" value="${location}" 
+                                   onchange="updateLocationSelection(this)" 
+                                   style="margin-right: 0.5rem;">
+                            <span style="font-size: 0.9rem;">${location} (${count})</span>
+                        </label>
+                    </div>
+                `;
+            }).join('');
         }
 
         function toggleLocationDropdown() {
             const dropdown = document.getElementById('locationDropdown');
             dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function toggleFilterPanel() {
+            const panel = document.getElementById('filterPanel');
+            const overlay = document.getElementById('filterOverlay');
+            
+            if (window.innerWidth <= 768) {
+                panel.classList.toggle('active');
+                overlay.classList.toggle('active');
+            }
         }
 
         document.addEventListener('click', function(e) {
@@ -1148,6 +1660,7 @@
                 selectedLocations.delete(checkbox.value);
             }
             updateLocationFilterText();
+            applyFiltersDebounced();
         }
 
         function updateLocationFilterText() {
@@ -1168,6 +1681,7 @@
                 selectedLocations.add(cb.value);
             });
             updateLocationFilterText();
+            applyFiltersDebounced();
         }
 
         function clearAllLocations() {
@@ -1177,16 +1691,47 @@
             });
             selectedLocations.clear();
             updateLocationFilterText();
+            applyFiltersDebounced();
         }
 
-        // Check authentication on load
+        // Debounced filter application
+        const applyFiltersDebounced = debounce(applyFilters, 300);
+
+        // Enhanced authentication and data loading
         window.onload = async function() {
+            // Check URL parameters for filter state
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('search')) {
+                searchTerm = urlParams.get('search');
+            }
+            
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
                 await loadUserData(session.user);
                 showApp();
             } else {
                 document.getElementById('loginScreen').style.display = 'flex';
+            }
+            
+            // Set up keyboard shortcuts
+            document.addEventListener('keydown', handleKeyboardShortcuts);
+        }
+
+        function handleKeyboardShortcuts(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                hideConfirmation();
+            }
+            
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === 'a' && document.getElementById('poolDetailView').classList.contains('active')) {
+                    e.preventDefault();
+                    selectAll();
+                }
+                if (e.key === 'e') {
+                    e.preventDefault();
+                    exportCandidates();
+                }
             }
         }
 
@@ -1212,7 +1757,7 @@
             }
         }
 
-        // Load user data
+        // Load user data with local storage for notes
         async function loadUserData(user) {
             currentUser = user;
             
@@ -1246,6 +1791,12 @@
             
             shortlist = shortlistData || [];
             updateShortlistBadge();
+            
+            // Load saved notes from localStorage
+            const savedNotes = localStorage.getItem('candidateNotes_' + user.id);
+            if (savedNotes) {
+                candidateNotes = JSON.parse(savedNotes);
+            }
         }
 
         // Show main app
@@ -1261,7 +1812,7 @@
             location.reload();
         }
 
-        // Switch views
+        // Switch views with URL state
         function switchView(view) {
             document.querySelectorAll('.view-section').forEach(section => {
                 section.classList.remove('active');
@@ -1278,10 +1829,24 @@
             else if (view === 'account') loadAccount();
             else if (view === 'requests') loadRequests();
             else if (view === 'admin' && userProfile?.role === 'admin') loadAdmin();
+            
+            // Update URL without reload
+            const url = new URL(window.location);
+            url.searchParams.set('view', view);
+            window.history.pushState({}, '', url);
         }
 
-        // Load talent pools
+        // Load talent pools with loading state
         async function loadPools() {
+            const poolsGrid = document.getElementById('poolsGrid');
+            
+            // Show loading skeletons
+            poolsGrid.innerHTML = `
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+            `;
+            
             const { data: pools } = await supabase
                 .from('talent_pools')
                 .select('*');
@@ -1295,7 +1860,6 @@
                 pool.total_candidates = count || 0;
             }
             
-            const poolsGrid = document.getElementById('poolsGrid');
             poolsGrid.innerHTML = '';
             
             for (const pool of pools) {
@@ -1324,10 +1888,19 @@
             }
         }
 
-        // Open a pool and show candidates
+        // Open a pool and show candidates with pagination
         async function openPool(pool) {
             currentPool = pool;
+            currentPage = 0;
             document.getElementById('currentPoolName').textContent = pool.name;
+            
+            // Show loading state
+            const candidatesGrid = document.getElementById('candidatesGrid');
+            candidatesGrid.innerHTML = `
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+                <div class="skeleton skeleton-card"></div>
+            `;
             
             const { data: candidates, error } = await supabase
                 .from('candidates')
@@ -1336,49 +1909,81 @@
             
             console.log(`Loading candidates for ${pool.id}:`, candidates?.length, error);
             
-            // Sort candidates by weighted completeness score
+            // Sort by profile completeness score
             allCandidates = (candidates || []).sort((a, b) => {
-                const scoreA = calculateWeightedCompleteness(a);
-                const scoreB = calculateWeightedCompleteness(b);
+                const scoreA = calculateProfileScore(a);
+                const scoreB = calculateProfileScore(b);
                 
-                // If one has a professional summary and the other doesn't, prioritize the one with summary
                 const hasSummaryA = a["About You"] && a["About You"].length > 50;
                 const hasSummaryB = b["About You"] && b["About You"].length > 50;
                 
                 if (hasSummaryA && !hasSummaryB) return -1;
                 if (!hasSummaryA && hasSummaryB) return 1;
                 
-                // Otherwise sort by weighted score
                 return scoreB - scoreA;
             });
             
-            // Populate location filter
             populateLocationFilter(allCandidates);
+            updateFiltersWithCounts();
             
-            displayCandidates(allCandidates);
-            updateCandidateCount(allCandidates.length);
+            // Apply initial filters and display
+            filteredCandidates = [...allCandidates];
+            displayCandidatesPage();
             
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.getElementById('poolDetailView').classList.add('active');
         }
 
-        // Display candidates in grid
+        // Display candidates with pagination
+        function displayCandidatesPage() {
+            const startIdx = currentPage * candidatesPerPage;
+            const endIdx = startIdx + candidatesPerPage;
+            displayedCandidates = filteredCandidates.slice(0, endIdx);
+            
+            displayCandidates(displayedCandidates);
+            
+            // Show/hide load more button
+            const loadMoreContainer = document.getElementById('loadMoreContainer');
+            if (endIdx < filteredCandidates.length) {
+                loadMoreContainer.style.display = 'block';
+            } else {
+                loadMoreContainer.style.display = 'none';
+            }
+        }
+
+        function loadMore() {
+            currentPage++;
+            displayCandidatesPage();
+        }
+
+        // Display candidates in grid with enhancements
         function displayCandidates(candidates) {
             const candidatesGrid = document.getElementById('candidatesGrid');
             
             if (!candidates || candidates.length === 0) {
-                candidatesGrid.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No candidates match your criteria.</p>';
+                candidatesGrid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <h3>No candidates match your criteria</h3>
+                        <p>Try adjusting your filters or search terms</p>
+                        <button class="btn btn-primary" onclick="clearFilters()">Clear All Filters</button>
+                    </div>
+                `;
                 updateCandidateCount(0);
                 return;
             }
             
-            updateCandidateCount(candidates.length);
+            updateCandidateCount(filteredCandidates.length);
             
             candidatesGrid.innerHTML = candidates.map(candidate => {
                 const jobTitle = toTitleCase(candidate["Current Job Title"] || 
                                candidate["Job Title"] || 
                                candidate.Name || 
                                `Candidate #${candidate.ID}`);
+                
+                let displayTitle = jobTitle;
+                if (searchTerm) {
+                    displayTitle = highlightSearchTerms(jobTitle, searchTerm);
+                }
                 
                 const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
                 const salary = formatSalaryExact(candidate["What are your salary expectations?"] || 
@@ -1392,32 +1997,56 @@
                 
                 const skillsDisplay = formatSkillsDisplay(candidate["Your Skills"] || candidate.Skills || '');
                 
+                const profileBadge = getProfileBadge(candidate);
+                const isNew = isNewCandidate(candidate);
+                
+                const isSelected = selectedCandidates.has(candidate.ID);
+                
                 return `
-                    <div class="candidate-card" onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'>
+                    <div class="candidate-card ${profileBadge ? profileBadge.class : ''} ${isSelected ? 'selected' : ''}" 
+                         id="card-${candidate.ID}">
+                        <input type="checkbox" 
+                               class="candidate-checkbox" 
+                               ${isSelected ? 'checked' : ''}
+                               onchange="toggleCandidateSelection(${candidate.ID})"
+                               onclick="event.stopPropagation()">
+                        
+                        ${profileBadge ? `
+                            <div class="profile-badge ${profileBadge.class}">
+                                ${profileBadge.name}
+                            </div>
+                        ` : ''}
+                        
+                        ${isNew ? '<div class="new-badge">New</div>' : ''}
+                        
                         ${activelyLooking ? `
-                            <div style="position: absolute; top: 1rem; right: 1rem; 
+                            <div style="position: absolute; top: 0.75rem; right: 0.75rem; 
                                        background: linear-gradient(135deg, var(--masters-green), var(--putting-green)); 
-                                       color: white; padding: 0.25rem 0.75rem; 
-                                       border-radius: 20px; font-size: 0.75rem; 
-                                       font-weight: 600; text-transform: uppercase;">
+                                       color: white; padding: 0.2rem 0.5rem; 
+                                       border-radius: 15px; font-size: 0.65rem; 
+                                       font-weight: 600; text-transform: uppercase; 
+                                       letter-spacing: 0.3px;">
                                 Actively Looking
                             </div>
                         ` : ''}
                         
-                        <h3 style="color: var(--augusta-green); margin-bottom: 0.5rem; ${activelyLooking ? 'padding-right: 120px;' : ''}">
-                            ${jobTitle}
-                        </h3>
-                        <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 1rem;">
-                            ${location}
-                        </p>
-                        ${summary ? `<p style="margin-bottom: 1rem; font-size: 0.95rem; color: var(--pro-shop-navy);">${summary}</p>` : ''}
-                        ${skillsDisplay ? `<div style="margin-bottom: 1rem;">${skillsDisplay}</div>` : ''}
-                        <div style="display: flex; justify-content: space-between; align-items: center; 
-                                    padding-top: 1rem; border-top: 1px solid #e5e7eb;">
-                            <span style="color: var(--rough-gray); font-size: 0.9rem;">
-                                ${salary} • ${notice}
-                            </span>
-                            <span style="color: var(--masters-green); font-weight: 600;">View →</span>
+                        <div onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'
+                             style="cursor: pointer; padding-left: 2rem;">
+                            <h3 style="color: var(--augusta-green); margin-bottom: 0.5rem; ${activelyLooking ? 'padding-right: 140px;' : ''}">
+                                ${displayTitle}
+                            </h3>
+                            <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 1rem;">
+                                ${location}
+                            </p>
+                            ${summary ? `<p style="margin-bottom: 1rem; font-size: 0.95rem; color: var(--pro-shop-navy);">${summary}</p>` : ''}
+                            ${skillsDisplay}
+                            <div style="display: flex; justify-content: space-between; align-items: center; 
+                                        padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                                <span style="color: var(--rough-gray); font-size: 0.9rem;">
+                                    ${salary} • ${notice}
+                                </span>
+                                <span style="color: var(--masters-green); font-weight: 600;">View →</span>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -1428,13 +2057,18 @@
         function updateCandidateCount(count) {
             const countElement = document.getElementById('candidateCount');
             if (countElement) {
-                countElement.textContent = count > 0 ? `Showing ${count} candidate${count !== 1 ? 's' : ''}` : '';
+                const showing = Math.min(displayedCandidates.length, count);
+                if (count > candidatesPerPage && showing < count) {
+                    countElement.textContent = `Showing ${showing} of ${count} candidates`;
+                } else {
+                    countElement.textContent = count > 0 ? `Showing ${count} candidate${count !== 1 ? 's' : ''}` : '';
+                }
             }
         }
 
-        // Apply filters
+        // Apply filters with automatic update
         function applyFilters() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const salaryFilter = document.getElementById('salaryFilter').value;
             const noticeFilter = document.getElementById('noticeFilter').value;
             const lookingFilter = document.getElementById('lookingFilter').value;
@@ -1488,7 +2122,60 @@
                 });
             }
             
-            displayCandidates(filtered);
+            filteredCandidates = filtered;
+            currentPage = 0;
+            displayCandidatesPage();
+            
+            // Update URL with filter state
+            const url = new URL(window.location);
+            if (searchTerm) {
+                url.searchParams.set('search', searchTerm);
+            } else {
+                url.searchParams.delete('search');
+            }
+            window.history.pushState({}, '', url);
+        }
+
+        // Apply sort
+        function applySort() {
+            const sortValue = document.getElementById('sortSelect').value;
+            
+            switch (sortValue) {
+                case 'completeness':
+                    filteredCandidates.sort((a, b) => calculateProfileScore(b) - calculateProfileScore(a));
+                    break;
+                case 'newest':
+                    filteredCandidates.sort((a, b) => {
+                        const dateA = new Date(a.created_at || 0);
+                        const dateB = new Date(b.created_at || 0);
+                        return dateB - dateA;
+                    });
+                    break;
+                case 'salary-high':
+                    filteredCandidates.sort((a, b) => {
+                        const salaryA = parseFloat(a["What are your salary expectations?"]) || 0;
+                        const salaryB = parseFloat(b["What are your salary expectations?"]) || 0;
+                        return salaryB - salaryA;
+                    });
+                    break;
+                case 'salary-low':
+                    filteredCandidates.sort((a, b) => {
+                        const salaryA = parseFloat(a["What are your salary expectations?"]) || 0;
+                        const salaryB = parseFloat(b["What are your salary expectations?"]) || 0;
+                        return salaryA - salaryB;
+                    });
+                    break;
+                case 'name':
+                    filteredCandidates.sort((a, b) => {
+                        const nameA = (a.Name || a["Current Job Title"] || '').toLowerCase();
+                        const nameB = (b.Name || b["Current Job Title"] || '').toLowerCase();
+                        return nameA.localeCompare(nameB);
+                    });
+                    break;
+            }
+            
+            currentPage = 0;
+            displayCandidatesPage();
         }
 
         // Clear filters
@@ -1499,20 +2186,158 @@
             document.getElementById('lookingFilter').value = '';
             document.getElementById('categoryFilter').value = '';
             clearAllLocations();
-            displayCandidates(allCandidates);
+            searchTerm = '';
+            filteredCandidates = [...allCandidates];
+            currentPage = 0;
+            displayCandidatesPage();
+            
+            // Clear URL parameters
+            const url = new URL(window.location);
+            url.searchParams.delete('search');
+            window.history.pushState({}, '', url);
         }
 
-        // Search functionality (live search)
+        // Bulk selection functions
+        function toggleCandidateSelection(candidateId) {
+            if (selectedCandidates.has(candidateId)) {
+                selectedCandidates.delete(candidateId);
+                document.getElementById(`card-${candidateId}`).classList.remove('selected');
+            } else {
+                selectedCandidates.add(candidateId);
+                document.getElementById(`card-${candidateId}`).classList.add('selected');
+            }
+        }
+
+        function selectAll() {
+            displayedCandidates.forEach(candidate => {
+                selectedCandidates.add(candidate.ID);
+                const card = document.getElementById(`card-${candidate.ID}`);
+                if (card) {
+                    card.classList.add('selected');
+                    const checkbox = card.querySelector('.candidate-checkbox');
+                    if (checkbox) checkbox.checked = true;
+                }
+            });
+        }
+
+        function deselectAll() {
+            selectedCandidates.clear();
+            document.querySelectorAll('.candidate-card').forEach(card => {
+                card.classList.remove('selected');
+                const checkbox = card.querySelector('.candidate-checkbox');
+                if (checkbox) checkbox.checked = false;
+            });
+        }
+
+        async function bulkAddToShortlist() {
+            if (selectedCandidates.size === 0) {
+                alert('Please select candidates first');
+                return;
+            }
+            
+            let added = 0;
+            for (const candidateId of selectedCandidates) {
+                const { error } = await supabase
+                    .from('shortlists')
+                    .insert({
+                        user_id: currentUser.id,
+                        candidate_id: candidateId,
+                        saved_from_pool: currentPool.id
+                    });
+                
+                if (!error) added++;
+            }
+            
+            alert(`Added ${added} candidates to shortlist!`);
+            deselectAll();
+            
+            const { data: shortlistData } = await supabase
+                .from('shortlists')
+                .select('*, candidates(*)')
+                .eq('user_id', currentUser.id);
+            
+            shortlist = shortlistData || [];
+            updateShortlistBadge();
+        }
+
+        // Export functions
+        function exportCandidates() {
+            const toExport = selectedCandidates.size > 0 ? 
+                filteredCandidates.filter(c => selectedCandidates.has(c.ID)) : 
+                filteredCandidates;
+            
+            if (toExport.length === 0) {
+                alert('No candidates to export');
+                return;
+            }
+            
+            let csv = 'Job Title,Location,Salary Expectations,Notice Period,Actively Looking,Profile Score\n';
+            
+            toExport.forEach(candidate => {
+                const jobTitle = candidate["Current Job Title"] || candidate["Job Title"] || '';
+                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+                const salary = candidate["What are your salary expectations?"] || 'Negotiable';
+                const notice = candidate["Notice Period"] || 'Unknown';
+                const looking = candidate["Actively looking for work"] || 'Unknown';
+                const score = calculateProfileScore(candidate).toFixed(0);
+                
+                csv += `"${jobTitle}","${location}","${salary}","${notice}","${looking}","${score}%"\n`;
+            });
+            
+            downloadCSV(csv, 'candidates_export.csv');
+        }
+
+        function exportShortlist() {
+            if (shortlist.length === 0) {
+                alert('No candidates in shortlist');
+                return;
+            }
+            
+            let csv = 'Job Title,Location,Salary Expectations,Notice Period,Notes\n';
+            
+            shortlist.forEach(item => {
+                const candidate = item.candidates;
+                if (!candidate) return;
+                
+                const jobTitle = candidate["Current Job Title"] || candidate["Job Title"] || '';
+                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+                const salary = candidate["What are your salary expectations?"] || 'Negotiable';
+                const notice = candidate["Notice Period"] || 'Unknown';
+                const notes = candidateNotes[candidate.ID] || '';
+                
+                csv += `"${jobTitle}","${location}","${salary}","${notice}","${notes}"\n`;
+            });
+            
+            downloadCSV(csv, 'shortlist_export.csv');
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', filename);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Search functionality with debounce
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');
             if (searchInput) {
-                searchInput.addEventListener('input', function(e) {
-                    applyFilters();
-                });
+                searchInput.addEventListener('input', applyFiltersDebounced);
             }
+            
+            // Auto-apply filters on change
+            ['salaryFilter', 'noticeFilter', 'lookingFilter', 'categoryFilter'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', applyFiltersDebounced);
+                }
+            });
         });
 
-        // Open candidate modal
+        // Open candidate modal with enhancements
         function openCandidate(candidate) {
             currentCandidate = candidate;
             
@@ -1524,8 +2349,23 @@
             const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
             const aboutRaw = candidate["About You"] || candidate.Summary || 'No summary provided';
             
-            // Format the about section with line breaks
-            const about = aboutRaw.replace(/\. /g, '.\n\n');
+            const profileBadge = getProfileBadge(candidate);
+            const profileScore = calculateProfileScore(candidate);
+            
+            // Create expandable summary
+            let aboutHtml = '';
+            if (aboutRaw.length > 300) {
+                aboutHtml = `
+                    <div id="summaryContainer">
+                        <p id="summaryText" class="expandable-text collapsed" style="line-height: 1.6;">
+                            ${aboutRaw}
+                        </p>
+                        <span class="show-more-btn" onclick="toggleSummary()">Show More</span>
+                    </div>
+                `;
+            } else {
+                aboutHtml = `<p style="line-height: 1.6;">${aboutRaw}</p>`;
+            }
             
             const skillsString = candidate["Your Skills"] || candidate.Skills || '';
             let skillsHtml = '';
@@ -1541,33 +2381,7 @@
                             </ul>
                         </div>
                     `;
-                } else if (skillsString.length > 150 && !skillsString.includes(',')) {
-                    skillsHtml = `
-                        <div style="margin-bottom: 2rem;">
-                            <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
-                            <p style="line-height: 1.6;">${skillsString}</p>
-                        </div>
-                    `;
-                } else if (skillsString.includes(',')) {
-                    const skills = skillsString.split(',').map(s => s.trim()).filter(s => s);
-                    if (skills.length > 0) {
-                        skillsHtml = `
-                            <div style="margin-bottom: 2rem;">
-                                <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
-                                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                                    ${skills.map(skill => 
-                                        `<span style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); 
-                                               color: var(--augusta-green); padding: 0.5rem 1rem; 
-                                               border-radius: 20px; font-weight: 600; 
-                                               border: 1px solid var(--putting-green);">
-                                            ${skill}
-                                        </span>`
-                                    ).join('')}
-                                </div>
-                            </div>
-                        `;
-                    }
-                } else if (skillsString) {
+                } else {
                     skillsHtml = `
                         <div style="margin-bottom: 2rem;">
                             <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
@@ -1583,11 +2397,22 @@
                                            candidate["Salary Expectations"]);
             const activelyLooking = candidate["Actively looking for work"] || 'Not specified';
             
-            document.getElementById('modalTitle').textContent = jobTitle;
+            document.getElementById('modalTitle').innerHTML = `
+                ${jobTitle}
+                ${profileBadge ? `
+                    <span class="tooltip" style="margin-left: 1rem;">
+                        <span class="profile-badge ${profileBadge.class}" style="position: static; display: inline-block;">
+                            ${profileBadge.name}
+                        </span>
+                        <span class="tooltiptext">Profile completeness: ${profileScore.toFixed(0)}%</span>
+                    </span>
+                ` : ''}
+            `;
+            
             document.getElementById('modalBody').innerHTML = `
                 <div style="margin-bottom: 2rem;">
                     <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Professional Summary</h3>
-                    <p style="line-height: 1.6; white-space: pre-wrap;">${about}</p>
+                    ${aboutHtml}
                 </div>
                 
                 <div style="margin-bottom: 2rem;">
@@ -1629,12 +2454,60 @@
                 </div>
             `;
             
+            // Load saved notes
+            const notes = candidateNotes[candidate.ID] || '';
+            document.getElementById('candidateNotes').value = notes;
+            
             document.getElementById('candidateModal').classList.add('active');
+        }
+
+        function toggleSummary() {
+            const summaryText = document.getElementById('summaryText');
+            const btn = document.querySelector('.show-more-btn');
+            
+            if (summaryText.classList.contains('collapsed')) {
+                summaryText.classList.remove('collapsed');
+                summaryText.style.maxHeight = 'none';
+                btn.textContent = 'Show Less';
+            } else {
+                summaryText.classList.add('collapsed');
+                btn.textContent = 'Show More';
+            }
+        }
+
+        // Notes functions
+        function saveNotes() {
+            if (!currentCandidate) return;
+            
+            const notes = document.getElementById('candidateNotes').value;
+            candidateNotes[currentCandidate.ID] = notes;
+            
+            // Save to localStorage
+            localStorage.setItem('candidateNotes_' + currentUser.id, JSON.stringify(candidateNotes));
+            
+            alert('Notes saved!');
         }
 
         // Close modal
         function closeModal() {
             document.getElementById('candidateModal').classList.remove('active');
+        }
+
+        // Credit confirmation
+        function showCreditConfirmation() {
+            document.getElementById('currentCredits').textContent = userProfile.credits;
+            document.getElementById('confirmationDialog').classList.add('active');
+            document.getElementById('dialogOverlay').classList.add('active');
+        }
+
+        function hideConfirmation() {
+            document.getElementById('confirmationDialog').classList.remove('active');
+            document.getElementById('dialogOverlay').classList.remove('active');
+        }
+
+        async function confirmCreditUse() {
+            hideConfirmation();
+            await requestContact();
         }
 
         // Add to shortlist
@@ -1696,6 +2569,7 @@
                     <div style="margin-top: 1rem; padding: 1rem; background: #d4edda; border-radius: 8px;">
                         <h4 style="color: var(--augusta-green); margin-bottom: 0.5rem;">Contact Details Revealed:</h4>
                         <p><strong>Email:</strong> ${currentCandidate.Email || 'Not provided'}</p>
+                        <p><strong>Phone:</strong> ${currentCandidate.Phone || 'Not provided'}</p>
                         <p><strong>LinkedIn:</strong> ${currentCandidate.LinkedIn || 'Not provided'}</p>
                         <p><strong>GitHub:</strong> ${currentCandidate.GitHub || 'Not provided'}</p>
                     </div>
@@ -1710,7 +2584,7 @@
             }
         }
 
-        // Other view functions
+        // Load shortlist
         async function loadShortlist() {
             const content = document.getElementById('shortlistContent');
             
@@ -1735,6 +2609,7 @@
                                    candidate.Name || 
                                    `Candidate #${candidate.ID}`);
                     const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+                    const notes = candidateNotes[candidate.ID] || '';
                     
                     return `
                         <div class="candidate-card" style="position: relative;">
@@ -1748,6 +2623,7 @@
                             <div onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'> 
                                 <h3 style="color: var(--augusta-green);">${jobTitle}</h3>
                                 <p style="color: var(--rough-gray);">${location}</p>
+                                ${notes ? `<p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--club-gold);">📝 ${notes.substring(0, 50)}...</p>` : ''}
                             </div>
                         </div>
                     `;
@@ -1785,18 +2661,55 @@
             }
         }
 
-        function loadAccount() {
+        async function loadAccount() {
             document.getElementById('accountName').textContent = userProfile?.name || '-';
             document.getElementById('accountEmail').textContent = currentUser?.email || '-';
             document.getElementById('accountCredits').textContent = userProfile?.credits || 0;
             
-            supabase
+            const { count } = await supabase
                 .from('requests')
                 .select('*', { count: 'exact', head: true })
+                .eq('user_id', currentUser.id);
+            
+            document.getElementById('totalRequests').textContent = count || 0;
+            
+            // Load credits history
+            const { data: requests } = await supabase
+                .from('requests')
+                .select('*, candidates(*)')
                 .eq('user_id', currentUser.id)
-                .then(({ count }) => {
-                    document.getElementById('totalRequests').textContent = count || 0;
-                });
+                .order('request_date', { ascending: false })
+                .limit(10);
+            
+            const historyDiv = document.getElementById('creditsHistory');
+            if (requests && requests.length > 0) {
+                historyDiv.innerHTML = `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #f9fafb;">
+                                <th style="padding: 0.5rem; text-align: left;">Date</th>
+                                <th style="padding: 0.5rem; text-align: left;">Candidate</th>
+                                <th style="padding: 0.5rem; text-align: left;">Credits</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${requests.map(req => {
+                                const jobTitle = req.candidates ? toTitleCase(req.candidates["Current Job Title"] || 
+                                               req.candidates.Name) : 'Unknown';
+                                return `
+                                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                                        <td style="padding: 0.5rem;">${new Date(req.request_date).toLocaleDateString()}</td>
+                                        <td style="padding: 0.5rem;">${jobTitle}</td>
+                                        <td style="padding: 0.5rem;">-${req.credits_used || 1}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } else {
+                historyDiv.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No credit history yet.</p>';
+            }
         }
 
         async function loadRequests() {
@@ -1817,18 +2730,27 @@
                             <tr style="background: #f9fafb;">
                                 <th style="padding: 1rem; text-align: left;">Date</th>
                                 <th style="padding: 1rem; text-align: left;">Candidate</th>
+                                <th style="padding: 1rem; text-align: left;">Contact Details</th>
                                 <th style="padding: 1rem; text-align: left;">Credits Used</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${requests.map(req => {
-                                const jobTitle = req.candidates ? toTitleCase(req.candidates["Current Job Title"] || 
-                                               req.candidates.Name || 
+                                const candidate = req.candidates;
+                                const jobTitle = candidate ? toTitleCase(candidate["Current Job Title"] || 
+                                               candidate.Name || 
                                                `Candidate #${req.candidate_id}`) : `Candidate #${req.candidate_id}`;
+                                
+                                const contactInfo = candidate ? `
+                                    Email: ${candidate.Email || 'N/A'}<br>
+                                    LinkedIn: ${candidate.LinkedIn || 'N/A'}
+                                ` : 'Not available';
+                                
                                 return `
                                     <tr style="border-bottom: 1px solid #e5e7eb;">
                                         <td style="padding: 1rem;">${new Date(req.request_date).toLocaleDateString()}</td>
                                         <td style="padding: 1rem;">${jobTitle}</td>
+                                        <td style="padding: 1rem; font-size: 0.9rem;">${contactInfo}</td>
                                         <td style="padding: 1rem;">${req.credits_used || 1}</td>
                                     </tr>
                                 `;
@@ -1918,10 +2840,6 @@
         function goHome() {
             switchView('pools');
         }
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeModal();
-        });
 
         document.getElementById('candidateModal')?.addEventListener('click', function(e) {
             if (e.target === this) closeModal();

@@ -1177,32 +1177,7 @@
         </div>
     </div>
 
-    <!-- Message Confirmation Dialog -->
-    <div class="dialog-overlay" id="messageDialogOverlay"></div>
-    <div class="confirmation-dialog" id="messageConfirmationDialog">
-        <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Confirm Message Send</h3>
-        <div style="background: #fef3e6; border: 2px solid var(--club-gold); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-            <p style="margin-bottom: 0.75rem;"><strong>⚠️ This will use 1 credit</strong></p>
-            <p style="font-size: 0.9rem; line-height: 1.6; margin-bottom: 0.5rem;">
-                By sending this message:
-            </p>
-            <ul style="font-size: 0.9rem; line-height: 1.6; margin-left: 1.5rem;">
-                <li>1 credit will be deducted from your account</li>
-                <li>Your message will be sent directly to the candidate</li>
-                <li>The candidate's email remains private</li>
-                <li>You can continue the conversation for free</li>
-                <li>All messages are logged for quality assurance</li>
-            </ul>
-        </div>
-        <p style="margin-bottom: 1.5rem;">Current balance: <strong id="currentCreditsMsg">0</strong> credits</p>
-        <p style="margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--rough-gray);">
-            After sending: <strong id="afterCreditsMsg">0</strong> credits remaining
-        </p>
-        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-            <button class="btn btn-secondary" onclick="cancelMessage()">Cancel</button>
-            <button class="btn btn-primary" onclick="confirmMessage()">Confirm & Send (1 Credit)</button>
-        </div>
-    </div>
+
 
     <script>
         // Initialize Supabase
@@ -2720,9 +2695,12 @@
             await refreshShortlist();
         }
 
-        // Load shortlist
+        // Load shortlist  
         async function loadShortlist() {
             const content = document.getElementById('shortlistContent');
+            
+            // Ensure we have fresh shortlist data
+            await refreshShortlist();
             
             if (!shortlist || shortlist.length === 0) {
                 content.innerHTML = `
@@ -2732,90 +2710,107 @@
                         <button class="btn btn-primary" onclick="switchView('pools')">Browse Talent Pools</button>
                     </div>
                 `;
-            } else {
-                content.innerHTML = '<div class="candidates-grid" id="shortlistGrid"></div>';
-                const grid = document.getElementById('shortlistGrid');
+                return;
+            }
+            
+            // Debug: Check what's in shortlist
+            console.log('Shortlist items:', shortlist);
+            
+            content.innerHTML = '<div class="candidates-grid" id="shortlistGrid"></div>';
+            const grid = document.getElementById('shortlistGrid');
+            
+            const cardHtml = shortlist.map(item => {
+                const candidate = item.candidates;
+                if (!candidate) {
+                    console.log('No candidate data for shortlist item:', item);
+                    return '';
+                }
                 
-                grid.innerHTML = shortlist.map(item => {
-                    const candidate = item.candidates;
-                    if (!candidate) return '';
-                    
-                    const jobTitle = toTitleCase(candidate["Current Job Title"] || 
-                                   candidate["Job Title"] || 
-                                   candidate.Name || 
-                                   `Candidate #${candidate.ID}`);
-                    
-                    const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-                    const salary = formatSalaryExact(candidate["What are your salary expectations?"] || 
-                                                   candidate["Salary Expectations"]);
-                    const noticeRaw = candidate["Notice Period"];
-                    const notice = noticeRaw ? formatNoticePeriod(noticeRaw) : 'Unknown Notice Period';
-                    const activelyLooking = (candidate["Actively looking for work"] || '').toUpperCase() === 'YES';
-                    
-                    const about = candidate["About You"] || candidate.Summary || '';
-                    const summary = generateSummaryPreview(about);
-                    
-                    const skillsDisplay = formatSkillsDisplay(candidate["Your Skills"] || candidate.Skills || '');
-                    
-                    const profileScore = calculateProfileScore(candidate);
-                    const isTopPick = profileScore >= 85;
-                    const isNew = isNewCandidate(candidate);
-                    const notes = candidateNotes[candidate.ID] || '';
-                    
-                    return `
-                        <div class="candidate-card" style="position: relative;">
-                            <button onclick="removeFromShortlist(${item.id})" 
-                                    style="position: absolute; top: 1rem; right: 1rem; 
-                                           background: #fee; color: var(--hazard-red); 
-                                           border: none; padding: 0.5rem 1rem; 
-                                           border-radius: 8px; cursor: pointer; z-index: 10;
-                                           font-size: 0.85rem;">
-                                Remove
-                            </button>
-                            
-                            ${isTopPick ? '<div class="top-pick-badge">⭐ Top Pick</div>' : ''}
-                            ${isNew ? '<div class="new-badge">New</div>' : ''}
-                            
-                            ${activelyLooking ? `
-                                <div style="position: absolute; top: 0.75rem; left: 0.75rem; 
-                                           background: linear-gradient(135deg, var(--masters-green), var(--putting-green)); 
-                                           color: white; padding: 0.2rem 0.5rem; 
-                                           border-radius: 15px; font-size: 0.65rem; 
-                                           font-weight: 600; text-transform: uppercase; 
-                                           letter-spacing: 0.3px;">
-                                    Actively Looking
+                const jobTitle = toTitleCase(candidate["Current Job Title"] || 
+                               candidate["Job Title"] || 
+                               candidate.Name || 
+                               `Candidate #${candidate.ID}`);
+                
+                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+                const salary = formatSalaryExact(candidate["What are your salary expectations?"] || 
+                                               candidate["Salary Expectations"]);
+                const noticeRaw = candidate["Notice Period"];
+                const notice = noticeRaw ? formatNoticePeriod(noticeRaw) : 'Unknown Notice Period';
+                const activelyLooking = (candidate["Actively looking for work"] || '').toUpperCase() === 'YES';
+                
+                const about = candidate["About You"] || candidate.Summary || '';
+                const summary = generateSummaryPreview(about);
+                
+                const skillsDisplay = formatSkillsDisplay(candidate["Your Skills"] || candidate.Skills || '');
+                
+                const profileScore = calculateProfileScore(candidate);
+                const isTopPick = profileScore >= 85;
+                const isNew = isNewCandidate(candidate);
+                const notes = candidateNotes[candidate.ID] || '';
+                
+                return `
+                    <div class="candidate-card" style="position: relative;">
+                        <button onclick="removeFromShortlist(${item.id})" 
+                                style="position: absolute; top: 1rem; right: 1rem; 
+                                       background: #fee; color: var(--hazard-red); 
+                                       border: none; padding: 0.5rem 1rem; 
+                                       border-radius: 8px; cursor: pointer; z-index: 10;
+                                       font-size: 0.85rem;">
+                            Remove
+                        </button>
+                        
+                        ${isTopPick ? '<div class="top-pick-badge">⭐ Top Pick</div>' : ''}
+                        ${isNew ? '<div class="new-badge">New</div>' : ''}
+                        
+                        ${activelyLooking ? `
+                            <div style="position: absolute; top: 0.75rem; left: 0.75rem; 
+                                       background: linear-gradient(135deg, var(--masters-green), var(--putting-green)); 
+                                       color: white; padding: 0.2rem 0.5rem; 
+                                       border-radius: 15px; font-size: 0.65rem; 
+                                       font-weight: 600; text-transform: uppercase; 
+                                       letter-spacing: 0.3px;">
+                                Actively Looking
+                            </div>
+                        ` : ''}
+                        
+                        <div onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'
+                             style="cursor: pointer;">
+                            <h3 style="color: var(--augusta-green); margin-bottom: 0.5rem; padding-right: 80px;">
+                                ${jobTitle}
+                            </h3>
+                            <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 1rem;">
+                                ${location}
+                            </p>
+                            ${summary ? `<p style="margin-bottom: 1rem; font-size: 0.95rem; color: var(--pro-shop-navy);">${summary}</p>` : ''}
+                            ${skillsDisplay}
+                            ${notes ? `
+                                <div style="background: #fffef5; border-left: 3px solid var(--club-gold); 
+                                           padding: 0.5rem; margin: 0.75rem 0; border-radius: 4px;">
+                                    <p style="font-size: 0.85rem; color: var(--club-gold); margin: 0;">
+                                        📝 Note: ${notes.substring(0, 100)}${notes.length > 100 ? '...' : ''}
+                                    </p>
                                 </div>
                             ` : ''}
-                            
-                            <div onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'
-                                 style="cursor: pointer;">
-                                <h3 style="color: var(--augusta-green); margin-bottom: 0.5rem; padding-right: 80px;">
-                                    ${jobTitle}
-                                </h3>
-                                <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 1rem;">
-                                    ${location}
-                                </p>
-                                ${summary ? `<p style="margin-bottom: 1rem; font-size: 0.95rem; color: var(--pro-shop-navy);">${summary}</p>` : ''}
-                                ${skillsDisplay}
-                                ${notes ? `
-                                    <div style="background: #fffef5; border-left: 3px solid var(--club-gold); 
-                                               padding: 0.5rem; margin: 0.75rem 0; border-radius: 4px;">
-                                        <p style="font-size: 0.85rem; color: var(--club-gold); margin: 0;">
-                                            📝 Note: ${notes.substring(0, 100)}${notes.length > 100 ? '...' : ''}
-                                        </p>
-                                    </div>
-                                ` : ''}
-                                <div style="display: flex; justify-content: space-between; align-items: center; 
-                                            padding-top: 1rem; border-top: 1px solid #e5e7eb;">
-                                    <span style="color: var(--rough-gray); font-size: 0.9rem;">
-                                        ${salary} • ${notice}
-                                    </span>
-                                    <span style="color: var(--masters-green); font-weight: 600;">View →</span>
-                                </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; 
+                                        padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                                <span style="color: var(--rough-gray); font-size: 0.9rem;">
+                                    ${salary} • ${notice}
+                                </span>
+                                <span style="color: var(--masters-green); font-weight: 600;">View →</span>
                             </div>
                         </div>
-                    `;
-                }).join('');
+                    </div>
+                `;
+            }).filter(html => html !== '').join('');
+            
+            if (cardHtml) {
+                grid.innerHTML = cardHtml;
+            } else {
+                grid.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 2rem;">
+                        <p style="color: var(--rough-gray);">Error loading shortlist candidates. Please refresh the page.</p>
+                    </div>
+                `;
             }
         }
 
@@ -2985,47 +2980,196 @@
                 usersList.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No users found.</p>';
             }
             
-            // Show recent messages in admin view
+            // Load ALL messages from database for admin visibility
             const messagesList = document.getElementById('adminMessagesList');
-            const allConversations = [];
             
-            // This would need to be stored in database for a real multi-user system
-            // For now, just show current user's messages in admin view
-            Object.values(conversations).forEach(conv => {
-                conv.messages.forEach(msg => {
-                    if (msg.from === 'employer') {
-                        allConversations.push({
-                            candidate: conv.candidateName,
-                            message: msg.text.substring(0, 100),
-                            timestamp: msg.timestamp
-                        });
+            // Fetch messages from Supabase
+            const { data: allMessages } = await supabase
+                .from('messages')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(100);
+            
+            if (allMessages && allMessages.length > 0) {
+                // Group messages by conversation
+                const conversationGroups = {};
+                allMessages.forEach(msg => {
+                    const key = `${msg.employer_id}_${msg.candidate_id}`;
+                    if (!conversationGroups[key]) {
+                        conversationGroups[key] = {
+                            employer_id: msg.employer_id,
+                            employer_email: msg.employer_email,
+                            candidate_id: msg.candidate_id,
+                            candidate_name: msg.candidate_name,
+                            messages: []
+                        };
                     }
+                    conversationGroups[key].messages.push(msg);
                 });
-            });
-            
-            if (allConversations.length > 0) {
+                
                 messagesList.innerHTML = `
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f9fafb;">
-                                <th style="padding: 1rem; text-align: left;">Date</th>
-                                <th style="padding: 1rem; text-align: left;">Candidate</th>
-                                <th style="padding: 1rem; text-align: left;">Message</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${allConversations.slice(0, 20).map(msg => `
-                                <tr style="border-bottom: 1px solid #e5e7eb;">
-                                    <td style="padding: 1rem;">${new Date(msg.timestamp).toLocaleString()}</td>
-                                    <td style="padding: 1rem;">${msg.candidate}</td>
-                                    <td style="padding: 1rem;">${msg.message}...</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
+                    <div style="background: #fff3cd; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <p style="color: #856404; margin: 0; font-size: 0.9rem;">
+                            <strong>⚖️ Legal Notice:</strong> All messages are monitored for quality assurance and compliance. 
+                            Ensure your privacy policy and terms of service clearly state that messages may be reviewed by administrators.
+                            Consider local data protection laws (GDPR, etc.) before implementing message monitoring.
+                        </p>
+                    </div>
+                    <h3 style="margin-bottom: 1rem; color: var(--augusta-green);">Recent Message Threads (Click to View Full Thread)</h3>
+                    <div style="display: grid; gap: 1rem;">
+                        ${Object.values(conversationGroups).map(conv => {
+                            const latestMsg = conv.messages[0];
+                            const totalCreditsUsed = conv.messages.filter(m => m.is_first_message).length;
+                            return `
+                                <div class="section-box" style="cursor: pointer; background: white; padding: 1.5rem; border-radius: 12px; 
+                                                                box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.3s ease;"
+                                     onclick="viewAdminMessageThread('${conv.employer_id}', ${conv.candidate_id}, '${conv.employer_email}', '${conv.candidate_name}')"
+                                     onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.12)';"
+                                     onmouseout="this.style.transform=''; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.08)';">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                                        <div>
+                                            <h4 style="color: var(--augusta-green); margin: 0;">
+                                                <strong>Employer:</strong> ${conv.employer_email}
+                                            </h4>
+                                            <p style="color: var(--rough-gray); margin: 0.25rem 0; font-size: 0.9rem;">
+                                                <strong>User ID:</strong> ${conv.employer_id}
+                                            </p>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <p style="color: var(--masters-green); margin: 0; font-weight: 600;">
+                                                Candidate: ${conv.candidate_name}
+                                            </p>
+                                            <p style="color: var(--rough-gray); margin: 0.25rem 0; font-size: 0.9rem;">
+                                                <strong>Candidate ID:</strong> #${conv.candidate_id}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div style="background: #f8f9fa; padding: 0.75rem; border-radius: 8px; margin-bottom: 0.75rem;">
+                                        <p style="margin: 0; font-size: 0.9rem; color: #333;">
+                                            <strong>Latest:</strong> "${latestMsg.message_text.substring(0, 150)}${latestMsg.message_text.length > 150 ? '...' : ''}"
+                                        </p>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 0.85rem; color: var(--rough-gray);">
+                                            ${new Date(latestMsg.created_at).toLocaleString()}
+                                        </span>
+                                        <div>
+                                            <span style="background: #e9ecef; padding: 0.25rem 0.75rem; border-radius: 12px; 
+                                                       font-size: 0.85rem; margin-right: 0.5rem;">
+                                                ${conv.messages.length} message${conv.messages.length !== 1 ? 's' : ''}
+                                            </span>
+                                            <span style="background: ${totalCreditsUsed > 0 ? '#ffc107' : '#e9ecef'}; 
+                                                       color: ${totalCreditsUsed > 0 ? '#000' : '#6c757d'}; 
+                                                       padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem;">
+                                                ${totalCreditsUsed} credit${totalCreditsUsed !== 1 ? 's' : ''} used
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
                 `;
             } else {
-                messagesList.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No messages found.</p>';
+                // If no messages in database, show local messages with notice
+                const allConversations = [];
+                Object.values(conversations).forEach(conv => {
+                    conv.messages.forEach(msg => {
+                        if (msg.from === 'employer') {
+                            allConversations.push({
+                                employer: currentUser.email,
+                                employer_id: currentUser.id,
+                                candidate: conv.candidateName,
+                                candidate_id: conv.candidateId,
+                                message: msg.text,
+                                timestamp: msg.timestamp,
+                                isFirst: conv.messages.indexOf(msg) === 0
+                            });
+                        }
+                    });
+                });
+                
+                if (allConversations.length > 0) {
+                    messagesList.innerHTML = `
+                        <div style="background: #f8d7da; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <p style="color: #721c24; margin: 0; font-size: 0.9rem;">
+                                <strong>⚠️ Database Setup Required:</strong> Messages are currently stored locally only. 
+                                To enable full admin visibility across all users, create a 'messages' table in Supabase with columns:
+                                employer_id, employer_email, candidate_id, candidate_name, message_text, is_first_message, credit_used, created_at
+                            </p>
+                        </div>
+                        <h3 style="margin-bottom: 1rem; color: var(--augusta-green);">Local Messages (Current Session Only)</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f9fafb;">
+                                    <th style="padding: 1rem; text-align: left;">Date</th>
+                                    <th style="padding: 1rem; text-align: left;">Employer</th>
+                                    <th style="padding: 1rem; text-align: left;">Employer ID</th>
+                                    <th style="padding: 1rem; text-align: left;">Candidate</th>
+                                    <th style="padding: 1rem; text-align: left;">Candidate ID</th>
+                                    <th style="padding: 1rem; text-align: left;">Message</th>
+                                    <th style="padding: 1rem; text-align: left;">Credits</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${allConversations.map(msg => `
+                                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                                        <td style="padding: 0.75rem; font-size: 0.85rem;">${new Date(msg.timestamp).toLocaleString()}</td>
+                                        <td style="padding: 0.75rem; font-size: 0.85rem;">${msg.employer}</td>
+                                        <td style="padding: 0.75rem; font-size: 0.85rem; font-family: monospace;">${msg.employer_id.substring(0, 8)}...</td>
+                                        <td style="padding: 0.75rem; font-size: 0.85rem;">${msg.candidate}</td>
+                                        <td style="padding: 0.75rem; font-size: 0.85rem;">#${msg.candidate_id}</td>
+                                        <td style="padding: 0.75rem; font-size: 0.85rem;">${msg.message.substring(0, 100)}...</td>
+                                        <td style="padding: 0.75rem; font-size: 0.85rem;">${msg.isFirst ? '1' : '0'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                } else {
+                    messagesList.innerHTML = '<p style="text-align: center; color: var(--rough-gray);">No messages found. Messages will appear here once sent.</p>';
+                }
+            }
+        }
+        
+        // Function to view full message thread in admin panel
+        async function viewAdminMessageThread(employerId, candidateId, employerEmail, candidateName) {
+            // Fetch all messages for this conversation
+            const { data: threadMessages } = await supabase
+                .from('messages')
+                .select('*')
+                .eq('employer_id', employerId)
+                .eq('candidate_id', candidateId)
+                .order('created_at', { ascending: true });
+            
+            if (threadMessages && threadMessages.length > 0) {
+                // Create modal to show full thread
+                const modalHtml = `
+                    <div class="modal active" style="z-index: 3000;">
+                        <div class="modal-content" style="max-width: 800px;">
+                            <button class="modal-close" onclick="this.closest('.modal').remove()">×</button>
+                            <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">Message Thread</h2>
+                            <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                                <p style="margin: 0.25rem 0;"><strong>Employer:</strong> ${employerEmail} (ID: ${employerId})</p>
+                                <p style="margin: 0.25rem 0;"><strong>Candidate:</strong> ${candidateName} (ID: #${candidateId})</p>
+                                <p style="margin: 0.25rem 0;"><strong>Total Messages:</strong> ${threadMessages.length}</p>
+                                <p style="margin: 0.25rem 0;"><strong>Credits Used:</strong> ${threadMessages.filter(m => m.is_first_message).length}</p>
+                            </div>
+                            <div class="conversation-container" style="max-height: 500px; overflow-y: auto; background: white; padding: 1rem; border-radius: 8px;">
+                                ${threadMessages.map(msg => `
+                                    <div class="message sent" style="margin-bottom: 1rem;">
+                                        <div style="font-weight: 600; margin-bottom: 0.5rem;">
+                                            Employer Message ${msg.is_first_message ? '(1 credit)' : '(free)'}
+                                        </div>
+                                        ${msg.message_text}
+                                        <div class="message-time">${new Date(msg.created_at).toLocaleString()}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
             }
         }
 

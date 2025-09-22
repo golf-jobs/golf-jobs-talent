@@ -807,7 +807,7 @@
             color: white;
         }
 
-        /* Responsive */
+        /* Mobile Split View */
         @media (max-width: 768px) {
             .pools-grid, .candidates-grid {
                 grid-template-columns: 1fr;
@@ -831,6 +831,63 @@
                 margin: 10% 1rem;
                 width: calc(100% - 2rem);
             }
+            
+            /* Hide right panel on mobile by default */
+            #profileDetailView {
+                display: none;
+            }
+            
+            /* Show only list on mobile */
+            .split-view-container {
+                flex-direction: column !important;
+                height: auto !important;
+            }
+            
+            .split-view-left {
+                width: 100% !important;
+                border-right: none !important;
+                padding-right: 0 !important;
+            }
+            
+            .split-view-right {
+                display: none;
+            }
+            
+            /* When profile is opened on mobile, show it as modal */
+            .mobile-profile-active #candidatesListView {
+                display: none;
+            }
+            
+            .mobile-profile-active #profileDetailView {
+                display: block;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: white;
+                z-index: 1000;
+                overflow-y: auto;
+                padding: 1rem;
+            }
+            
+            .mobile-back-btn {
+                display: block !important;
+                position: fixed;
+                top: 1rem;
+                left: 1rem;
+                z-index: 1001;
+                background: var(--augusta-green);
+                color: white;
+                border: none;
+                padding: 0.5rem 1rem;
+                border-radius: 8px;
+                cursor: pointer;
+            }
+        }
+        
+        .mobile-back-btn {
+            display: none;
         }
     </style>
 </head>
@@ -972,9 +1029,9 @@
                 <div id="candidateCount" style="margin-bottom: 1rem; color: var(--rough-gray);"></div>
                 
                 <!-- Split View Container -->
-                <div style="display: flex; gap: 1.5rem; height: calc(100vh - 350px); min-height: 600px;">
+                <div class="split-view-container" style="display: flex; gap: 1.5rem; height: calc(100vh - 350px); min-height: 600px;">
                     <!-- Left Panel - Candidate List -->
-                    <div style="width: 40%; overflow-y: auto; padding-right: 1rem; border-right: 1px solid #e5e7eb;">
+                    <div class="split-view-left" style="width: 40%; overflow-y: auto; padding-right: 1rem; border-right: 1px solid #e5e7eb;">
                         <div id="candidatesListView">
                             <!-- Loading skeletons -->
                             <div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div>
@@ -989,7 +1046,8 @@
                     </div>
                     
                     <!-- Right Panel - Full Profile View -->
-                    <div style="flex: 1; overflow-y: auto; padding-left: 1rem;">
+                    <div class="split-view-right" style="flex: 1; overflow-y: auto; padding-left: 1rem;">
+                        <button class="mobile-back-btn" onclick="closeMobileProfile()">← Back to List</button>
                         <div id="profileDetailView" style="background: white; border-radius: 16px; padding: 2rem; min-height: 100%;">
                             <div style="text-align: center; color: var(--rough-gray); padding: 4rem 2rem;">
                                 <h3 style="margin-bottom: 1rem;">Select a candidate</h3>
@@ -1363,13 +1421,13 @@
                     .select('*')
                     .in('ID', candidateIds);
                 
-                shortlist = shortlistData.map(item => {
-                    const candidate = candidatesData?.find(c => c.ID === item.candidate_id);
-                    return {
-                        ...item,
-                        candidates: candidate || null
-                    };
-                });
+                // Build a map using string keys to avoid number/string mismatches
+                const byId = new Map((candidatesData || []).map(c => [String(c.ID), c]));
+                
+                shortlist = shortlistData.map(item => ({
+                    ...item,
+                    candidates: byId.get(String(item.candidate_id)) || null
+                }));
             } else {
                 shortlist = [];
             }
@@ -1549,13 +1607,15 @@
                 const about = candidate["About You"] || candidate.Summary || '';
                 const summaryPreview = about.substring(0, 150) + (about.length > 150 ? '...' : '');
                 
+                const clickHandler = `viewCandidateProfile(${JSON.stringify(candidate).replace(/'/g, "&apos;")})`;
+                
                 return `
                     <div class="candidate-list-item ${isSelected ? 'selected' : ''}" 
                          id="card-${candidate.ID}"
                          style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; 
                                 border: 2px solid ${isSelected ? 'var(--masters-green)' : '#e5e7eb'}; 
                                 cursor: pointer; transition: all 0.3s ease; position: relative;"
-                         onclick="viewCandidateProfile(${JSON.stringify(candidate).replace(/'/g, "&apos;")})">
+                         onclick='${clickHandler}'>
                         
                         <input type="checkbox" 
                                style="position: absolute; top: 1rem; left: 1rem; width: 20px; height: 20px; cursor: pointer;"
@@ -1577,23 +1637,9 @@
                             
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <span style="color: var(--rough-gray); font-size: 0.85rem;">
-                                    ${salary} • ${notice}
+                                    ${salary} • ${notice}${activelyLooking ? ' • Actively looking' : ''}
                                 </span>
-                                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    ${isAvailableNow ? `
-                                        <span style="background: #d4edda; color: #155724; padding: 0.2rem 0.5rem; 
-                                                   border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
-                                            AVAILABLE NOW
-                                        </span>
-                                    ` : ''}
-                                    ${activelyLooking ? `
-                                        <span style="background: var(--masters-green); color: white; padding: 0.2rem 0.5rem; 
-                                                   border-radius: 8px; font-size: 0.75rem; font-weight: 600;">
-                                            ACTIVELY LOOKING
-                                        </span>
-                                    ` : ''}
-                                    <span style="color: var(--masters-green); font-weight: 600;">View →</span>
-                                </div>
+                                <span style="color: var(--masters-green); font-weight: 600;">View →</span>
                             </div>
                         </div>
                     </div>
@@ -1604,6 +1650,11 @@
         // New function to display full profile in right panel
         function viewCandidateProfile(candidate) {
             currentCandidate = candidate;
+            
+            // On mobile, add class to show profile
+            if (window.innerWidth <= 768) {
+                document.body.classList.add('mobile-profile-active');
+            }
             
             // Track profile view
             const candidateName = candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`;
@@ -1632,15 +1683,15 @@
             
             const profileDetailView = document.getElementById('profileDetailView');
             profileDetailView.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 2rem;">
-                    <div>
-                        <h1 style="color: var(--augusta-green); margin-bottom: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <h1 style="color: var(--augusta-green); margin-bottom: 0.5rem; font-size: 1.8rem;">
                             ${jobTitle}
                             ${isTopPick ? '<span class="top-pick-badge" style="position: static; display: inline-block; margin-left: 1rem;">⭐ TOP PICK</span>' : ''}
                         </h1>
                         <p style="color: var(--rough-gray); font-size: 1.1rem;">${location}</p>
                     </div>
-                    <div style="display: flex; gap: 1rem;">
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                         <button class="btn btn-secondary btn-small" onclick="addToShortlistFromProfile()">Save to Shortlist</button>
                         <button class="btn btn-primary btn-small" onclick="openMessageDialog()">Send Message</button>
                     </div>
@@ -1669,23 +1720,38 @@
                 
                 <div style="margin-bottom: 2rem;">
                     <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Professional Summary</h3>
-                    <p style="line-height: 1.8; color: #333;">${about.replace(/\n/g, '<br>')}</p>
+                    <p style="line-height: 1.8; color: #333; white-space: pre-wrap;">${about}</p>
                 </div>
                 
                 ${skills ? `
                     <div style="margin-bottom: 2rem;">
                         <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
-                        <p style="line-height: 1.6; color: #333;">${skills.replace(/\n/g, '<br>')}</p>
+                        <p style="line-height: 1.6; color: #333; white-space: pre-wrap;">${skills}</p>
                     </div>
                 ` : ''}
                 
                 <div class="notes-panel" style="margin-top: 2rem;">
                     <h4 style="color: var(--augusta-green); margin-bottom: 0.5rem;">📝 Private Notes</h4>
-                    <textarea id="candidateNotes" class="note-textarea" 
+                    <textarea id="candidateNotesProfile" class="note-textarea" 
                               placeholder="Add your notes about this candidate...">${candidateNotes[candidate.ID] || ''}</textarea>
-                    <button class="btn btn-small" onclick="saveNotes()" style="margin-top: 0.5rem;">Save Notes</button>
+                    <button class="btn btn-small" onclick="saveProfileNotes()" style="margin-top: 0.5rem;">Save Notes</button>
                 </div>
             `;
+        }
+        
+        // Mobile profile handling
+        function closeMobileProfile() {
+            document.body.classList.remove('mobile-profile-active');
+        }
+        
+        // Save notes from profile view
+        function saveProfileNotes() {
+            if (!currentCandidate) return;
+            
+            const notes = document.getElementById('candidateNotesProfile').value;
+            candidateNotes[currentCandidate.ID] = notes;
+            localStorage.setItem('candidateNotes_' + currentUser.id, JSON.stringify(candidateNotes));
+            alert('Notes saved!');
         }
 
         // Add functions for profile view actions

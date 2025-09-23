@@ -66,20 +66,6 @@
             margin-bottom: 1.75rem;
         }
 
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(0, 77, 38, 0.1);
-            border-top-color: var(--augusta-green);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 2rem auto;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
         /* Login Screen */
         .login-container {
             min-height: 100vh;
@@ -211,28 +197,34 @@
             position: relative;
         }
 
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
         .logo {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.5rem;
             cursor: pointer;
             min-width: 0;
         }
 
         .logo img {
-            height: 60px;
+            height: 50px;
         }
 
         #menuToggle {
             display: none;
-            padding: 0.5rem 1rem;
+            padding: 0.5rem 0.75rem;
             background: rgba(255,255,255,0.2);
             border: 1px solid rgba(255,255,255,0.3);
             color: white;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-left: 0.5rem;
+            font-size: 0.9rem;
         }
 
         #menuToggle:hover {
@@ -253,7 +245,7 @@
         }
 
         .nav-tab {
-            padding: 0.625rem 1.25rem;
+            padding: 0.5rem 1rem;
             background: rgba(255,255,255,0.1);
             backdrop-filter: blur(10px);
             border: none;
@@ -261,12 +253,11 @@
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 500;
             font-family: 'Poppins', sans-serif;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            position: relative;
             flex: 0 0 auto;
             white-space: nowrap;
         }
@@ -293,9 +284,9 @@
         .user-info {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.5rem;
             background: rgba(0,0,0,0.2);
-            padding: 0.5rem 1rem;
+            padding: 0.375rem 0.75rem;
             border-radius: 12px;
             flex: 0 0 auto;
             min-width: 0;
@@ -304,20 +295,22 @@
         .credits-badge {
             background: linear-gradient(135deg, var(--club-gold) 0%, var(--trophy-gold) 100%);
             color: var(--augusta-green);
-            padding: 0.375rem 1rem;
+            padding: 0.25rem 0.75rem;
             border-radius: 20px;
             font-weight: 700;
             font-family: 'Poppins', sans-serif;
+            font-size: 0.85rem;
         }
 
         .btn-logout {
-            padding: 0.5rem 1rem;
+            padding: 0.375rem 0.75rem;
             background: rgba(255,255,255,0.2);
             border: 1px solid rgba(255,255,255,0.3);
             color: white;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 0.85rem;
         }
 
         .btn-logout:hover {
@@ -344,66 +337,6 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Analytics Dashboard */
-        .analytics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .analytics-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        }
-
-        .analytics-card h3 {
-            color: var(--augusta-green);
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--masters-green);
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            color: var(--rough-gray);
-            font-size: 0.9rem;
-        }
-
-        .top-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .top-list li {
-            padding: 0.75rem;
-            border-bottom: 1px solid #e5e7eb;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .top-list li:last-child {
-            border-bottom: none;
-        }
-
-        .rank-badge {
-            background: var(--club-gold);
-            color: var(--augusta-green);
-            padding: 0.25rem 0.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.85rem;
-            margin-right: 0.75rem;
         }
 
         /* Pools Grid */
@@ -445,6 +378,7 @@
             font-size: 1.75rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
+            padding-right: 100px;
         }
 
         .pool-badge {
@@ -458,47 +392,6 @@
             font-size: 0.875rem;
             font-weight: 700;
             z-index: 1;
-        }
-        
-        @media (max-width: 640px) {
-            #menuToggle {
-                display: inline-block;
-            }
-            
-            .nav-tabs {
-                display: none;
-            }
-            
-            .nav-tabs.is-open {
-                display: flex;
-                position: absolute;
-                left: 0;
-                right: 0;
-                top: 100%;
-                background: linear-gradient(135deg, var(--augusta-green), var(--fairway-green));
-                padding: 1rem;
-                z-index: 999;
-                flex-direction: column;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            }
-            
-            .nav-tab {
-                width: 100%;
-                text-align: center;
-            }
-            
-            .user-info span#userName {
-                display: none;
-            }
-            
-            .pool-header {
-                padding: 2rem 1rem;
-            }
-            
-            .pool-title {
-                padding-right: 100px;
-                font-size: 1.5rem;
-            }
         }
 
         .pool-stats {
@@ -548,13 +441,20 @@
             border-color: var(--masters-green);
         }
 
-        .candidate-checkbox {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            width: 20px;
-            height: 20px;
+        .candidate-list-item {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 2px solid #e5e7eb;
             cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .candidate-list-item:hover {
+            border-color: var(--masters-green);
+            transform: translateX(4px);
         }
 
         .top-pick-badge {
@@ -572,20 +472,7 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
-        .new-badge {
-            position: absolute;
-            top: -8px;
-            left: 1rem;
-            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
-            color: white;
-            padding: 0.2rem 0.5rem;
-            border-radius: 10px;
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-        
-        /* Remove button hover state */
+        /* Remove button */
         .btn-remove-shortlist {
             position: absolute;
             top: 1rem;
@@ -609,7 +496,7 @@
             box-shadow: 0 4px 12px rgba(201, 48, 44, 0.3);
         }
 
-        /* Message System Styles */
+        /* Message System */
         .message-box {
             background: #f8f9fa;
             border: 1px solid #e1e8e4;
@@ -632,61 +519,6 @@
         .message-textarea:focus {
             outline: none;
             border-color: var(--masters-green);
-        }
-
-        .conversation-container {
-            max-height: 400px;
-            overflow-y: auto;
-            padding: 1rem;
-            background: white;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-        }
-
-        .message {
-            margin-bottom: 1rem;
-            padding: 0.75rem;
-            border-radius: 8px;
-        }
-
-        .message.sent {
-            background: var(--masters-green);
-            color: white;
-            margin-left: 20%;
-            text-align: right;
-        }
-
-        .message.received {
-            background: #f0f0f0;
-            margin-right: 20%;
-        }
-
-        .message-time {
-            font-size: 0.75rem;
-            opacity: 0.7;
-            margin-top: 0.25rem;
-        }
-
-        /* Sorting Bar */
-        .sorting-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .sort-options {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .bulk-actions {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
         }
 
         /* Filter Panel */
@@ -862,6 +694,55 @@
             color: var(--augusta-green);
         }
 
+        /* Sorting Bar */
+        .sorting-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .sort-options {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* Split View Container */
+        .split-view-container {
+            display: flex;
+            gap: 1.5rem;
+            min-height: 600px;
+            height: clamp(420px, 70vh, calc(100vh - 240px));
+        }
+
+        @supports (height: 100dvh) {
+            .split-view-container {
+                height: clamp(420px, 70dvh, calc(100dvh - 240px));
+            }
+        }
+
+        .split-view-left {
+            width: 40%;
+            overflow-y: auto;
+            padding-right: 1rem;
+            border-right: 1px solid #e5e7eb;
+        }
+
+        .split-view-right {
+            flex: 1;
+            overflow-y: auto;
+            padding-left: 1rem;
+        }
+
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -902,31 +783,11 @@
             background: var(--augusta-green);
             color: white;
         }
-        
-        .split-view-container {
-            display: flex;
-            gap: 1.5rem;
-            min-height: 600px;
-            height: clamp(420px, 70vh, calc(100vh - 240px));
-        }
-        
-        @supports (height: 100dvh) {
-            .split-view-container {
-                height: clamp(420px, 70dvh, calc(100dvh - 240px));
-            }
-        }
 
-        /* Mobile and Tablet Responsive */
-        @media (max-width: 1024px) {
-            .header {
-                padding: 0.75rem 0;
-            }
-            
-            .header-content {
-                padding: 0 1rem;
-                gap: 0.75rem;
-            }
-            
+        /* RESPONSIVE DESIGN - Fixed cascade order */
+        
+        /* Tablet (641px to 1024px) */
+        @media (min-width: 641px) and (max-width: 1024px) {
             .logo img {
                 height: 45px;
             }
@@ -936,28 +797,17 @@
                 display: flex;
                 gap: 0.5rem;
                 overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
                 padding-bottom: 0.25rem;
-            }
-            
-            .nav-tabs::-webkit-scrollbar {
-                display: none;
             }
             
             .nav-tab {
                 flex: 0 0 auto;
-                padding: 0.5rem 1rem;
+                padding: 0.45rem 0.9rem;
                 font-size: 0.85rem;
-                text-align: center;
-                white-space: nowrap;
-                min-width: fit-content;
             }
             
             .user-info {
-                width: 100%;
-                justify-content: space-between;
-                padding: 0.5rem;
+                gap: 0.375rem;
             }
             
             .user-info span#userName {
@@ -965,72 +815,79 @@
             }
             
             .credits-badge {
-                font-size: 0.9rem;
-                padding: 0.25rem 0.75rem;
+                font-size: 0.8rem;
+                padding: 0.2rem 0.6rem;
             }
             
             .btn-logout {
-                font-size: 0.85rem;
-                padding: 0.375rem 0.75rem;
+                font-size: 0.8rem;
+                padding: 0.3rem 0.6rem;
             }
         }
-        
-        /* Mobile Profile Modal */
-        .mobile-profile-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: white;
-            z-index: 2000;
-            overflow-y: auto;
-        }
-        
-        .mobile-profile-modal.active {
-            display: block;
-        }
-        
-        .mobile-profile-header {
-            position: sticky;
-            top: 0;
-            background: linear-gradient(135deg, var(--augusta-green) 0%, var(--fairway-green) 100%);
-            padding: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .mobile-back-btn {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.3s ease;
-        }
-        
-        .mobile-back-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
-        
-        .mobile-profile-content {
-            padding: 1.5rem;
-        }
-        
-        @media (max-width: 768px) {
-            .pools-grid, .candidates-grid {
-                grid-template-columns: 1fr;
+
+        /* Phone (max 640px) - Higher specificity */
+        @media (max-width: 640px) {
+            #menuToggle {
+                display: inline-block !important;
+            }
+            
+            /* Hidden by default on phones */
+            .nav-tabs {
+                display: none !important;
+            }
+            
+            /* Shown when burger toggled */
+            .nav-tabs.is-open {
+                display: flex !important;
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 100%;
+                background: linear-gradient(135deg, var(--augusta-green), var(--fairway-green));
+                padding: 1rem;
+                z-index: 999;
+                flex-direction: column;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            }
+            
+            .nav-tab {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .logo img {
+                height: 40px;
+            }
+            
+            .user-info span#userName {
+                display: none;
+            }
+            
+            .credits-badge {
+                font-size: 0.75rem;
+            }
+            
+            .btn-logout {
+                font-size: 0.75rem;
             }
             
             .container {
                 padding: 0 1rem;
-                margin: 1rem auto;
+            }
+            
+            .pool-title {
+                font-size: 1.5rem;
+            }
+            
+            h1 {
+                font-size: 1.75rem !important;
+            }
+        }
+
+        /* All mobile/tablet (max 768px) */
+        @media (max-width: 768px) {
+            .pools-grid, .candidates-grid {
+                grid-template-columns: 1fr;
             }
             
             .sorting-bar {
@@ -1054,7 +911,7 @@
                 width: calc(100% - 2rem);
             }
             
-            /* Mobile split view handling */
+            /* Hide split view on mobile */
             .split-view-container {
                 display: block !important;
                 height: auto !important;
@@ -1064,7 +921,6 @@
                 width: 100% !important;
                 border-right: none !important;
                 padding-right: 0 !important;
-                max-height: none !important;
                 overflow-y: visible !important;
             }
             
@@ -1072,7 +928,6 @@
                 display: none !important;
             }
             
-            /* Filter panel mobile */
             #filterPanel > div {
                 flex-direction: column;
                 gap: 0.75rem;
@@ -1082,40 +937,12 @@
                 width: 100%;
             }
             
-            /* Section boxes on mobile */
-            .section-box {
-                padding: 1.5rem;
-            }
-            
-            /* Breadcrumb mobile */
             .breadcrumb {
                 font-size: 0.9rem;
-                margin-bottom: 1rem;
-            }
-            
-            /* Candidate list items on mobile - make them clickable */
-            .candidate-list-item {
-                cursor: pointer;
             }
         }
-        
+
         @media (max-width: 480px) {
-            .logo img {
-                height: 40px;
-            }
-            
-            h1 {
-                font-size: 1.75rem !important;
-            }
-            
-            .pool-title {
-                font-size: 1.25rem;
-            }
-            
-            .candidate-card {
-                padding: 1.25rem;
-            }
-            
             .btn {
                 padding: 0.75rem 1.25rem;
                 font-size: 0.9rem;
@@ -1164,9 +991,11 @@
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <div class="logo" onclick="goHome()">
-                    <img src="https://ik.imagekit.io/golfjobs/Golf%20Jobs%20logo%20white.png?updatedAt=1758280288759" alt="Golf Jobs">
-                    <button id="menuToggle" aria-expanded="false" aria-controls="navTabs">☰ Menu</button>
+                <div class="header-left">
+                    <div class="logo" onclick="goHome()">
+                        <img src="https://ik.imagekit.io/golfjobs/Golf%20Jobs%20logo%20white.png?updatedAt=1758280288759" alt="Golf Jobs">
+                    </div>
+                    <button id="menuToggle" type="button" aria-expanded="false" aria-controls="navTabs">☰ Menu</button>
                 </div>
                 <nav id="navTabs" class="nav-tabs">
                     <button class="nav-tab active" onclick="switchView('pools', this)">Talent Pools</button>
@@ -1200,7 +1029,7 @@
                 </div>
             </div>
 
-            <!-- Pool Detail View with Split Layout -->
+            <!-- Pool Detail View -->
             <div id="poolDetailView" class="view-section">
                 <div class="breadcrumb">
                     <a href="#" onclick="switchView('pools')">Talent Pools</a>
@@ -1269,7 +1098,7 @@
                 <!-- Split View Container -->
                 <div class="split-view-container">
                     <!-- Left Panel - Candidate List -->
-                    <div class="split-view-left" style="width: 40%; overflow-y: auto; padding-right: 1rem; border-right: 1px solid #e5e7eb;">
+                    <div class="split-view-left">
                         <div id="candidatesListView">
                             <!-- Loading skeletons -->
                             <div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div>
@@ -1284,7 +1113,7 @@
                     </div>
                     
                     <!-- Right Panel - Full Profile View -->
-                    <div class="split-view-right" style="flex: 1; overflow-y: auto; padding-left: 1rem;">
+                    <div class="split-view-right">
                         <div id="profileDetailView" style="background: white; border-radius: 16px; padding: 2rem; min-height: 100%;">
                             <!-- Profile will be loaded here when a candidate is selected -->
                         </div>
@@ -1323,54 +1152,14 @@
             <div id="adminView" class="view-section">
                 <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">Admin Dashboard</h1>
                 
-                <!-- Analytics Section -->
-                <div class="section-box">
-                    <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">📊 Platform Analytics</h2>
-                    <div class="analytics-grid">
-                        <div class="analytics-card">
-                            <h3>Total Profile Views</h3>
-                            <div class="stat-number" id="totalViews">0</div>
-                            <div class="stat-label">All time views</div>
-                        </div>
-                        <div class="analytics-card">
-                            <h3>Total Messages</h3>
-                            <div class="stat-number" id="totalMessagesAdmin">0</div>
-                            <div class="stat-label">Messages sent</div>
-                        </div>
-                        <div class="analytics-card">
-                            <h3>Active Users</h3>
-                            <div class="stat-number" id="activeUsers">0</div>
-                            <div class="stat-label">Registered employers</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Most Viewed Profiles -->
-                <div class="section-box">
-                    <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">🔥 Most Viewed Profiles</h2>
-                    <ul class="top-list" id="mostViewedList">
-                        <li>Loading...</li>
-                    </ul>
-                </div>
-
-                <!-- Most Messaged Candidates -->
-                <div class="section-box">
-                    <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">💬 Most Messaged Candidates</h2>
-                    <ul class="top-list" id="mostMessagedList">
-                        <li>Loading...</li>
-                    </ul>
-                </div>
-
-                <!-- All Messages -->
-                <div class="section-box">
-                    <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">Recent Messages</h2>
-                    <div id="adminMessagesList"></div>
-                </div>
-
-                <!-- All Users -->
                 <div class="section-box">
                     <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">All Users</h2>
                     <div id="adminUsersList"></div>
+                </div>
+                
+                <div class="section-box">
+                    <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">Recent Messages</h2>
+                    <div id="adminMessagesList"></div>
                 </div>
             </div>
         </div>
@@ -1418,15 +1207,11 @@
         <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Confirm Message Send</h3>
         <div style="background: #fef3e6; border: 2px solid var(--club-gold); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
             <p style="margin-bottom: 0.75rem;"><strong>⚠️ This will use 1 credit</strong></p>
-            <p style="font-size: 0.9rem; line-height: 1.6; margin-bottom: 0.5rem;">
-                By sending this message:
-            </p>
             <ul style="font-size: 0.9rem; line-height: 1.6; margin-left: 1.5rem;">
                 <li>1 credit will be deducted from your account</li>
                 <li>Your message will be sent directly to the candidate</li>
                 <li>The candidate's email remains private</li>
                 <li>You can continue the conversation for free</li>
-                <li>All messages are logged for quality assurance</li>
             </ul>
         </div>
         <p style="margin-bottom: 1.5rem;">Current balance: <strong id="currentCreditsMsg">0</strong> credits</p>
@@ -1548,10 +1333,8 @@
             }
             profileViews[candidateId].count++;
             
-            // Save to localStorage for persistence
             localStorage.setItem('profileViews', JSON.stringify(profileViews));
             
-            // Also save to database if available
             try {
                 await supabase.from('profile_views').insert({
                     candidate_id: candidateId,
@@ -1581,15 +1364,47 @@
                 profileViews = JSON.parse(savedViews);
             }
             
-            // Toggle menu for small screens
+            // Setup menu toggle
             const menuToggle = document.getElementById('menuToggle');
             if (menuToggle) {
-                menuToggle.addEventListener('click', () => {
+                menuToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
                     const tabs = document.getElementById('navTabs');
                     const open = tabs.classList.toggle('is-open');
                     menuToggle.setAttribute('aria-expanded', String(open));
                 });
             }
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                const tabs = document.getElementById('navTabs');
+                const toggle = document.getElementById('menuToggle');
+                if (!tabs || !toggle) return;
+                if (tabs.classList.contains('is-open')) {
+                    const clickedInsideMenu = tabs.contains(e.target);
+                    const clickedToggle = toggle.contains(e.target);
+                    if (!clickedInsideMenu && !clickedToggle) closeMobileMenu();
+                }
+            });
+            
+            // Close menu when resizing
+            window.addEventListener('resize', () => {
+                const mq = window.matchMedia('(max-width: 640px)');
+                if (!mq.matches) closeMobileMenu();
+            });
+            
+            // Setup filter listeners
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', debounce(applyFilters, 300));
+            }
+            
+            ['salaryFilter', 'noticeFilter', 'lookingFilter'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', applyFilters);
+                }
+            });
         }
 
         // Login
@@ -1651,7 +1466,7 @@
             if (savedConversations) conversations = JSON.parse(savedConversations);
         }
 
-        // Refresh shortlist - FIXED
+        // Refresh shortlist
         async function refreshShortlist() {
             const { data: shortlistData } = await supabase
                 .from('shortlists')
@@ -1665,7 +1480,6 @@
                     .select('*')
                     .in('ID', candidateIds);
                 
-                // Build a map using string keys to avoid number/string mismatches
                 const byId = new Map((candidatesData || []).map(c => [String(c.ID), c]));
                 
                 shortlist = shortlistData.map(item => ({
@@ -1702,7 +1516,7 @@
             location.reload();
         }
 
-        // Switch views
+        // Navigation
         function switchView(view, el) {
             document.querySelectorAll('.view-section').forEach(section => {
                 section.classList.remove('active');
@@ -1714,7 +1528,7 @@
             document.getElementById(view + 'View').classList.add('active');
             if (el) el.classList.add('active');
             
-            closeMobileMenu(); // Close burger menu on navigation
+            closeMobileMenu();
             
             if (view === 'pools') loadPools();
             else if (view === 'shortlist') loadShortlist();
@@ -1722,8 +1536,7 @@
             else if (view === 'account') loadAccount();
             else if (view === 'admin' && userProfile?.role === 'admin') loadAdmin();
         }
-        
-        // Close mobile menu
+
         function closeMobileMenu() {
             const tabs = document.getElementById('navTabs');
             if (tabs && tabs.classList.contains('is-open')) {
@@ -1733,6 +1546,11 @@
             if (menuToggle) {
                 menuToggle.setAttribute('aria-expanded', 'false');
             }
+        }
+
+        function goHome() {
+            const poolsTab = document.querySelector('.nav-tab');
+            switchView('pools', poolsTab);
         }
 
         // Load pools
@@ -1789,7 +1607,7 @@
             }
         }
 
-        // Open pool - FIXED
+        // Open pool
         async function openPool(pool) {
             currentPool = pool;
             currentPage = 0;
@@ -1814,9 +1632,8 @@
             filteredCandidates = [...allCandidates];
             displayCandidatesPage();
             
-            // Auto-select first candidate on desktop only (when split view is visible)
+            // Auto-select first candidate on desktop only
             if (window.innerWidth > 768 && filteredCandidates.length > 0) {
-                // Add a small delay to ensure DOM is ready
                 setTimeout(() => {
                     const profileDetailView = document.getElementById('profileDetailView');
                     if (profileDetailView && profileDetailView.offsetParent !== null) {
@@ -1870,9 +1687,7 @@
                 const isTopPick = profileScore >= 85;
                 const isSelected = selectedCandidates.has(candidate.ID);
                 const activelyLooking = (candidate["Actively looking for work"] || '').toUpperCase() === 'YES';
-                const isAvailableNow = (candidate["Notice Period"] || '').toLowerCase().includes('immediate');
                 
-                // Get summary preview
                 const about = candidate["About You"] || candidate.Summary || '';
                 const summaryPreview = about.substring(0, 150) + (about.length > 150 ? '...' : '');
                 
@@ -1881,9 +1696,6 @@
                 return `
                     <div class="candidate-list-item ${isSelected ? 'selected' : ''}" 
                          id="card-${candidate.ID}"
-                         style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; 
-                                border: 2px solid ${isSelected ? 'var(--masters-green)' : '#e5e7eb'}; 
-                                cursor: pointer; transition: all 0.3s ease; position: relative;"
                          onclick='${clickHandler}'>
                         
                         <input type="checkbox" 
@@ -1916,21 +1728,21 @@
             }).join('');
         }
 
-        // New function to display full profile
+        // View candidate profile
         function viewCandidateProfile(candidate) {
             currentCandidate = candidate;
             
-            // If mobile, use existing modal and return
+            // If mobile, use modal instead
             if (window.innerWidth <= 768) {
                 openCandidate(candidate);
                 return;
             }
             
-            // Desktop: keep current split-pane behavior
+            // Desktop: split view
             const candidateName = candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`;
             trackProfileView(candidate.ID, candidateName);
             
-            // Highlight selected item in list
+            // Highlight selected
             document.querySelectorAll('.candidate-list-item').forEach(item => {
                 item.style.background = 'white';
                 item.style.borderColor = '#e5e7eb';
@@ -2010,8 +1822,7 @@
                 `;
             }
         }
-        
-        // Save notes from profile view
+
         function saveProfileNotes() {
             if (!currentCandidate) return;
             
@@ -2021,7 +1832,6 @@
             alert('Notes saved!');
         }
 
-        // Add functions for profile view actions
         async function addToShortlistFromProfile() {
             if (!currentCandidate) return;
             
@@ -2056,20 +1866,6 @@
         }
 
         // Filters
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                searchInput.addEventListener('input', debounce(applyFilters, 300));
-            }
-            
-            ['salaryFilter', 'noticeFilter', 'lookingFilter'].forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.addEventListener('change', applyFilters);
-                }
-            });
-        });
-
         function debounce(func, delay) {
             let timeout;
             return function() {
@@ -2202,7 +1998,6 @@
         async function openCandidate(candidate) {
             currentCandidate = candidate;
             
-            // Track profile view
             const candidateName = candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`;
             await trackProfileView(candidate.ID, candidateName);
             
@@ -2213,11 +2008,9 @@
             const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
             const notice = formatNoticePeriod(candidate["Notice Period"]);
             
-            // Check conversation status
             const hasConversation = conversations[candidate.ID]?.messages?.length > 0;
             document.getElementById('creditCost').textContent = hasConversation ? '(Free)' : '(1 Credit)';
             
-            // Show previous messages
             const previousMessagesDiv = document.getElementById('previousMessages');
             if (hasConversation) {
                 previousMessagesDiv.style.display = 'block';
@@ -2365,7 +2158,6 @@
             conversations[currentCandidate.ID].messages.push(message);
             localStorage.setItem('conversations_' + currentUser.id, JSON.stringify(conversations));
             
-            // Save to database
             try {
                 await supabase.from('messages').insert({
                     employer_id: currentUser.id,
@@ -2466,7 +2258,6 @@
                 return;
             }
             
-            // Remove duplicates based on candidate_id
             const uniqueShortlist = [];
             const seenCandidates = new Set();
             
@@ -2541,7 +2332,7 @@
                 }
                 
                 await refreshShortlist();
-                updateShortlistBadge(); // Update the badge count
+                updateShortlistBadge();
                 await loadShortlist();
             } catch (err) {
                 console.error('Error:', err);
@@ -2555,7 +2346,6 @@
                 return;
             }
             
-            // Get all unique fields from all candidates
             const allFields = new Set();
             shortlist.forEach(item => {
                 if (item.candidates) {
@@ -2567,11 +2357,9 @@
                 }
             });
             
-            // Create header row
             const fields = Array.from(allFields);
             let csv = fields.map(field => `"${field}"`).join(',') + ',"Private Notes"\n';
             
-            // Remove duplicates based on candidate ID
             const uniqueCandidates = new Map();
             shortlist.forEach(item => {
                 if (item.candidates && !uniqueCandidates.has(item.candidates.ID)) {
@@ -2579,15 +2367,12 @@
                 }
             });
             
-            // Add data rows
             uniqueCandidates.forEach((candidate, candidateId) => {
                 const row = fields.map(field => {
                     const value = candidate[field] || '';
-                    // Escape quotes and wrap in quotes
                     return `"${String(value).replace(/"/g, '""')}"`;
                 });
                 
-                // Add notes
                 const notes = candidateNotes[candidateId] || '';
                 row.push(`"${notes.replace(/"/g, '""')}"`);
                 
@@ -2601,7 +2386,6 @@
             a.download = 'golf_jobs_shortlist_' + new Date().toISOString().slice(0, 10) + '.csv';
             a.click();
             
-            // Clean up
             window.URL.revokeObjectURL(url);
         }
 
@@ -2671,10 +2455,6 @@
                 return;
             }
             
-            // Load analytics
-            await loadAnalytics();
-            
-            // Load users
             const { data: allUsers } = await supabase
                 .from('users')
                 .select('*')
@@ -2682,8 +2462,6 @@
             
             const usersList = document.getElementById('adminUsersList');
             if (allUsers && allUsers.length > 0) {
-                document.getElementById('activeUsers').textContent = allUsers.length;
-                
                 usersList.innerHTML = `
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
@@ -2708,7 +2486,6 @@
                 `;
             }
             
-            // Load messages
             const { data: allMessages } = await supabase
                 .from('messages')
                 .select('*')
@@ -2716,8 +2493,6 @@
                 .limit(50);
             
             if (allMessages && allMessages.length > 0) {
-                document.getElementById('totalMessagesAdmin').textContent = allMessages.length;
-                
                 const messagesList = document.getElementById('adminMessagesList');
                 messagesList.innerHTML = `
                     <table style="width: 100%; border-collapse: collapse;">
@@ -2756,95 +2531,6 @@
                     </table>
                 `;
             }
-        }
-
-        async function loadAnalytics() {
-            // Get profile views from database
-            const { data: views } = await supabase
-                .from('profile_views')
-                .select('candidate_id, candidate_name');
-            
-            // Count views per candidate
-            const viewCounts = {};
-            if (views) {
-                views.forEach(view => {
-                    if (!viewCounts[view.candidate_id]) {
-                        viewCounts[view.candidate_id] = {
-                            name: view.candidate_name,
-                            count: 0
-                        };
-                    }
-                    viewCounts[view.candidate_id].count++;
-                });
-            }
-            
-            // Also add local views
-            Object.entries(profileViews).forEach(([id, data]) => {
-                if (viewCounts[id]) {
-                    viewCounts[id].count += data.count;
-                } else {
-                    viewCounts[id] = data;
-                }
-            });
-            
-            // Sort and display most viewed
-            const sortedViews = Object.entries(viewCounts)
-                .sort((a, b) => b[1].count - a[1].count)
-                .slice(0, 10);
-            
-            const totalViews = Object.values(viewCounts).reduce((sum, v) => sum + v.count, 0);
-            document.getElementById('totalViews').textContent = totalViews;
-            
-            document.getElementById('mostViewedList').innerHTML = sortedViews.map((item, index) => `
-                <li>
-                    <div style="display: flex; align-items: center;">
-                        <span class="rank-badge">#${index + 1}</span>
-                        <span>${item[1].name || `Candidate #${item[0]}`}</span>
-                    </div>
-                    <span style="color: var(--masters-green); font-weight: 600;">
-                        ${item[1].count} views
-                    </span>
-                </li>
-            `).join('') || '<li>No data yet</li>';
-            
-            // Get message counts
-            const { data: messages } = await supabase
-                .from('messages')
-                .select('candidate_id, candidate_name');
-            
-            const messageCounts = {};
-            if (messages) {
-                messages.forEach(msg => {
-                    if (!messageCounts[msg.candidate_id]) {
-                        messageCounts[msg.candidate_id] = {
-                            name: msg.candidate_name,
-                            count: 0
-                        };
-                    }
-                    messageCounts[msg.candidate_id].count++;
-                });
-            }
-            
-            const sortedMessages = Object.entries(messageCounts)
-                .sort((a, b) => b[1].count - a[1].count)
-                .slice(0, 10);
-            
-            document.getElementById('mostMessagedList').innerHTML = sortedMessages.map((item, index) => `
-                <li>
-                    <div style="display: flex; align-items: center;">
-                        <span class="rank-badge">#${index + 1}</span>
-                        <span>${item[1].name || `Candidate #${item[0]}`}</span>
-                    </div>
-                    <span style="color: var(--masters-green); font-weight: 600;">
-                        ${item[1].count} messages
-                    </span>
-                </li>
-            `).join('') || '<li>No messages yet</li>';
-        }
-
-        function goHome() {
-            const poolsTab = document.querySelector('.nav-tab');
-            switchView('pools', poolsTab);
         }
 
         // Modal close on click outside

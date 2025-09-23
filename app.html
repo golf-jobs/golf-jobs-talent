@@ -1381,6 +1381,15 @@
             return 'other';
         }
 
+        function calculateProfileScore(candidate) {
+            let score = 50;
+            if (candidate["About You"] && candidate["About You"].length > 100) score += 20;
+            if (candidate["Your Skills"]) score += 15;
+            if (candidate["What are your salary expectations?"]) score += 10;
+            if (candidate["Notice Period"]) score += 5;
+            return Math.min(score, 100);
+        }
+
         // Track profile view
         async function trackProfileView(candidateId, candidateName) {
             if (!profileViews[candidateId]) {
@@ -1454,7 +1463,7 @@
                 searchInput.addEventListener('input', debounce(applyFilters, 300));
             }
             
-            ['salaryFilter', 'noticeFilter', 'lookingFilter'].forEach(id => {
+            ['locationFilter', 'categoryFilter', 'salaryFilter', 'noticeFilter', 'lookingFilter'].forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
                     element.addEventListener('change', applyFilters);
@@ -1993,7 +2002,8 @@
             if (categoryFilter) {
                 filtered = filtered.filter(c => {
                     const jobTitle = c["Current Job Title"] || c["Job Title"] || '';
-                    return categorizeJobRole(jobTitle) === categoryFilter;
+                    const category = categorizeJobRole(jobTitle);
+                    return category === categoryFilter;
                 });
             }
             
@@ -2060,6 +2070,8 @@
 
         function clearFilters() {
             document.getElementById('searchInput').value = '';
+            document.getElementById('locationFilter').value = '';
+            document.getElementById('categoryFilter').value = '';
             document.getElementById('salaryFilter').value = '';
             document.getElementById('noticeFilter').value = '';
             document.getElementById('lookingFilter').value = '';
@@ -2452,19 +2464,18 @@
                 return;
             }
             
-            const allFields = new Set();
-            shortlist.forEach(item => {
-                if (item.candidates) {
-                    Object.keys(item.candidates).forEach(field => {
-                        if (field !== 'id' && field !== 'pool_id' && field !== 'created_at') {
-                            allFields.add(field);
-                        }
-                    });
-                }
-            });
+            // Only export specific fields that are shown in the profile
+            const headers = [
+                'Job Title',
+                'Professional Summary', 
+                'Skills',
+                'Location',
+                'Salary Expectations',
+                'Notice Period',
+                'Private Notes'
+            ];
             
-            const fields = Array.from(allFields);
-            let csv = fields.map(field => `"${field}"`).join(',') + ',"Private Notes"\n';
+            let csv = headers.map(h => `"${h}"`).join(',') + '\n';
             
             const uniqueCandidates = new Map();
             shortlist.forEach(item => {
@@ -2474,13 +2485,23 @@
             });
             
             uniqueCandidates.forEach((candidate, candidateId) => {
-                const row = fields.map(field => {
-                    const value = candidate[field] || '';
-                    return `"${String(value).replace(/"/g, '""')}"`;
-                });
-                
+                const jobTitle = candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`;
+                const summary = candidate["About You"] || '';
+                const skills = candidate["Your Skills"] || '';
+                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+                const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
+                const notice = formatNoticePeriod(candidate["Notice Period"]);
                 const notes = candidateNotes[candidateId] || '';
-                row.push(`"${notes.replace(/"/g, '""')}"`);
+                
+                const row = [
+                    jobTitle,
+                    summary,
+                    skills,
+                    location,
+                    salary,
+                    notice,
+                    notes
+                ].map(value => `"${String(value).replace(/"/g, '""')}"`);
                 
                 csv += row.join(',') + '\n';
             });

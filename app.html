@@ -512,6 +512,30 @@
             font-weight: 700;
             text-transform: uppercase;
         }
+        
+        /* Remove button hover state */
+        .btn-remove-shortlist {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #fee;
+            color: var(--hazard-red);
+            border: 1px solid transparent;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 10;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-remove-shortlist:hover {
+            background: var(--hazard-red);
+            color: white;
+            border-color: var(--hazard-red);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(201, 48, 44, 0.3);
+        }
 
         /* Message System Styles */
         .message-box {
@@ -807,19 +831,79 @@
             color: white;
         }
 
-        /* Mobile Split View */
+        /* Mobile and Tablet Responsive */
+        @media (max-width: 1024px) {
+            .header {
+                padding: 0.75rem 0;
+            }
+            
+            .header-content {
+                padding: 0 1rem;
+                gap: 0.75rem;
+            }
+            
+            .logo img {
+                height: 45px;
+            }
+            
+            .nav-tabs {
+                width: 100%;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+            }
+            
+            .nav-tab {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.85rem;
+                text-align: center;
+            }
+            
+            .user-info {
+                width: 100%;
+                justify-content: space-between;
+                padding: 0.5rem;
+            }
+            
+            .user-info span#userName {
+                display: none;
+            }
+            
+            .credits-badge {
+                font-size: 0.9rem;
+                padding: 0.25rem 0.75rem;
+            }
+            
+            .btn-logout {
+                font-size: 0.85rem;
+                padding: 0.375rem 0.75rem;
+            }
+        }
+        
         @media (max-width: 768px) {
             .pools-grid, .candidates-grid {
                 grid-template-columns: 1fr;
             }
             
-            .header-content {
-                flex-direction: column;
-                align-items: stretch;
+            .container {
+                padding: 0 1rem;
+                margin: 1rem auto;
             }
             
             .nav-tabs {
-                flex-wrap: wrap;
+                display: flex;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            
+            .nav-tabs::-webkit-scrollbar {
+                display: none;
+            }
+            
+            .nav-tab {
+                flex: 0 0 auto;
+                white-space: nowrap;
             }
             
             .sorting-bar {
@@ -827,39 +911,46 @@
                 align-items: stretch;
             }
             
+            .bulk-actions {
+                width: 100%;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+            }
+            
+            .bulk-actions button:last-child {
+                grid-column: span 2;
+            }
+            
             .modal-content {
                 margin: 10% 1rem;
                 width: calc(100% - 2rem);
             }
             
-            /* Hide right panel on mobile by default */
-            #profileDetailView {
-                display: none;
-            }
-            
-            /* Show only list on mobile */
+            /* Mobile split view handling */
             .split-view-container {
                 flex-direction: column !important;
                 height: auto !important;
+                gap: 0 !important;
             }
             
             .split-view-left {
                 width: 100% !important;
                 border-right: none !important;
                 padding-right: 0 !important;
+                max-height: none !important;
+                overflow-y: visible !important;
             }
             
             .split-view-right {
+                width: 100% !important;
+                padding-left: 0 !important;
                 display: none;
             }
             
-            /* When profile is opened on mobile, show it as modal */
-            .mobile-profile-active #candidatesListView {
+            /* Show profile in modal on mobile */
+            .mobile-profile-modal {
                 display: none;
-            }
-            
-            .mobile-profile-active #profileDetailView {
-                display: block;
                 position: fixed;
                 top: 0;
                 left: 0;
@@ -868,26 +959,86 @@
                 background: white;
                 z-index: 1000;
                 overflow-y: auto;
+                padding: 0;
+            }
+            
+            .mobile-profile-modal.active {
+                display: block;
+            }
+            
+            .mobile-profile-header {
+                position: sticky;
+                top: 0;
+                background: var(--augusta-green);
                 padding: 1rem;
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                z-index: 10;
             }
             
             .mobile-back-btn {
-                display: block !important;
-                position: fixed;
-                top: 1rem;
-                left: 1rem;
-                z-index: 1001;
-                background: var(--augusta-green);
+                background: rgba(255,255,255,0.2);
                 color: white;
                 border: none;
                 padding: 0.5rem 1rem;
                 border-radius: 8px;
                 cursor: pointer;
+                font-weight: 600;
+            }
+            
+            .mobile-profile-content {
+                padding: 1.5rem;
+            }
+            
+            /* Filter panel mobile */
+            #filterPanel > div {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            #filterPanel select {
+                width: 100%;
+            }
+            
+            /* Section boxes on mobile */
+            .section-box {
+                padding: 1.5rem;
+            }
+            
+            /* Breadcrumb mobile */
+            .breadcrumb {
+                font-size: 0.9rem;
+                margin-bottom: 1rem;
             }
         }
         
-        .mobile-back-btn {
-            display: none;
+        @media (max-width: 480px) {
+            .logo img {
+                height: 40px;
+            }
+            
+            h1 {
+                font-size: 1.75rem !important;
+            }
+            
+            .pool-title {
+                font-size: 1.25rem;
+            }
+            
+            .candidate-card {
+                padding: 1.25rem;
+            }
+            
+            .btn {
+                padding: 0.75rem 1.25rem;
+                font-size: 0.9rem;
+            }
+            
+            .btn-small {
+                padding: 0.375rem 0.75rem;
+                font-size: 0.8rem;
+            }
         }
     </style>
 </head>
@@ -2226,11 +2377,7 @@
                 return `
                     <div class="candidate-card" style="position: relative;">
                         <button onclick="removeFromShortlist('${item.id}')" 
-                                style="position: absolute; top: 1rem; right: 1rem; 
-                                       background: #fee; color: var(--hazard-red); 
-                                       border: none; padding: 0.5rem 1rem; 
-                                       border-radius: 8px; cursor: pointer; z-index: 10;
-                                       font-size: 0.85rem;">
+                                class="btn-remove-shortlist">
                             Remove
                         </button>
                         <div onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'
@@ -2278,6 +2425,7 @@
                 }
                 
                 await refreshShortlist();
+                updateShortlistBadge(); // Update the badge count
                 await loadShortlist();
             } catch (err) {
                 console.error('Error:', err);
@@ -2291,27 +2439,54 @@
                 return;
             }
             
-            let csv = 'Job Title,Location,Salary,Notice Period,Notes\n';
-            
+            // Get all unique fields from all candidates
+            const allFields = new Set();
             shortlist.forEach(item => {
-                const c = item.candidates;
-                if (c) {
-                    const jobTitle = c["Current Job Title"] || c["Job Title"] || '';
-                    const location = cleanAndFormatLocation(c["Town/City"], c.Country);
-                    const salary = c["What are your salary expectations?"] || 'Negotiable';
-                    const notice = c["Notice Period"] || 'Unknown';
-                    const notes = candidateNotes[c.ID] || '';
-                    
-                    csv += `"${jobTitle}","${location}","${salary}","${notice}","${notes}"\n`;
+                if (item.candidates) {
+                    Object.keys(item.candidates).forEach(field => {
+                        if (field !== 'id' && field !== 'pool_id' && field !== 'created_at') {
+                            allFields.add(field);
+                        }
+                    });
                 }
+            });
+            
+            // Create header row
+            const fields = Array.from(allFields);
+            let csv = fields.map(field => `"${field}"`).join(',') + ',"Private Notes"\n';
+            
+            // Remove duplicates based on candidate ID
+            const uniqueCandidates = new Map();
+            shortlist.forEach(item => {
+                if (item.candidates && !uniqueCandidates.has(item.candidates.ID)) {
+                    uniqueCandidates.set(item.candidates.ID, item.candidates);
+                }
+            });
+            
+            // Add data rows
+            uniqueCandidates.forEach((candidate, candidateId) => {
+                const row = fields.map(field => {
+                    const value = candidate[field] || '';
+                    // Escape quotes and wrap in quotes
+                    return `"${String(value).replace(/"/g, '""')}"`;
+                });
+                
+                // Add notes
+                const notes = candidateNotes[candidateId] || '';
+                row.push(`"${notes.replace(/"/g, '""')}"`);
+                
+                csv += row.join(',') + '\n';
             });
             
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'shortlist.csv';
+            a.download = 'golf_jobs_shortlist_' + new Date().toISOString().slice(0, 10) + '.csv';
             a.click();
+            
+            // Clean up
+            window.URL.revokeObjectURL(url);
         }
 
         // Messages

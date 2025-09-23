@@ -208,6 +208,7 @@
             grid-template-columns: auto 1fr auto;
             align-items: center;
             gap: 0.75rem;
+            position: relative;
         }
 
         .logo {
@@ -2842,7 +2843,8 @@
         }
 
         function goHome() {
-            switchView('pools');
+            const poolsTab = document.querySelector('.nav-tab');
+            switchView('pools', poolsTab);
         }
 
         // Modal close on click outside

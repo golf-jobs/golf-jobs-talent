@@ -2199,10 +2199,21 @@
                 return;
             }
             
+            // Remove duplicates based on candidate_id
+            const uniqueShortlist = [];
+            const seenCandidates = new Set();
+            
+            for (const item of shortlist) {
+                if (!seenCandidates.has(item.candidate_id)) {
+                    seenCandidates.add(item.candidate_id);
+                    uniqueShortlist.push(item);
+                }
+            }
+            
             content.innerHTML = '<div class="candidates-grid" id="shortlistGrid"></div>';
             const grid = document.getElementById('shortlistGrid');
             
-            grid.innerHTML = shortlist.map(item => {
+            grid.innerHTML = uniqueShortlist.map(item => {
                 const candidate = item.candidates;
                 if (!candidate) return '';
                 
@@ -2214,7 +2225,7 @@
                 
                 return `
                     <div class="candidate-card" style="position: relative;">
-                        <button onclick="removeFromShortlist(${item.id})" 
+                        <button onclick="removeFromShortlist('${item.id}')" 
                                 style="position: absolute; top: 1rem; right: 1rem; 
                                        background: #fee; color: var(--hazard-red); 
                                        border: none; padding: 0.5rem 1rem; 
@@ -2254,13 +2265,24 @@
         async function removeFromShortlist(shortlistId) {
             if (!confirm('Remove from shortlist?')) return;
             
-            await supabase
-                .from('shortlists')
-                .delete()
-                .eq('id', shortlistId);
-            
-            await refreshShortlist();
-            loadShortlist();
+            try {
+                const { error } = await supabase
+                    .from('shortlists')
+                    .delete()
+                    .eq('id', shortlistId);
+                
+                if (error) {
+                    console.error('Error removing from shortlist:', error);
+                    alert('Error removing candidate. Please try again.');
+                    return;
+                }
+                
+                await refreshShortlist();
+                await loadShortlist();
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Error removing candidate. Please try again.');
+            }
         }
 
         function exportShortlist() {

@@ -1043,6 +1043,23 @@
                            style="width: 100%; padding: 0.875rem; border: 2px solid #e1e8e4; border-radius: 12px; font-size: 1rem; margin-bottom: 1rem;">
                     
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start;">
+                        <select id="locationFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
+                            <option value="">All Locations</option>
+                        </select>
+                        
+                        <select id="categoryFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
+                            <option value="">All Categories</option>
+                            <option value="greenkeeping">Greenkeeping</option>
+                            <option value="management">Management</option>
+                            <option value="pga">PGA Professional</option>
+                            <option value="sales">Sales</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="retail">Retail</option>
+                            <option value="f&b">Food & Beverage</option>
+                            <option value="operations">Operations</option>
+                            <option value="other">Other</option>
+                        </select>
+                        
                         <select id="salaryFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
                             <option value="">All Salaries</option>
                             <option value="0-30000">£20-30k</option>
@@ -1304,26 +1321,64 @@
             return notice + ' notice';
         }
 
-        function calculateProfileScore(candidate) {
-            let score = 0;
-            let maxScore = 100;
+        function categorizeJobRole(jobTitle) {
+            if (!jobTitle) return 'other';
+            const title = jobTitle.toLowerCase();
             
-            const aboutYou = candidate["About You"] || '';
-            if (aboutYou.length > 200) score += 30;
-            else if (aboutYou.length > 100) score += 20;
-            else if (aboutYou.length > 50) score += 10;
+            // Greenkeeping
+            if (title.includes('greenkeep') || title.includes('course manager') || 
+                title.includes('groundsman') || title.includes('turf') || 
+                title.includes('agronomist') || title.includes('mechanic')) {
+                return 'greenkeeping';
+            }
             
-            const skills = candidate["Your Skills"] || '';
-            if (skills.length > 100) score += 20;
-            else if (skills.length > 50) score += 15;
-            else if (skills.length > 20) score += 10;
+            // Management
+            if (title.includes('manager') || title.includes('director') || 
+                title.includes('head of') || title.includes('general manager') || 
+                title.includes('chief') || title.includes('ceo') || title.includes('coo')) {
+                return 'management';
+            }
             
-            if (candidate["Current Job Title"] || candidate["Job Title"]) score += 10;
-            if (candidate["What are your salary expectations?"]) score += 10;
-            if (candidate["Notice Period"]) score += 10;
-            if (candidate["Town/City"]) score += 5;
+            // PGA Professional
+            if (title.includes('pga') || title.includes('golf professional') || 
+                title.includes('head professional') || title.includes('assistant professional') ||
+                title.includes('teaching') || title.includes('coach') || title.includes('instructor')) {
+                return 'pga';
+            }
             
-            return Math.min((score / maxScore) * 100, 100);
+            // Sales
+            if (title.includes('sales') || title.includes('business development') || 
+                title.includes('account manager')) {
+                return 'sales';
+            }
+            
+            // Marketing
+            if (title.includes('marketing') || title.includes('social media') || 
+                title.includes('communications') || title.includes('brand')) {
+                return 'marketing';
+            }
+            
+            // Retail
+            if (title.includes('retail') || title.includes('shop') || 
+                title.includes('merchandis')) {
+                return 'retail';
+            }
+            
+            // F&B
+            if (title.includes('chef') || title.includes('food') || title.includes('beverage') || 
+                title.includes('bar') || title.includes('restaurant') || title.includes('catering') ||
+                title.includes('hospitality') || title.includes('f&b') || title.includes('waiting')) {
+                return 'f&b';
+            }
+            
+            // Operations
+            if (title.includes('operations') || title.includes('admin') || 
+                title.includes('reception') || title.includes('secretary') || 
+                title.includes('coordinator')) {
+                return 'operations';
+            }
+            
+            return 'other';
         }
 
         // Track profile view
@@ -1629,6 +1684,41 @@
                 return calculateProfileScore(b) - calculateProfileScore(a);
             });
             
+            // Populate location filter with dynamic counts
+            const locationCounts = {};
+            allCandidates.forEach(candidate => {
+                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+                locationCounts[location] = (locationCounts[location] || 0) + 1;
+            });
+            
+            const locationFilter = document.getElementById('locationFilter');
+            if (locationFilter) {
+                locationFilter.innerHTML = '<option value="">All Locations</option>';
+                
+                // Sort locations by count (descending) then alphabetically
+                const sortedLocations = Object.entries(locationCounts).sort((a, b) => {
+                    if (b[1] !== a[1]) return b[1] - a[1];
+                    return a[0].localeCompare(b[0]);
+                });
+                
+                sortedLocations.forEach(([location, count]) => {
+                    if (location !== 'Location Not Specified') {
+                        const option = document.createElement('option');
+                        option.value = location;
+                        option.textContent = `${location} (${count})`;
+                        locationFilter.appendChild(option);
+                    }
+                });
+                
+                // Add "Unspecified" at the bottom if exists
+                if (locationCounts['Location Not Specified']) {
+                    const option = document.createElement('option');
+                    option.value = 'Location Not Specified';
+                    option.textContent = `Location Not Specified (${locationCounts['Location Not Specified']})`;
+                    locationFilter.appendChild(option);
+                }
+            }
+            
             filteredCandidates = [...allCandidates];
             displayCandidatesPage();
             
@@ -1876,6 +1966,8 @@
 
         function applyFilters() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const locationFilter = document.getElementById('locationFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
             const salaryFilter = document.getElementById('salaryFilter').value;
             const noticeFilter = document.getElementById('noticeFilter').value;
             const lookingFilter = document.getElementById('lookingFilter').value;
@@ -1889,6 +1981,20 @@
                     (c["Your Skills"] || '').toLowerCase().includes(searchTerm) ||
                     (c["About You"] || '').toLowerCase().includes(searchTerm)
                 );
+            }
+            
+            if (locationFilter) {
+                filtered = filtered.filter(c => {
+                    const location = cleanAndFormatLocation(c["Town/City"], c.Country);
+                    return location === locationFilter;
+                });
+            }
+            
+            if (categoryFilter) {
+                filtered = filtered.filter(c => {
+                    const jobTitle = c["Current Job Title"] || c["Job Title"] || '';
+                    return categorizeJobRole(jobTitle) === categoryFilter;
+                });
             }
             
             if (salaryFilter) {

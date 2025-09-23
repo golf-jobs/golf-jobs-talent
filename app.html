@@ -1049,15 +1049,6 @@
                         
                         <select id="categoryFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
                             <option value="">All Categories</option>
-                            <option value="greenkeeping">Greenkeeping</option>
-                            <option value="management">Management</option>
-                            <option value="pga">PGA Professional</option>
-                            <option value="sales">Sales</option>
-                            <option value="marketing">Marketing</option>
-                            <option value="retail">Retail</option>
-                            <option value="f&b">Food & Beverage</option>
-                            <option value="operations">Operations</option>
-                            <option value="other">Other</option>
                         </select>
                         
                         <select id="salaryFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
@@ -1322,63 +1313,69 @@
         }
 
         function categorizeJobRole(jobTitle) {
-            if (!jobTitle) return 'other';
+            if (!jobTitle) return ['other'];
             const title = jobTitle.toLowerCase();
+            const categories = [];
             
             // Greenkeeping
             if (title.includes('greenkeep') || title.includes('course manager') || 
                 title.includes('groundsman') || title.includes('turf') || 
                 title.includes('agronomist') || title.includes('mechanic')) {
-                return 'greenkeeping';
+                categories.push('greenkeeping');
             }
             
-            // Management
+            // Management - check this early to catch compound roles
             if (title.includes('manager') || title.includes('director') || 
                 title.includes('head of') || title.includes('general manager') || 
-                title.includes('chief') || title.includes('ceo') || title.includes('coo')) {
-                return 'management';
+                title.includes('chief') || title.includes('ceo') || title.includes('coo') ||
+                title.includes('supervisor') || title.includes('lead')) {
+                categories.push('management');
             }
             
             // PGA Professional
             if (title.includes('pga') || title.includes('golf professional') || 
                 title.includes('head professional') || title.includes('assistant professional') ||
                 title.includes('teaching') || title.includes('coach') || title.includes('instructor')) {
-                return 'pga';
+                categories.push('pga');
             }
             
             // Sales
             if (title.includes('sales') || title.includes('business development') || 
-                title.includes('account manager')) {
-                return 'sales';
+                title.includes('account') || title.includes('commercial')) {
+                categories.push('sales');
             }
             
             // Marketing
             if (title.includes('marketing') || title.includes('social media') || 
-                title.includes('communications') || title.includes('brand')) {
-                return 'marketing';
+                title.includes('communications') || title.includes('brand') || 
+                title.includes('digital') || title.includes('pr ') || title === 'pr') {
+                categories.push('marketing');
             }
             
             // Retail
             if (title.includes('retail') || title.includes('shop') || 
-                title.includes('merchandis')) {
-                return 'retail';
+                title.includes('merchandis') || title.includes('pro shop')) {
+                categories.push('retail');
             }
             
             // F&B
             if (title.includes('chef') || title.includes('food') || title.includes('beverage') || 
                 title.includes('bar') || title.includes('restaurant') || title.includes('catering') ||
-                title.includes('hospitality') || title.includes('f&b') || title.includes('waiting')) {
-                return 'f&b';
+                title.includes('hospitality') || title.includes('f&b') || title.includes('f & b') || 
+                title.includes('waiting') || title.includes('server')) {
+                categories.push('f&b');
             }
             
             // Operations
             if (title.includes('operations') || title.includes('admin') || 
                 title.includes('reception') || title.includes('secretary') || 
-                title.includes('coordinator')) {
-                return 'operations';
+                title.includes('coordinator') || title.includes('assistant') ||
+                title.includes('office')) {
+                categories.push('operations');
             }
             
-            return 'other';
+            // If no categories matched, return 'other'
+            return categories.length > 0 ? categories : ['other'];
         }
 
         function calculateProfileScore(candidate) {
@@ -1728,6 +1725,59 @@
                 }
             }
             
+            // Populate category filter with dynamic counts
+            const categoryCounts = {
+                'greenkeeping': 0,
+                'management': 0,
+                'pga': 0,
+                'sales': 0,
+                'marketing': 0,
+                'retail': 0,
+                'f&b': 0,
+                'operations': 0,
+                'other': 0
+            };
+            
+            allCandidates.forEach(candidate => {
+                const jobTitle = candidate["Current Job Title"] || candidate["Job Title"] || '';
+                const categories = categorizeJobRole(jobTitle);
+                categories.forEach(cat => {
+                    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+                });
+            });
+            
+            const categoryFilter = document.getElementById('categoryFilter');
+            if (categoryFilter) {
+                categoryFilter.innerHTML = '<option value="">All Categories</option>';
+                
+                const categoryLabels = {
+                    'greenkeeping': 'Greenkeeping',
+                    'management': 'Management',
+                    'pga': 'PGA Professional',
+                    'sales': 'Sales',
+                    'marketing': 'Marketing',
+                    'retail': 'Retail',
+                    'f&b': 'Food & Beverage',
+                    'operations': 'Operations',
+                    'other': 'Other'
+                };
+                
+                // Sort categories by count (descending) then alphabetically
+                const sortedCategories = Object.entries(categoryCounts)
+                    .filter(([cat, count]) => count > 0)
+                    .sort((a, b) => {
+                        if (b[1] !== a[1]) return b[1] - a[1];
+                        return categoryLabels[a[0]].localeCompare(categoryLabels[b[0]]);
+                    });
+                
+                sortedCategories.forEach(([category, count]) => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = `${categoryLabels[category]} (${count})`;
+                    categoryFilter.appendChild(option);
+                });
+            }
+            
             filteredCandidates = [...allCandidates];
             displayCandidatesPage();
             
@@ -2002,8 +2052,8 @@
             if (categoryFilter) {
                 filtered = filtered.filter(c => {
                     const jobTitle = c["Current Job Title"] || c["Job Title"] || '';
-                    const category = categorizeJobRole(jobTitle);
-                    return category === categoryFilter;
+                    const categories = categorizeJobRole(jobTitle);
+                    return categories.includes(categoryFilter);
                 });
             }
             

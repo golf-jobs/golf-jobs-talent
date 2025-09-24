@@ -66,6 +66,20 @@
             margin-bottom: 1.75rem;
         }
 
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 77, 38, 0.1);
+            border-top-color: var(--augusta-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         /* Login Screen */
         .login-container {
             min-height: 100vh;
@@ -179,7 +193,6 @@
             background: linear-gradient(135deg, var(--augusta-green) 0%, var(--fairway-green) 100%);
             color: white;
             padding: 1rem 0;
-            padding-top: max(1rem, env(safe-area-inset-top));
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
             position: sticky;
             top: 0;
@@ -189,63 +202,32 @@
         .header-content {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 0 1rem;
-            display: grid;
-            grid-template-columns: auto 1fr auto;
-            align-items: center;
-            gap: 0.75rem;
-            position: relative;
-        }
-
-        .header-left {
+            padding: 0 2rem;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 0.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 1rem;
             cursor: pointer;
-            min-width: 0;
         }
 
         .logo img {
-            height: 50px;
-        }
-
-        #menuToggle {
-            display: none;
-            padding: 0.5rem 0.75rem;
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-        }
-
-        #menuToggle:hover {
-            background: rgba(255,255,255,0.3);
+            height: 60px;
         }
 
         .nav-tabs {
             display: flex;
             gap: 0.5rem;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-            min-width: 0;
-        }
-
-        .nav-tabs::-webkit-scrollbar {
-            display: none;
         }
 
         .nav-tab {
-            padding: 0.5rem 1rem;
+            padding: 0.625rem 1.25rem;
             background: rgba(255,255,255,0.1);
             backdrop-filter: blur(10px);
             border: none;
@@ -253,13 +235,12 @@
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             font-weight: 500;
             font-family: 'Poppins', sans-serif;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            flex: 0 0 auto;
-            white-space: nowrap;
+            position: relative;
         }
 
         .nav-tab:hover {
@@ -284,33 +265,29 @@
         .user-info {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 1rem;
             background: rgba(0,0,0,0.2);
-            padding: 0.375rem 0.75rem;
+            padding: 0.5rem 1rem;
             border-radius: 12px;
-            flex: 0 0 auto;
-            min-width: 0;
         }
 
         .credits-badge {
             background: linear-gradient(135deg, var(--club-gold) 0%, var(--trophy-gold) 100%);
             color: var(--augusta-green);
-            padding: 0.25rem 0.75rem;
+            padding: 0.375rem 1rem;
             border-radius: 20px;
             font-weight: 700;
             font-family: 'Poppins', sans-serif;
-            font-size: 0.85rem;
         }
 
         .btn-logout {
-            padding: 0.375rem 0.75rem;
+            padding: 0.5rem 1rem;
             background: rgba(255,255,255,0.2);
             border: 1px solid rgba(255,255,255,0.3);
             color: white;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 0.85rem;
         }
 
         .btn-logout:hover {
@@ -337,6 +314,66 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Analytics Dashboard */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .analytics-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .analytics-card h3 {
+            color: var(--augusta-green);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--masters-green);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--rough-gray);
+            font-size: 0.9rem;
+        }
+
+        .top-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .top-list li {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-list li:last-child {
+            border-bottom: none;
+        }
+
+        .rank-badge {
+            background: var(--club-gold);
+            color: var(--augusta-green);
+            padding: 0.25rem 0.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-right: 0.75rem;
         }
 
         /* Pools Grid */
@@ -378,7 +415,6 @@
             font-size: 1.75rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
-            padding-right: 100px;
         }
 
         .pool-badge {
@@ -391,7 +427,6 @@
             border-radius: 20px;
             font-size: 0.875rem;
             font-weight: 700;
-            z-index: 1;
         }
 
         .pool-stats {
@@ -441,20 +476,13 @@
             border-color: var(--masters-green);
         }
 
-        .candidate-list-item {
-            background: white;
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border: 2px solid #e5e7eb;
+        .candidate-checkbox {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            width: 20px;
+            height: 20px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .candidate-list-item:hover {
-            border-color: var(--masters-green);
-            transform: translateX(4px);
         }
 
         .top-pick-badge {
@@ -472,31 +500,20 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
-        /* Remove button */
-        .btn-remove-shortlist {
+        .new-badge {
             position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: #fee;
-            color: var(--hazard-red);
-            border: 1px solid transparent;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            z-index: 10;
-            font-size: 0.85rem;
-            transition: all 0.2s ease;
-        }
-
-        .btn-remove-shortlist:hover {
-            background: var(--hazard-red);
+            top: -8px;
+            left: 1rem;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
             color: white;
-            border-color: var(--hazard-red);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(201, 48, 44, 0.3);
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
         }
 
-        /* Message System */
+        /* Message System Styles */
         .message-box {
             background: #f8f9fa;
             border: 1px solid #e1e8e4;
@@ -519,6 +536,61 @@
         .message-textarea:focus {
             outline: none;
             border-color: var(--masters-green);
+        }
+
+        .conversation-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+        }
+
+        .message.sent {
+            background: var(--masters-green);
+            color: white;
+            margin-left: 20%;
+            text-align: right;
+        }
+
+        .message.received {
+            background: #f0f0f0;
+            margin-right: 20%;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            margin-top: 0.25rem;
+        }
+
+        /* Sorting Bar */
+        .sorting-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .sort-options {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
         /* Filter Panel */
@@ -694,55 +766,6 @@
             color: var(--augusta-green);
         }
 
-        /* Sorting Bar */
-        .sorting-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .sort-options {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .bulk-actions {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        /* Split View Container */
-        .split-view-container {
-            display: flex;
-            gap: 1.5rem;
-            min-height: 600px;
-            height: clamp(420px, 70vh, calc(100vh - 240px));
-        }
-
-        @supports (height: 100dvh) {
-            .split-view-container {
-                height: clamp(420px, 70dvh, calc(100dvh - 240px));
-            }
-        }
-
-        .split-view-left {
-            width: 40%;
-            overflow-y: auto;
-            padding-right: 1rem;
-            border-right: 1px solid #e5e7eb;
-        }
-
-        .split-view-right {
-            flex: 1;
-            overflow-y: auto;
-            padding-left: 1rem;
-        }
-
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -784,110 +807,19 @@
             color: white;
         }
 
-        /* RESPONSIVE DESIGN - Fixed cascade order */
-        
-        /* Tablet (641px to 1024px) */
-        @media (min-width: 641px) and (max-width: 1024px) {
-            .logo img {
-                height: 45px;
-            }
-            
-            .nav-tabs {
-                width: 100%;
-                display: flex;
-                gap: 0.5rem;
-                overflow-x: auto;
-                padding-bottom: 0.25rem;
-            }
-            
-            .nav-tab {
-                flex: 0 0 auto;
-                padding: 0.45rem 0.9rem;
-                font-size: 0.85rem;
-            }
-            
-            .user-info {
-                gap: 0.375rem;
-            }
-            
-            .user-info span#userName {
-                display: none;
-            }
-            
-            .credits-badge {
-                font-size: 0.8rem;
-                padding: 0.2rem 0.6rem;
-            }
-            
-            .btn-logout {
-                font-size: 0.8rem;
-                padding: 0.3rem 0.6rem;
-            }
-        }
-
-        /* Phone (max 640px) - Higher specificity */
-        @media (max-width: 640px) {
-            #menuToggle {
-                display: inline-block !important;
-            }
-            
-            /* Hidden by default on phones */
-            .nav-tabs {
-                display: none !important;
-            }
-            
-            /* Shown when burger toggled */
-            .nav-tabs.is-open {
-                display: flex !important;
-                position: absolute;
-                left: 0;
-                right: 0;
-                top: 100%;
-                background: linear-gradient(135deg, var(--augusta-green), var(--fairway-green));
-                padding: 1rem;
-                z-index: 999;
-                flex-direction: column;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            }
-            
-            .nav-tab {
-                width: 100%;
-                text-align: center;
-            }
-            
-            .logo img {
-                height: 40px;
-            }
-            
-            .user-info span#userName {
-                display: none;
-            }
-            
-            .credits-badge {
-                font-size: 0.75rem;
-            }
-            
-            .btn-logout {
-                font-size: 0.75rem;
-            }
-            
-            .container {
-                padding: 0 1rem;
-            }
-            
-            .pool-title {
-                font-size: 1.5rem;
-            }
-            
-            h1 {
-                font-size: 1.75rem !important;
-            }
-        }
-
-        /* All mobile/tablet (max 768px) */
+        /* Mobile Split View */
         @media (max-width: 768px) {
             .pools-grid, .candidates-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .nav-tabs {
+                flex-wrap: wrap;
             }
             
             .sorting-bar {
@@ -895,25 +827,19 @@
                 align-items: stretch;
             }
             
-            .bulk-actions {
-                width: 100%;
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 0.5rem;
-            }
-            
-            .bulk-actions button:last-child {
-                grid-column: span 2;
-            }
-            
             .modal-content {
                 margin: 10% 1rem;
                 width: calc(100% - 2rem);
             }
             
-            /* Hide split view on mobile */
+            /* Hide right panel on mobile by default */
+            #profileDetailView {
+                display: none;
+            }
+            
+            /* Show only list on mobile */
             .split-view-container {
-                display: block !important;
+                flex-direction: column !important;
                 height: auto !important;
             }
             
@@ -921,37 +847,56 @@
                 width: 100% !important;
                 border-right: none !important;
                 padding-right: 0 !important;
-                overflow-y: visible !important;
             }
             
             .split-view-right {
-                display: none !important;
+                display: none;
             }
             
-            #filterPanel > div {
-                flex-direction: column;
-                gap: 0.75rem;
+            /* When profile is opened on mobile, show it as modal */
+            .mobile-profile-active #candidatesListView {
+                display: none;
             }
             
-            #filterPanel select {
-                width: 100%;
+            .mobile-profile-active #profileDetailView {
+                display: block;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: white;
+                z-index: 1000;
+                overflow-y: auto;
+                padding: 1rem;
             }
             
-            .breadcrumb {
-                font-size: 0.9rem;
+            .mobile-back-btn {
+                display: block !important;
+                position: fixed;
+                top: 1rem;
+                left: 1rem;
+                z-index: 1001;
+                background: var(--augusta-green);
+                color: white;
+                border: none;
+                padding: 0.5rem 1rem;
+                border-radius: 8px;
+                cursor: pointer;
             }
         }
+        
+        .mobile-back-btn {
+            display: none;
+        }
 
-        @media (max-width: 480px) {
-            .btn {
-                padding: 0.75rem 1.25rem;
-                font-size: 0.9rem;
-            }
-            
-            .btn-small {
-                padding: 0.375rem 0.75rem;
-                font-size: 0.8rem;
-            }
+        .error-message {
+            background: #fee;
+            color: var(--hazard-red);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
         }
     </style>
 </head>
@@ -991,20 +936,17 @@
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <div class="header-left">
-                    <div class="logo" onclick="goHome()">
-                        <img src="https://ik.imagekit.io/golfjobs/Golf%20Jobs%20logo%20white.png?updatedAt=1758280288759" alt="Golf Jobs">
-                    </div>
-                    <button id="menuToggle" type="button" aria-expanded="false" aria-controls="navTabs">☰ Menu</button>
+                <div class="logo" onclick="goHome()">
+                    <img src="https://ik.imagekit.io/golfjobs/Golf%20Jobs%20logo%20white.png?updatedAt=1758280288759" alt="Golf Jobs">
                 </div>
-                <nav id="navTabs" class="nav-tabs">
-                    <button class="nav-tab active" onclick="switchView('pools', this)">Talent Pools</button>
-                    <button class="nav-tab" onclick="switchView('shortlist', this)">
+                <nav class="nav-tabs">
+                    <button class="nav-tab active" onclick="switchView('pools')">Talent Pools</button>
+                    <button class="nav-tab" onclick="switchView('shortlist')">
                         Shortlist <span id="shortlistBadge" class="shortlist-badge" style="display: none;">0</span>
                     </button>
-                    <button class="nav-tab" onclick="switchView('messages', this)">Messages</button>
-                    <button class="nav-tab" onclick="switchView('account', this)">My Account</button>
-                    <button id="adminTab" class="nav-tab" onclick="switchView('admin', this)" style="display:none;">Admin</button>
+                    <button class="nav-tab" onclick="switchView('messages')">Messages</button>
+                    <button class="nav-tab" onclick="switchView('account')">My Account</button>
+                    <button id="adminTab" class="nav-tab" onclick="switchView('admin')" style="display:none;">Admin</button>
                 </nav>
                 <div class="user-info">
                     <span id="userName">Welcome</span>
@@ -1029,7 +971,7 @@
                 </div>
             </div>
 
-            <!-- Pool Detail View -->
+            <!-- Pool Detail View with Split Layout -->
             <div id="poolDetailView" class="view-section">
                 <div class="breadcrumb">
                     <a href="#" onclick="switchView('pools')">Talent Pools</a>
@@ -1043,14 +985,6 @@
                            style="width: 100%; padding: 0.875rem; border: 2px solid #e1e8e4; border-radius: 12px; font-size: 1rem; margin-bottom: 1rem;">
                     
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start;">
-                        <select id="locationFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
-                            <option value="">All Locations</option>
-                        </select>
-                        
-                        <select id="categoryFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
-                            <option value="">All Categories</option>
-                        </select>
-                        
                         <select id="salaryFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
                             <option value="">All Salaries</option>
                             <option value="0-30000">£20-30k</option>
@@ -1104,9 +1038,9 @@
                 <div id="candidateCount" style="margin-bottom: 1rem; color: var(--rough-gray);"></div>
                 
                 <!-- Split View Container -->
-                <div class="split-view-container">
+                <div class="split-view-container" style="display: flex; gap: 1.5rem; height: calc(100vh - 350px); min-height: 600px;">
                     <!-- Left Panel - Candidate List -->
-                    <div class="split-view-left">
+                    <div class="split-view-left" style="width: 40%; overflow-y: auto; padding-right: 1rem; border-right: 1px solid #e5e7eb;">
                         <div id="candidatesListView">
                             <!-- Loading skeletons -->
                             <div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div>
@@ -1121,9 +1055,13 @@
                     </div>
                     
                     <!-- Right Panel - Full Profile View -->
-                    <div class="split-view-right">
+                    <div class="split-view-right" style="flex: 1; overflow-y: auto; padding-left: 1rem;">
+                        <button class="mobile-back-btn" onclick="closeMobileProfile()">← Back to List</button>
                         <div id="profileDetailView" style="background: white; border-radius: 16px; padding: 2rem; min-height: 100%;">
-                            <!-- Profile will be loaded here when a candidate is selected -->
+                            <div style="text-align: center; color: var(--rough-gray); padding: 4rem 2rem;">
+                                <h3 style="margin-bottom: 1rem;">Select a candidate</h3>
+                                <p>Click on any candidate from the list to view their full profile</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1160,14 +1098,54 @@
             <div id="adminView" class="view-section">
                 <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">Admin Dashboard</h1>
                 
+                <!-- Analytics Section -->
                 <div class="section-box">
-                    <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">All Users</h2>
-                    <div id="adminUsersList"></div>
+                    <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">📊 Platform Analytics</h2>
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <h3>Total Profile Views</h3>
+                            <div class="stat-number" id="totalViews">0</div>
+                            <div class="stat-label">All time views</div>
+                        </div>
+                        <div class="analytics-card">
+                            <h3>Total Messages</h3>
+                            <div class="stat-number" id="totalMessagesAdmin">0</div>
+                            <div class="stat-label">Messages sent</div>
+                        </div>
+                        <div class="analytics-card">
+                            <h3>Active Users</h3>
+                            <div class="stat-number" id="activeUsers">0</div>
+                            <div class="stat-label">Registered employers</div>
+                        </div>
+                    </div>
                 </div>
-                
+
+                <!-- Most Viewed Profiles -->
+                <div class="section-box">
+                    <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">🔥 Most Viewed Profiles</h2>
+                    <ul class="top-list" id="mostViewedList">
+                        <li>Loading...</li>
+                    </ul>
+                </div>
+
+                <!-- Most Messaged Candidates -->
+                <div class="section-box">
+                    <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">💬 Most Messaged Candidates</h2>
+                    <ul class="top-list" id="mostMessagedList">
+                        <li>Loading...</li>
+                    </ul>
+                </div>
+
+                <!-- All Messages -->
                 <div class="section-box">
                     <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">Recent Messages</h2>
                     <div id="adminMessagesList"></div>
+                </div>
+
+                <!-- All Users -->
+                <div class="section-box">
+                    <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">All Users</h2>
+                    <div id="adminUsersList"></div>
                 </div>
             </div>
         </div>
@@ -1215,11 +1193,15 @@
         <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Confirm Message Send</h3>
         <div style="background: #fef3e6; border: 2px solid var(--club-gold); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
             <p style="margin-bottom: 0.75rem;"><strong>⚠️ This will use 1 credit</strong></p>
+            <p style="font-size: 0.9rem; line-height: 1.6; margin-bottom: 0.5rem;">
+                By sending this message:
+            </p>
             <ul style="font-size: 0.9rem; line-height: 1.6; margin-left: 1.5rem;">
                 <li>1 credit will be deducted from your account</li>
                 <li>Your message will be sent directly to the candidate</li>
                 <li>The candidate's email remains private</li>
                 <li>You can continue the conversation for free</li>
+                <li>All messages are logged for quality assurance</li>
             </ul>
         </div>
         <p style="margin-bottom: 1.5rem;">Current balance: <strong id="currentCreditsMsg">0</strong> credits</p>
@@ -1312,79 +1294,26 @@
             return notice + ' notice';
         }
 
-        function categorizeJobRole(jobTitle) {
-            if (!jobTitle) return ['other'];
-            const title = jobTitle.toLowerCase();
-            const categories = [];
-            
-            // Greenkeeping
-            if (title.includes('greenkeep') || title.includes('course manager') || 
-                title.includes('groundsman') || title.includes('turf') || 
-                title.includes('agronomist') || title.includes('mechanic')) {
-                categories.push('greenkeeping');
-            }
-            
-            // Management - check this early to catch compound roles
-            if (title.includes('manager') || title.includes('director') || 
-                title.includes('head of') || title.includes('general manager') || 
-                title.includes('chief') || title.includes('ceo') || title.includes('coo') ||
-                title.includes('supervisor') || title.includes('lead')) {
-                categories.push('management');
-            }
-            
-            // PGA Professional
-            if (title.includes('pga') || title.includes('golf professional') || 
-                title.includes('head professional') || title.includes('assistant professional') ||
-                title.includes('teaching') || title.includes('coach') || title.includes('instructor')) {
-                categories.push('pga');
-            }
-            
-            // Sales
-            if (title.includes('sales') || title.includes('business development') || 
-                title.includes('account') || title.includes('commercial')) {
-                categories.push('sales');
-            }
-            
-            // Marketing
-            if (title.includes('marketing') || title.includes('social media') || 
-                title.includes('communications') || title.includes('brand') || 
-                title.includes('digital') || title.includes('pr ') || title === 'pr') {
-                categories.push('marketing');
-            }
-            
-            // Retail
-            if (title.includes('retail') || title.includes('shop') || 
-                title.includes('merchandis') || title.includes('pro shop')) {
-                categories.push('retail');
-            }
-            
-            // F&B
-            if (title.includes('chef') || title.includes('food') || title.includes('beverage') || 
-                title.includes('bar') || title.includes('restaurant') || title.includes('catering') ||
-                title.includes('hospitality') || title.includes('f&b') || title.includes('f & b') || 
-                title.includes('waiting') || title.includes('server')) {
-                categories.push('f&b');
-            }
-            
-            // Operations
-            if (title.includes('operations') || title.includes('admin') || 
-                title.includes('reception') || title.includes('secretary') || 
-                title.includes('coordinator') || title.includes('assistant') ||
-                title.includes('office')) {
-                categories.push('operations');
-            }
-            
-            // If no categories matched, return 'other'
-            return categories.length > 0 ? categories : ['other'];
-        }
-
         function calculateProfileScore(candidate) {
-            let score = 50;
-            if (candidate["About You"] && candidate["About You"].length > 100) score += 20;
-            if (candidate["Your Skills"]) score += 15;
+            let score = 0;
+            let maxScore = 100;
+            
+            const aboutYou = candidate["About You"] || '';
+            if (aboutYou.length > 200) score += 30;
+            else if (aboutYou.length > 100) score += 20;
+            else if (aboutYou.length > 50) score += 10;
+            
+            const skills = candidate["Your Skills"] || '';
+            if (skills.length > 100) score += 20;
+            else if (skills.length > 50) score += 15;
+            else if (skills.length > 20) score += 10;
+            
+            if (candidate["Current Job Title"] || candidate["Job Title"]) score += 10;
             if (candidate["What are your salary expectations?"]) score += 10;
-            if (candidate["Notice Period"]) score += 5;
-            return Math.min(score, 100);
+            if (candidate["Notice Period"]) score += 10;
+            if (candidate["Town/City"]) score += 5;
+            
+            return Math.min((score / maxScore) * 100, 100);
         }
 
         // Track profile view
@@ -1394,8 +1323,10 @@
             }
             profileViews[candidateId].count++;
             
+            // Save to localStorage for persistence
             localStorage.setItem('profileViews', JSON.stringify(profileViews));
             
+            // Also save to database if available
             try {
                 await supabase.from('profile_views').insert({
                     candidate_id: candidateId,
@@ -1424,48 +1355,6 @@
             if (savedViews) {
                 profileViews = JSON.parse(savedViews);
             }
-            
-            // Setup menu toggle
-            const menuToggle = document.getElementById('menuToggle');
-            if (menuToggle) {
-                menuToggle.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const tabs = document.getElementById('navTabs');
-                    const open = tabs.classList.toggle('is-open');
-                    menuToggle.setAttribute('aria-expanded', String(open));
-                });
-            }
-            
-            // Close menu when clicking outside
-            document.addEventListener('click', (e) => {
-                const tabs = document.getElementById('navTabs');
-                const toggle = document.getElementById('menuToggle');
-                if (!tabs || !toggle) return;
-                if (tabs.classList.contains('is-open')) {
-                    const clickedInsideMenu = tabs.contains(e.target);
-                    const clickedToggle = toggle.contains(e.target);
-                    if (!clickedInsideMenu && !clickedToggle) closeMobileMenu();
-                }
-            });
-            
-            // Close menu when resizing
-            window.addEventListener('resize', () => {
-                const mq = window.matchMedia('(max-width: 640px)');
-                if (!mq.matches) closeMobileMenu();
-            });
-            
-            // Setup filter listeners
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                searchInput.addEventListener('input', debounce(applyFilters, 300));
-            }
-            
-            ['locationFilter', 'categoryFilter', 'salaryFilter', 'noticeFilter', 'lookingFilter'].forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.addEventListener('change', applyFilters);
-                }
-            });
         }
 
         // Login
@@ -1490,32 +1379,51 @@
             }
         }
 
-        // Load user data
+        // Load user data - FIXED with error handling
         async function loadUserData(user) {
             currentUser = user;
             
-            const { data: profile } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', user.id)
-                .single();
-            
-            if (profile) {
-                userProfile = profile;
-                document.getElementById('userName').textContent = profile.name || user.email.split('@')[0];
-                document.getElementById('creditsCount').textContent = profile.credits || 0;
+            try {
+                const { data: profile, error: profileError } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
                 
-                if (profile.role === 'admin') {
-                    document.getElementById('adminTab').style.display = 'block';
+                if (profileError) {
+                    console.error('Error loading user profile:', profileError);
+                    // Continue with basic user info
+                    userProfile = { id: user.id, email: user.email, credits: 0 };
+                } else if (profile) {
+                    userProfile = profile;
+                    document.getElementById('userName').textContent = profile.name || user.email.split('@')[0];
+                    document.getElementById('creditsCount').textContent = profile.credits || 0;
+                    
+                    if (profile.role === 'admin') {
+                        document.getElementById('adminTab').style.display = 'block';
+                    }
                 }
+            } catch (err) {
+                console.error('Error in loadUserData:', err);
+                userProfile = { id: user.id, email: user.email, credits: 0 };
             }
             
-            const { data: poolAccess } = await supabase
-                .from('user_pool_access')
-                .select('pool_id')
-                .eq('user_id', user.id);
-            
-            userPools = poolAccess ? poolAccess.map(p => p.pool_id) : [];
+            try {
+                const { data: poolAccess, error: poolAccessError } = await supabase
+                    .from('user_pool_access')
+                    .select('pool_id')
+                    .eq('user_id', user.id);
+                
+                if (poolAccessError) {
+                    console.error('Error loading pool access:', poolAccessError);
+                    userPools = [];
+                } else {
+                    userPools = poolAccess ? poolAccess.map(p => p.pool_id) : [];
+                }
+            } catch (err) {
+                console.error('Error loading pool access:', err);
+                userPools = [];
+            }
             
             await refreshShortlist();
             
@@ -1527,27 +1435,36 @@
             if (savedConversations) conversations = JSON.parse(savedConversations);
         }
 
-        // Refresh shortlist
+        // Refresh shortlist - FIXED
         async function refreshShortlist() {
-            const { data: shortlistData } = await supabase
-                .from('shortlists')
-                .select('*')
-                .eq('user_id', currentUser.id);
-            
-            if (shortlistData && shortlistData.length > 0) {
-                const candidateIds = shortlistData.map(item => item.candidate_id);
-                const { data: candidatesData } = await supabase
-                    .from('candidates')
+            try {
+                const { data: shortlistData, error } = await supabase
+                    .from('shortlists')
                     .select('*')
-                    .in('ID', candidateIds);
+                    .eq('user_id', currentUser.id);
                 
-                const byId = new Map((candidatesData || []).map(c => [String(c.ID), c]));
-                
-                shortlist = shortlistData.map(item => ({
-                    ...item,
-                    candidates: byId.get(String(item.candidate_id)) || null
-                }));
-            } else {
+                if (error) {
+                    console.error('Error loading shortlist:', error);
+                    shortlist = [];
+                } else if (shortlistData && shortlistData.length > 0) {
+                    const candidateIds = shortlistData.map(item => item.candidate_id);
+                    const { data: candidatesData } = await supabase
+                        .from('candidates')
+                        .select('*')
+                        .in('ID', candidateIds);
+                    
+                    // Build a map using string keys to avoid number/string mismatches
+                    const byId = new Map((candidatesData || []).map(c => [String(c.ID), c]));
+                    
+                    shortlist = shortlistData.map(item => ({
+                        ...item,
+                        candidates: byId.get(String(item.candidate_id)) || null
+                    }));
+                } else {
+                    shortlist = [];
+                }
+            } catch (err) {
+                console.error('Error refreshing shortlist:', err);
                 shortlist = [];
             }
             
@@ -1577,8 +1494,8 @@
             location.reload();
         }
 
-        // Navigation
-        function switchView(view, el) {
+        // Switch views
+        function switchView(view) {
             document.querySelectorAll('.view-section').forEach(section => {
                 section.classList.remove('active');
             });
@@ -1587,9 +1504,7 @@
             });
             
             document.getElementById(view + 'View').classList.add('active');
-            if (el) el.classList.add('active');
-            
-            closeMobileMenu();
+            if (event && event.target) event.target.classList.add('active');
             
             if (view === 'pools') loadPools();
             else if (view === 'shortlist') loadShortlist();
@@ -1598,24 +1513,9 @@
             else if (view === 'admin' && userProfile?.role === 'admin') loadAdmin();
         }
 
-        function closeMobileMenu() {
-            const tabs = document.getElementById('navTabs');
-            if (tabs && tabs.classList.contains('is-open')) {
-                tabs.classList.remove('is-open');
-            }
-            const menuToggle = document.getElementById('menuToggle');
-            if (menuToggle) {
-                menuToggle.setAttribute('aria-expanded', 'false');
-            }
-        }
-
-        function goHome() {
-            const poolsTab = document.querySelector('.nav-tab');
-            switchView('pools', poolsTab);
-        }
-
-        // Load pools
+        // Load pools - FIXED with proper error handling
         async function loadPools() {
+            console.log('Starting loadPools...');
             const poolsGrid = document.getElementById('poolsGrid');
             poolsGrid.innerHTML = `
                 <div class="skeleton skeleton-card"></div>
@@ -1623,52 +1523,112 @@
                 <div class="skeleton skeleton-card"></div>
             `;
             
-            const { data: pools } = await supabase
-                .from('talent_pools')
-                .select('*');
-            
-            for (let pool of pools) {
-                const { count } = await supabase
-                    .from('candidates')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('pool_id', pool.id);
+            try {
+                const { data: pools, error: poolsError } = await supabase
+                    .from('talent_pools')
+                    .select('*');
                 
-                pool.total_candidates = count || 0;
-            }
-            
-            pools.sort((a, b) => b.total_candidates - a.total_candidates);
-            
-            poolsGrid.innerHTML = '';
-            
-            for (const pool of pools) {
-                const hasAccess = userPools.includes(pool.id);
+                console.log('Pools query result:', { pools, poolsError });
                 
-                const poolCard = document.createElement('div');
-                poolCard.className = hasAccess ? 'pool-card' : 'pool-card locked';
-                poolCard.innerHTML = `
-                    <div class="pool-header">
-                        <div class="pool-title">${pool.name}</div>
-                        <div class="pool-badge">${hasAccess ? 'Available' : 'Locked'}</div>
-                    </div>
-                    <div class="pool-stats">
-                        <div class="pool-stat">
-                            <span>Total Candidates</span>
-                            <span style="font-size: 1.25rem; font-weight: 700; color: var(--augusta-green);">
-                                ${pool.total_candidates}
-                            </span>
+                if (poolsError) {
+                    console.error('Error fetching pools:', poolsError);
+                    poolsGrid.innerHTML = `
+                        <div class="error-message">
+                            <h3>Error loading talent pools</h3>
+                            <p>${poolsError.message}</p>
+                            <p style="font-size: 0.9rem; margin-top: 1rem;">Please contact graham@golf-jobs.com if this persists.</p>
                         </div>
-                    </div>
-                `;
-                
-                if (hasAccess) {
-                    poolCard.onclick = () => openPool(pool);
+                    `;
+                    return;
                 }
                 
-                poolsGrid.appendChild(poolCard);
+                if (!pools || pools.length === 0) {
+                    console.log('No pools found in database');
+                    poolsGrid.innerHTML = `
+                        <div class="empty-state">
+                            <h3>No talent pools available yet</h3>
+                            <p>Talent pools will appear here once they've been created.</p>
+                            <p style="font-size: 0.9rem; margin-top: 1rem;">Contact graham@golf-jobs.com for access.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Try to get candidate counts, but don't fail if we can't
+                for (let pool of pools) {
+                    try {
+                        const { count, error: countError } = await supabase
+                            .from('candidates')
+                            .select('*', { count: 'exact', head: true })
+                            .eq('pool_id', pool.id);
+                        
+                        console.log(`Count for pool ${pool.id}:`, { count, countError });
+                        
+                        if (countError) {
+                            console.warn(`Could not count candidates for pool ${pool.id}:`, countError);
+                            pool.total_candidates = 'N/A';
+                        } else {
+                            pool.total_candidates = count || 0;
+                        }
+                    } catch (err) {
+                        console.warn(`Error counting candidates for pool ${pool.id}:`, err);
+                        pool.total_candidates = 'N/A';
+                    }
+                }
+                
+                // Sort pools by candidate count (if available)
+                pools.sort((a, b) => {
+                    const aCount = typeof a.total_candidates === 'number' ? a.total_candidates : -1;
+                    const bCount = typeof b.total_candidates === 'number' ? b.total_candidates : -1;
+                    return bCount - aCount;
+                });
+                
+                console.log('Pools with counts:', pools);
+                
+                poolsGrid.innerHTML = '';
+                
+                for (const pool of pools) {
+                    const hasAccess = userPools.includes(pool.id);
+                    
+                    const poolCard = document.createElement('div');
+                    poolCard.className = hasAccess ? 'pool-card' : 'pool-card locked';
+                    poolCard.innerHTML = `
+                        <div class="pool-header">
+                            <div class="pool-title">${pool.name}</div>
+                            <div class="pool-badge">${hasAccess ? 'Available' : 'Locked'}</div>
+                        </div>
+                        <div class="pool-stats">
+                            <div class="pool-stat">
+                                <span>Total Candidates</span>
+                                <span style="font-size: 1.25rem; font-weight: 700; color: var(--augusta-green);">
+                                    ${pool.total_candidates}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    if (hasAccess) {
+                        poolCard.onclick = () => openPool(pool);
+                    } else {
+                        poolCard.onclick = () => alert('Contact graham@golf-jobs.com to request access to this pool.');
+                    }
+                    
+                    poolsGrid.appendChild(poolCard);
+                }
+                
+            } catch (err) {
+                console.error('Unexpected error in loadPools:', err);
+                poolsGrid.innerHTML = `
+                    <div class="error-message">
+                        <h3>An unexpected error occurred</h3>
+                        <p>${err.message}</p>
+                        <p style="font-size: 0.9rem; margin-top: 1rem;">Please refresh the page or contact support.</p>
+                    </div>
+                `;
             }
         }
 
-        // Open pool
+        // Open pool - FIXED
         async function openPool(pool) {
             currentPool = pool;
             currentPage = 0;
@@ -1681,114 +1641,38 @@
                 <div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div>
             `;
             
-            const { data: candidates } = await supabase
-                .from('candidates')
-                .select('*')
-                .eq('pool_id', pool.id);
-            
-            allCandidates = (candidates || []).sort((a, b) => {
-                return calculateProfileScore(b) - calculateProfileScore(a);
-            });
-            
-            // Populate location filter with dynamic counts
-            const locationCounts = {};
-            allCandidates.forEach(candidate => {
-                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-                locationCounts[location] = (locationCounts[location] || 0) + 1;
-            });
-            
-            const locationFilter = document.getElementById('locationFilter');
-            if (locationFilter) {
-                locationFilter.innerHTML = '<option value="">All Locations</option>';
+            try {
+                const { data: candidates, error } = await supabase
+                    .from('candidates')
+                    .select('*')
+                    .eq('pool_id', pool.id);
                 
-                // Sort locations by count (descending) then alphabetically
-                const sortedLocations = Object.entries(locationCounts).sort((a, b) => {
-                    if (b[1] !== a[1]) return b[1] - a[1];
-                    return a[0].localeCompare(b[0]);
-                });
-                
-                sortedLocations.forEach(([location, count]) => {
-                    if (location !== 'Location Not Specified') {
-                        const option = document.createElement('option');
-                        option.value = location;
-                        option.textContent = `${location} (${count})`;
-                        locationFilter.appendChild(option);
-                    }
-                });
-                
-                // Add "Unspecified" at the bottom if exists
-                if (locationCounts['Location Not Specified']) {
-                    const option = document.createElement('option');
-                    option.value = 'Location Not Specified';
-                    option.textContent = `Location Not Specified (${locationCounts['Location Not Specified']})`;
-                    locationFilter.appendChild(option);
+                if (error) {
+                    console.error('Error loading candidates:', error);
+                    candidatesListView.innerHTML = `
+                        <div class="error-message">
+                            <h3>Error loading candidates</h3>
+                            <p>${error.message}</p>
+                        </div>
+                    `;
+                    return;
                 }
-            }
-            
-            // Populate category filter with dynamic counts
-            const categoryCounts = {
-                'greenkeeping': 0,
-                'management': 0,
-                'pga': 0,
-                'sales': 0,
-                'marketing': 0,
-                'retail': 0,
-                'f&b': 0,
-                'operations': 0,
-                'other': 0
-            };
-            
-            allCandidates.forEach(candidate => {
-                const jobTitle = candidate["Current Job Title"] || candidate["Job Title"] || '';
-                const categories = categorizeJobRole(jobTitle);
-                categories.forEach(cat => {
-                    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+                
+                allCandidates = (candidates || []).sort((a, b) => {
+                    return calculateProfileScore(b) - calculateProfileScore(a);
                 });
-            });
-            
-            const categoryFilter = document.getElementById('categoryFilter');
-            if (categoryFilter) {
-                categoryFilter.innerHTML = '<option value="">All Categories</option>';
                 
-                const categoryLabels = {
-                    'greenkeeping': 'Greenkeeping',
-                    'management': 'Management',
-                    'pga': 'PGA Professional',
-                    'sales': 'Sales',
-                    'marketing': 'Marketing',
-                    'retail': 'Retail',
-                    'f&b': 'Food & Beverage',
-                    'operations': 'Operations',
-                    'other': 'Other'
-                };
+                filteredCandidates = [...allCandidates];
+                displayCandidatesPage();
                 
-                // Sort categories by count (descending) then alphabetically
-                const sortedCategories = Object.entries(categoryCounts)
-                    .filter(([cat, count]) => count > 0)
-                    .sort((a, b) => {
-                        if (b[1] !== a[1]) return b[1] - a[1];
-                        return categoryLabels[a[0]].localeCompare(categoryLabels[b[0]]);
-                    });
-                
-                sortedCategories.forEach(([category, count]) => {
-                    const option = document.createElement('option');
-                    option.value = category;
-                    option.textContent = `${categoryLabels[category]} (${count})`;
-                    categoryFilter.appendChild(option);
-                });
-            }
-            
-            filteredCandidates = [...allCandidates];
-            displayCandidatesPage();
-            
-            // Auto-select first candidate on desktop only
-            if (window.innerWidth > 768 && filteredCandidates.length > 0) {
-                setTimeout(() => {
-                    const profileDetailView = document.getElementById('profileDetailView');
-                    if (profileDetailView && profileDetailView.offsetParent !== null) {
-                        viewCandidateProfile(filteredCandidates[0]);
-                    }
-                }, 100);
+            } catch (err) {
+                console.error('Error in openPool:', err);
+                candidatesListView.innerHTML = `
+                    <div class="error-message">
+                        <h3>An error occurred</h3>
+                        <p>Unable to load candidates.</p>
+                    </div>
+                `;
             }
             
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
@@ -1836,7 +1720,9 @@
                 const isTopPick = profileScore >= 85;
                 const isSelected = selectedCandidates.has(candidate.ID);
                 const activelyLooking = (candidate["Actively looking for work"] || '').toUpperCase() === 'YES';
+                const isAvailableNow = (candidate["Notice Period"] || '').toLowerCase().includes('immediate');
                 
+                // Get summary preview
                 const about = candidate["About You"] || candidate.Summary || '';
                 const summaryPreview = about.substring(0, 150) + (about.length > 150 ? '...' : '');
                 
@@ -1845,6 +1731,9 @@
                 return `
                     <div class="candidate-list-item ${isSelected ? 'selected' : ''}" 
                          id="card-${candidate.ID}"
+                         style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; 
+                                border: 2px solid ${isSelected ? 'var(--masters-green)' : '#e5e7eb'}; 
+                                cursor: pointer; transition: all 0.3s ease; position: relative;"
                          onclick='${clickHandler}'>
                         
                         <input type="checkbox" 
@@ -1877,21 +1766,20 @@
             }).join('');
         }
 
-        // View candidate profile
+        // New function to display full profile in right panel
         function viewCandidateProfile(candidate) {
             currentCandidate = candidate;
             
-            // If mobile, use modal instead
+            // On mobile, add class to show profile
             if (window.innerWidth <= 768) {
-                openCandidate(candidate);
-                return;
+                document.body.classList.add('mobile-profile-active');
             }
             
-            // Desktop: split view
+            // Track profile view
             const candidateName = candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`;
             trackProfileView(candidate.ID, candidateName);
             
-            // Highlight selected
+            // Highlight selected item in list
             document.querySelectorAll('.candidate-list-item').forEach(item => {
                 item.style.background = 'white';
                 item.style.borderColor = '#e5e7eb';
@@ -1913,65 +1801,69 @@
             const isTopPick = profileScore >= 85;
             
             const profileDetailView = document.getElementById('profileDetailView');
-            if (profileDetailView) {
-                profileDetailView.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
-                        <div style="flex: 1; min-width: 250px;">
-                            <h1 style="color: var(--augusta-green); margin-bottom: 0.5rem; font-size: 1.8rem;">
-                                ${jobTitle}
-                                ${isTopPick ? '<span class="top-pick-badge" style="position: static; display: inline-block; margin-left: 1rem;">⭐ TOP PICK</span>' : ''}
-                            </h1>
-                            <p style="color: var(--rough-gray); font-size: 1.1rem;">${location}</p>
-                        </div>
-                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <button class="btn btn-secondary btn-small" onclick="addToShortlistFromProfile()">Save to Shortlist</button>
-                            <button class="btn btn-primary btn-small" onclick="openMessageDialog()">Send Message</button>
-                        </div>
+            profileDetailView.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <h1 style="color: var(--augusta-green); margin-bottom: 0.5rem; font-size: 1.8rem;">
+                            ${jobTitle}
+                            ${isTopPick ? '<span class="top-pick-badge" style="position: static; display: inline-block; margin-left: 1rem;">⭐ TOP PICK</span>' : ''}
+                        </h1>
+                        <p style="color: var(--rough-gray); font-size: 1.1rem;">${location}</p>
                     </div>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-                        <div style="background: var(--morning-mist); padding: 1rem; border-radius: 8px;">
-                            <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">
-                                Salary Expectations
-                            </div>
-                            <div style="font-weight: 600; font-size: 1.1rem;">${salary}</div>
-                        </div>
-                        <div style="background: var(--morning-mist); padding: 1rem; border-radius: 8px;">
-                            <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">
-                                Notice Period
-                            </div>
-                            <div style="font-weight: 600; font-size: 1.1rem;">${notice}</div>
-                        </div>
-                        <div style="background: var(--morning-mist); padding: 1rem; border-radius: 8px;">
-                            <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">
-                                Job Search Status
-                            </div>
-                            <div style="font-weight: 600; font-size: 1.1rem;">${activelyLooking}</div>
-                        </div>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button class="btn btn-secondary btn-small" onclick="addToShortlistFromProfile()">Save to Shortlist</button>
+                        <button class="btn btn-primary btn-small" onclick="openMessageDialog()">Send Message</button>
                     </div>
-                    
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div style="background: var(--morning-mist); padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">
+                            Salary Expectations
+                        </div>
+                        <div style="font-weight: 600; font-size: 1.1rem;">${salary}</div>
+                    </div>
+                    <div style="background: var(--morning-mist); padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">
+                            Notice Period
+                        </div>
+                        <div style="font-weight: 600; font-size: 1.1rem;">${notice}</div>
+                    </div>
+                    <div style="background: var(--morning-mist); padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">
+                            Job Search Status
+                        </div>
+                        <div style="font-weight: 600; font-size: 1.1rem;">${activelyLooking}</div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Professional Summary</h3>
+                    <p style="line-height: 1.8; color: #333; white-space: pre-wrap;">${about}</p>
+                </div>
+                
+                ${skills ? `
                     <div style="margin-bottom: 2rem;">
-                        <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Professional Summary</h3>
-                        <p style="line-height: 1.8; color: #333; white-space: pre-wrap;">${about}</p>
+                        <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
+                        <p style="line-height: 1.6; color: #333; white-space: pre-wrap;">${skills}</p>
                     </div>
-                    
-                    ${skills ? `
-                        <div style="margin-bottom: 2rem;">
-                            <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
-                            <p style="line-height: 1.6; color: #333; white-space: pre-wrap;">${skills}</p>
-                        </div>
-                    ` : ''}
-                    
-                    <div class="notes-panel" style="margin-top: 2rem;">
-                        <h4 style="color: var(--augusta-green); margin-bottom: 0.5rem;">📝 Private Notes</h4>
-                        <textarea id="candidateNotesProfile" class="note-textarea" 
-                                  placeholder="Add your notes about this candidate...">${candidateNotes[candidate.ID] || ''}</textarea>
-                        <button class="btn btn-small" onclick="saveProfileNotes()" style="margin-top: 0.5rem;">Save Notes</button>
-                    </div>
-                `;
-            }
+                ` : ''}
+                
+                <div class="notes-panel" style="margin-top: 2rem;">
+                    <h4 style="color: var(--augusta-green); margin-bottom: 0.5rem;">📝 Private Notes</h4>
+                    <textarea id="candidateNotesProfile" class="note-textarea" 
+                              placeholder="Add your notes about this candidate...">${candidateNotes[candidate.ID] || ''}</textarea>
+                    <button class="btn btn-small" onclick="saveProfileNotes()" style="margin-top: 0.5rem;">Save Notes</button>
+                </div>
+            `;
         }
-
+        
+        // Mobile profile handling
+        function closeMobileProfile() {
+            document.body.classList.remove('mobile-profile-active');
+        }
+        
+        // Save notes from profile view
         function saveProfileNotes() {
             if (!currentCandidate) return;
             
@@ -1981,6 +1873,7 @@
             alert('Notes saved!');
         }
 
+        // Add functions for profile view actions
         async function addToShortlistFromProfile() {
             if (!currentCandidate) return;
             
@@ -2015,6 +1908,20 @@
         }
 
         // Filters
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', debounce(applyFilters, 300));
+            }
+            
+            ['salaryFilter', 'noticeFilter', 'lookingFilter'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', applyFilters);
+                }
+            });
+        });
+
         function debounce(func, delay) {
             let timeout;
             return function() {
@@ -2025,8 +1932,6 @@
 
         function applyFilters() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const locationFilter = document.getElementById('locationFilter').value;
-            const categoryFilter = document.getElementById('categoryFilter').value;
             const salaryFilter = document.getElementById('salaryFilter').value;
             const noticeFilter = document.getElementById('noticeFilter').value;
             const lookingFilter = document.getElementById('lookingFilter').value;
@@ -2040,21 +1945,6 @@
                     (c["Your Skills"] || '').toLowerCase().includes(searchTerm) ||
                     (c["About You"] || '').toLowerCase().includes(searchTerm)
                 );
-            }
-            
-            if (locationFilter) {
-                filtered = filtered.filter(c => {
-                    const location = cleanAndFormatLocation(c["Town/City"], c.Country);
-                    return location === locationFilter;
-                });
-            }
-            
-            if (categoryFilter) {
-                filtered = filtered.filter(c => {
-                    const jobTitle = c["Current Job Title"] || c["Job Title"] || '';
-                    const categories = categorizeJobRole(jobTitle);
-                    return categories.includes(categoryFilter);
-                });
             }
             
             if (salaryFilter) {
@@ -2120,8 +2010,6 @@
 
         function clearFilters() {
             document.getElementById('searchInput').value = '';
-            document.getElementById('locationFilter').value = '';
-            document.getElementById('categoryFilter').value = '';
             document.getElementById('salaryFilter').value = '';
             document.getElementById('noticeFilter').value = '';
             document.getElementById('lookingFilter').value = '';
@@ -2166,6 +2054,7 @@
         async function openCandidate(candidate) {
             currentCandidate = candidate;
             
+            // Track profile view
             const candidateName = candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`;
             await trackProfileView(candidate.ID, candidateName);
             
@@ -2176,9 +2065,11 @@
             const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
             const notice = formatNoticePeriod(candidate["Notice Period"]);
             
+            // Check conversation status
             const hasConversation = conversations[candidate.ID]?.messages?.length > 0;
             document.getElementById('creditCost').textContent = hasConversation ? '(Free)' : '(1 Credit)';
             
+            // Show previous messages
             const previousMessagesDiv = document.getElementById('previousMessages');
             if (hasConversation) {
                 previousMessagesDiv.style.display = 'block';
@@ -2326,6 +2217,7 @@
             conversations[currentCandidate.ID].messages.push(message);
             localStorage.setItem('conversations_' + currentUser.id, JSON.stringify(conversations));
             
+            // Save to database
             try {
                 await supabase.from('messages').insert({
                     employer_id: currentUser.id,
@@ -2426,6 +2318,7 @@
                 return;
             }
             
+            // Remove duplicates based on candidate_id
             const uniqueShortlist = [];
             const seenCandidates = new Set();
             
@@ -2452,7 +2345,11 @@
                 return `
                     <div class="candidate-card" style="position: relative;">
                         <button onclick="removeFromShortlist('${item.id}')" 
-                                class="btn-remove-shortlist">
+                                style="position: absolute; top: 1rem; right: 1rem; 
+                                       background: #fee; color: var(--hazard-red); 
+                                       border: none; padding: 0.5rem 1rem; 
+                                       border-radius: 8px; cursor: pointer; z-index: 10;
+                                       font-size: 0.85rem;">
                             Remove
                         </button>
                         <div onclick='openCandidate(${JSON.stringify(candidate).replace(/'/g, "&apos;")})'
@@ -2500,7 +2397,6 @@
                 }
                 
                 await refreshShortlist();
-                updateShortlistBadge();
                 await loadShortlist();
             } catch (err) {
                 console.error('Error:', err);
@@ -2514,56 +2410,27 @@
                 return;
             }
             
-            // Only export specific fields that are shown in the profile
-            const headers = [
-                'Job Title',
-                'Professional Summary', 
-                'Skills',
-                'Location',
-                'Salary Expectations',
-                'Notice Period',
-                'Private Notes'
-            ];
+            let csv = 'Job Title,Location,Salary,Notice Period,Notes\n';
             
-            let csv = headers.map(h => `"${h}"`).join(',') + '\n';
-            
-            const uniqueCandidates = new Map();
             shortlist.forEach(item => {
-                if (item.candidates && !uniqueCandidates.has(item.candidates.ID)) {
-                    uniqueCandidates.set(item.candidates.ID, item.candidates);
+                const c = item.candidates;
+                if (c) {
+                    const jobTitle = c["Current Job Title"] || c["Job Title"] || '';
+                    const location = cleanAndFormatLocation(c["Town/City"], c.Country);
+                    const salary = c["What are your salary expectations?"] || 'Negotiable';
+                    const notice = c["Notice Period"] || 'Unknown';
+                    const notes = candidateNotes[c.ID] || '';
+                    
+                    csv += `"${jobTitle}","${location}","${salary}","${notice}","${notes}"\n`;
                 }
-            });
-            
-            uniqueCandidates.forEach((candidate, candidateId) => {
-                const jobTitle = candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`;
-                const summary = candidate["About You"] || '';
-                const skills = candidate["Your Skills"] || '';
-                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-                const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
-                const notice = formatNoticePeriod(candidate["Notice Period"]);
-                const notes = candidateNotes[candidateId] || '';
-                
-                const row = [
-                    jobTitle,
-                    summary,
-                    skills,
-                    location,
-                    salary,
-                    notice,
-                    notes
-                ].map(value => `"${String(value).replace(/"/g, '""')}"`);
-                
-                csv += row.join(',') + '\n';
             });
             
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'golf_jobs_shortlist_' + new Date().toISOString().slice(0, 10) + '.csv';
+            a.download = 'shortlist.csv';
             a.click();
-            
-            window.URL.revokeObjectURL(url);
         }
 
         // Messages
@@ -2632,82 +2499,195 @@
                 return;
             }
             
-            const { data: allUsers } = await supabase
-                .from('users')
-                .select('*')
-                .order('created_at', { ascending: false });
+            // Load analytics
+            await loadAnalytics();
             
-            const usersList = document.getElementById('adminUsersList');
-            if (allUsers && allUsers.length > 0) {
-                usersList.innerHTML = `
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f9fafb;">
-                                <th style="padding: 1rem; text-align: left;">Name</th>
-                                <th style="padding: 1rem; text-align: left;">Email</th>
-                                <th style="padding: 1rem; text-align: left;">Credits</th>
-                                <th style="padding: 1rem; text-align: left;">Joined</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${allUsers.map(user => `
-                                <tr style="border-bottom: 1px solid #e5e7eb;">
-                                    <td style="padding: 1rem;">${user.name || 'Not set'}</td>
-                                    <td style="padding: 1rem;">${user.email}</td>
-                                    <td style="padding: 1rem;">${user.credits || 0}</td>
-                                    <td style="padding: 1rem;">${new Date(user.created_at).toLocaleDateString()}</td>
+            // Load users
+            try {
+                const { data: allUsers } = await supabase
+                    .from('users')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                const usersList = document.getElementById('adminUsersList');
+                if (allUsers && allUsers.length > 0) {
+                    document.getElementById('activeUsers').textContent = allUsers.length;
+                    
+                    usersList.innerHTML = `
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f9fafb;">
+                                    <th style="padding: 1rem; text-align: left;">Name</th>
+                                    <th style="padding: 1rem; text-align: left;">Email</th>
+                                    <th style="padding: 1rem; text-align: left;">Credits</th>
+                                    <th style="padding: 1rem; text-align: left;">Joined</th>
                                 </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
+                            </thead>
+                            <tbody>
+                                ${allUsers.map(user => `
+                                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                                        <td style="padding: 1rem;">${user.name || 'Not set'}</td>
+                                        <td style="padding: 1rem;">${user.email}</td>
+                                        <td style="padding: 1rem;">${user.credits || 0}</td>
+                                        <td style="padding: 1rem;">${new Date(user.created_at).toLocaleDateString()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+            } catch (err) {
+                console.error('Error loading users:', err);
             }
             
-            const { data: allMessages } = await supabase
-                .from('messages')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(50);
-            
-            if (allMessages && allMessages.length > 0) {
-                const messagesList = document.getElementById('adminMessagesList');
-                messagesList.innerHTML = `
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="background: #f9fafb;">
-                                <th style="padding: 0.75rem; text-align: left;">Date</th>
-                                <th style="padding: 0.75rem; text-align: left;">Employer</th>
-                                <th style="padding: 0.75rem; text-align: left;">Candidate</th>
-                                <th style="padding: 0.75rem; text-align: left;">Message</th>
-                                <th style="padding: 0.75rem; text-align: left;">Credits</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${allMessages.map(msg => `
-                                <tr style="border-bottom: 1px solid #e5e7eb;">
-                                    <td style="padding: 0.75rem; font-size: 0.85rem;">
-                                        ${new Date(msg.created_at).toLocaleDateString()}
-                                    </td>
-                                    <td style="padding: 0.75rem; font-size: 0.85rem;">
-                                        ${msg.employer_email}
-                                    </td>
-                                    <td style="padding: 0.75rem; font-size: 0.85rem;">
-                                        ${msg.candidate_name || `ID: ${msg.candidate_id}`}
-                                    </td>
-                                    <td style="padding: 0.75rem; font-size: 0.85rem;">
-                                        ${msg.message_text.substring(0, 100)}...
-                                    </td>
-                                    <td style="padding: 0.75rem; font-size: 0.85rem;">
-                                        ${msg.is_first_message ? 
-                                            '<span style="background: #ffc107; padding: 2px 6px; border-radius: 4px;">1</span>' : 
-                                            '<span style="background: #e9ecef; padding: 2px 6px; border-radius: 4px;">0</span>'}
-                                    </td>
+            // Load messages
+            try {
+                const { data: allMessages } = await supabase
+                    .from('messages')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+                
+                if (allMessages && allMessages.length > 0) {
+                    document.getElementById('totalMessagesAdmin').textContent = allMessages.length;
+                    
+                    const messagesList = document.getElementById('adminMessagesList');
+                    messagesList.innerHTML = `
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f9fafb;">
+                                    <th style="padding: 0.75rem; text-align: left;">Date</th>
+                                    <th style="padding: 0.75rem; text-align: left;">Employer</th>
+                                    <th style="padding: 0.75rem; text-align: left;">Candidate</th>
+                                    <th style="padding: 0.75rem; text-align: left;">Message</th>
+                                    <th style="padding: 0.75rem; text-align: left;">Credits</th>
                                 </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
+                            </thead>
+                            <tbody>
+                                ${allMessages.map(msg => `
+                                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                                        <td style="padding: 0.75rem; font-size: 0.85rem;">
+                                            ${new Date(msg.created_at).toLocaleDateString()}
+                                        </td>
+                                        <td style="padding: 0.75rem; font-size: 0.85rem;">
+                                            ${msg.employer_email}
+                                        </td>
+                                        <td style="padding: 0.75rem; font-size: 0.85rem;">
+                                            ${msg.candidate_name || `ID: ${msg.candidate_id}`}
+                                        </td>
+                                        <td style="padding: 0.75rem; font-size: 0.85rem;">
+                                            ${msg.message_text.substring(0, 100)}...
+                                        </td>
+                                        <td style="padding: 0.75rem; font-size: 0.85rem;">
+                                            ${msg.is_first_message ? 
+                                                '<span style="background: #ffc107; padding: 2px 6px; border-radius: 4px;">1</span>' : 
+                                                '<span style="background: #e9ecef; padding: 2px 6px; border-radius: 4px;">0</span>'}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+            } catch (err) {
+                console.error('Error loading messages:', err);
             }
+        }
+
+        async function loadAnalytics() {
+            // Get profile views from database
+            try {
+                const { data: views } = await supabase
+                    .from('profile_views')
+                    .select('candidate_id, candidate_name');
+                
+                // Count views per candidate
+                const viewCounts = {};
+                if (views) {
+                    views.forEach(view => {
+                        if (!viewCounts[view.candidate_id]) {
+                            viewCounts[view.candidate_id] = {
+                                name: view.candidate_name,
+                                count: 0
+                            };
+                        }
+                        viewCounts[view.candidate_id].count++;
+                    });
+                }
+                
+                // Also add local views
+                Object.entries(profileViews).forEach(([id, data]) => {
+                    if (viewCounts[id]) {
+                        viewCounts[id].count += data.count;
+                    } else {
+                        viewCounts[id] = data;
+                    }
+                });
+                
+                // Sort and display most viewed
+                const sortedViews = Object.entries(viewCounts)
+                    .sort((a, b) => b[1].count - a[1].count)
+                    .slice(0, 10);
+                
+                const totalViews = Object.values(viewCounts).reduce((sum, v) => sum + v.count, 0);
+                document.getElementById('totalViews').textContent = totalViews;
+                
+                document.getElementById('mostViewedList').innerHTML = sortedViews.map((item, index) => `
+                    <li>
+                        <div style="display: flex; align-items: center;">
+                            <span class="rank-badge">#${index + 1}</span>
+                            <span>${item[1].name || `Candidate #${item[0]}`}</span>
+                        </div>
+                        <span style="color: var(--masters-green); font-weight: 600;">
+                            ${item[1].count} views
+                        </span>
+                    </li>
+                `).join('') || '<li>No data yet</li>';
+            } catch (err) {
+                console.error('Error loading analytics:', err);
+            }
+            
+            // Get message counts
+            try {
+                const { data: messages } = await supabase
+                    .from('messages')
+                    .select('candidate_id, candidate_name');
+                
+                const messageCounts = {};
+                if (messages) {
+                    messages.forEach(msg => {
+                        if (!messageCounts[msg.candidate_id]) {
+                            messageCounts[msg.candidate_id] = {
+                                name: msg.candidate_name,
+                                count: 0
+                            };
+                        }
+                        messageCounts[msg.candidate_id].count++;
+                    });
+                }
+                
+                const sortedMessages = Object.entries(messageCounts)
+                    .sort((a, b) => b[1].count - a[1].count)
+                    .slice(0, 10);
+                
+                document.getElementById('mostMessagedList').innerHTML = sortedMessages.map((item, index) => `
+                    <li>
+                        <div style="display: flex; align-items: center;">
+                            <span class="rank-badge">#${index + 1}</span>
+                            <span>${item[1].name || `Candidate #${item[0]}`}</span>
+                        </div>
+                        <span style="color: var(--masters-green); font-weight: 600;">
+                            ${item[1].count} messages
+                        </span>
+                    </li>
+                `).join('') || '<li>No messages yet</li>';
+            } catch (err) {
+                console.error('Error loading message counts:', err);
+            }
+        }
+
+        function goHome() {
+            switchView('pools');
         }
 
         // Modal close on click outside

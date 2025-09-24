@@ -4,9 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Golf Jobs - Premium Talent Pools</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="https://ik.imagekit.io/golfjobs/Golf%20Jobs%20logo%20white.png?updatedAt=1758280288759">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://ik.imagekit.io/golfjobs/Golf%20Jobs%20logo%20white.png?updatedAt=1758280288759">
+
     
     <!-- Add Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+        // Handle browser back/forward to keep view in sync
+        window.addEventListener('popstate', function(e) {
+            const v = new URL(window.location).searchParams.get('view') || 'pools';
+            switchView(v, {skipPush: true});
+        });
+    </script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1346,6 +1357,8 @@
             if (session) {
                 await loadUserData(session.user);
                 showApp();
+                // Apply initial view from URL if present
+                try { const v = new URL(window.location).searchParams.get('view'); if (v) { switchView(v, {skipPush: true}); } } catch(e) {}
             } else {
                 document.getElementById('loginScreen').style.display = 'flex';
             }
@@ -1495,22 +1508,34 @@
         }
 
         // Switch views
-        function switchView(view) {
-            document.querySelectorAll('.view-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
+        function switchView(view, options = {}) {
+            const skipPush = options.skipPush === true;
+
+            // Clear active states
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.view-section').forEach(section => section.classList.remove('active'));
             
-            document.getElementById(view + 'View').classList.add('active');
-            if (event && event.target) event.target.classList.add('active');
+            // Activate view section
+            const section = document.getElementById(view + 'View');
+            if (section) section.classList.add('active');
             
+            // Activate corresponding nav tab (even when called programmatically)
+            const tabBtn = document.querySelector(`.nav-tabs .nav-tab[onclick="switchView('${view}')"]`);
+            if (tabBtn) tabBtn.classList.add('active');
+            
+            // Existing per-view loaders
             if (view === 'pools') loadPools();
             else if (view === 'shortlist') loadShortlist();
-            else if (view === 'messages') loadMessages();
+            else if (view === 'messages') loadMessages && loadMessages();
             else if (view === 'account') loadAccount();
-            else if (view === 'admin' && userProfile?.role === 'admin') loadAdmin();
+            else if (view === 'admin' && userProfile?.role === 'admin') loadAdmin && loadAdmin();
+            
+            // Update URL ?view= param
+            if (!skipPush) {
+                const url = new URL(window.location);
+                url.searchParams.set('view', view);
+                window.history.pushState({ view }, '', url);
+            }
         }
 
         // Load pools - FIXED with proper error handling

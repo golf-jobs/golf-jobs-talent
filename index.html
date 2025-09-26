@@ -1447,16 +1447,19 @@
                 
                 if (poolAccessError) {
                     console.error('Error loading pool access:', poolAccessError);
-                    // Default to allowing access to 'all' pool if there's an error
-                    userPools = ['all'];
+                    userPools = [];
                 } else {
-                    userPools = poolAccess ? poolAccess.map(p => p.pool_id) : ['all'];
-                    console.log('User pool access:', userPools);
+                    userPools = poolAccess ? poolAccess.map(p => p.pool_id) : [];
+                    console.log('User ID:', user.id);
+                    console.log('User pool access loaded:', userPools);
+                    // If user has 'all' access, they can access everything
+                    if (userPools.includes('all')) {
+                        console.log('User has access to ALL pools');
+                    }
                 }
             } catch (err) {
                 console.error('Error loading pool access:', err);
-                // Default to allowing access to 'all' pool if there's an error
-                userPools = ['all'];
+                userPools = [];
             }
             
             await refreshShortlist();
@@ -1614,7 +1617,7 @@
                             count = result.count;
                             countError = result.error;
                         } else {
-                            // For specific pools, filter by pool_id
+                            // For specific pools, filter by pool_id matching the slug
                             const result = await supabase
                                 .from('candidates')
                                 .select('*', { count: 'exact', head: true })
@@ -1649,8 +1652,8 @@
                 poolsGrid.innerHTML = '';
                 
                 for (const pool of pools) {
-                    // Special handling for 'all' pool - always accessible
-                    const hasAccess = pool.slug === 'all' ? true : userPools.includes(pool.slug) || userPools.includes(pool.label);
+                    // Check if user has access to this pool
+                    const hasAccess = userPools.includes(pool.slug) || userPools.includes('all');
                     
                     const poolCard = document.createElement('div');
                     poolCard.className = hasAccess ? 'pool-card' : 'pool-card locked';
@@ -1663,7 +1666,7 @@
                             <div class="pool-stat">
                                 <span>Total Candidates</span>
                                 <span style="font-size: 1.25rem; font-weight: 700; color: var(--augusta-green);">
-                                    ${pool.total_candidates}
+                                    ${pool.total_candidates !== undefined ? pool.total_candidates : 'Loading...'}
                                 </span>
                             </div>
                         </div>
@@ -1734,9 +1737,14 @@
                     return;
                 }
                 
+                // Sort candidates by profile score (highest first)
                 allCandidates = (candidates || []).sort((a, b) => {
-                    return calculateProfileScore(b) - calculateProfileScore(a);
+                    const scoreA = calculateProfileScore(a);
+                    const scoreB = calculateProfileScore(b);
+                    return scoreB - scoreA; // Higher scores first
                 });
+                
+                console.log(`Loaded ${allCandidates.length} candidates for pool ${pool.label}`);
                 
                 // Populate location filter with counts
                 populateLocationFilter(allCandidates);
@@ -1855,7 +1863,13 @@
             document.getElementById('candidateCount').textContent = `Showing ${displayedCandidates.length} of ${filteredCandidates.length} candidates`;
             
             candidatesListView.innerHTML = candidates.map(candidate => {
-                const jobTitle = toTitleCase(candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`);
+                // Handle Current Job Title - convert from Float to String if needed
+                let rawJobTitle = candidate["Current Job Title"];
+                if (typeof rawJobTitle === 'number') {
+                    rawJobTitle = ''; // If it's a number (float), treat as empty
+                }
+                const jobTitle = toTitleCase(rawJobTitle || candidate["Job Title"] || `Candidate #${candidate.ID}`);
+                
                 const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
                 const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
                 const notice = formatNoticePeriod(candidate["Notice Period"]);
@@ -1888,7 +1902,7 @@
                         ${isTopPick ? '<div class="top-pick-badge" style="position: absolute; top: -8px; right: 10px;">⭐ TOP PICK</div>' : ''}
                         
                         <div style="padding-left: 2.5rem;">
-                            <h3 style="color: var(--augusta-green); margin-bottom: 0.25rem; font-size: 1.1rem;">${jobTitle}</h3>
+                            <h3 style="color: var(--augusta-green); margin-bottom: 0.25rem; font-size: 1.1rem; font-weight: 600;">${jobTitle}</h3>
                             <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 0.5rem;">${location}</p>
                             
                             ${summaryPreview ? `
@@ -1918,8 +1932,14 @@
                 document.body.classList.add('mobile-profile-active');
             }
             
+            // Handle Current Job Title - convert from Float to String if needed
+            let rawJobTitle = candidate["Current Job Title"];
+            if (typeof rawJobTitle === 'number') {
+                rawJobTitle = ''; // If it's a number (float), treat as empty
+            }
+            const candidateName = toTitleCase(rawJobTitle || candidate["Job Title"] || `Candidate #${candidate.ID}`);
+            
             // Track profile view
-            const candidateName = toTitleCase(candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`);
             trackProfileView(candidate.ID, candidateName);
             
             // Highlight selected item in list

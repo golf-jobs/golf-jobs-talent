@@ -996,6 +996,24 @@
                            style="width: 100%; padding: 0.875rem; border: 2px solid #e1e8e4; border-radius: 12px; font-size: 1rem; margin-bottom: 1rem;">
                     
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-start;">
+                        <select id="locationFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
+                            <option value="">All Locations</option>
+                        </select>
+                        
+                        <select id="categoryFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
+                            <option value="">All Categories</option>
+                            <option value="greenkeeping">Greenkeeping</option>
+                            <option value="management">Management</option>
+                            <option value="pga">PGA Professional</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="sales">Sales</option>
+                            <option value="hospitality">Hospitality</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="admin">Admin/Office</option>
+                            <option value="retail">Retail/Pro Shop</option>
+                            <option value="f&b">F&B/Catering</option>
+                        </select>
+                        
                         <select id="salaryFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
                             <option value="">All Salaries</option>
                             <option value="0-30000">£20-30k</option>
@@ -1538,7 +1556,7 @@
             }
         }
 
-        // Load pools - FIXED with proper error handling
+        // Load pools - FIXED with proper error handling and correct field names
         async function loadPools() {
             console.log('Starting loadPools...');
             const poolsGrid = document.getElementById('poolsGrid');
@@ -1550,8 +1568,9 @@
             
             try {
                 const { data: pools, error: poolsError } = await supabase
-                    .from('talent_pools').select('slug, label, sort_order')
-  .order('sort_order', { ascending: true });
+                    .from('talent_pools')
+                    .select('id, slug, label, sort_order')
+                    .order('sort_order', { ascending: true });
                 
                 console.log('Pools query result:', { pools, poolsError });
                 
@@ -1619,7 +1638,7 @@
                     poolCard.className = hasAccess ? 'pool-card' : 'pool-card locked';
                     poolCard.innerHTML = `
                         <div class="pool-header">
-                            <div class="pool-title">${pool.name}</div>
+                            <div class="pool-title">${pool.label}</div>
                             <div class="pool-badge">${hasAccess ? 'Available' : 'Locked'}</div>
                         </div>
                         <div class="pool-stats">
@@ -1653,11 +1672,11 @@
             }
         }
 
-        // Open pool - FIXED
+        // Open pool - FIXED with location filter and categorization
         async function openPool(pool) {
             currentPool = pool;
             currentPage = 0;
-            document.getElementById('currentPoolName').textContent = pool.name;
+            document.getElementById('currentPoolName').textContent = pool.label;
             
             const candidatesListView = document.getElementById('candidatesListView');
             candidatesListView.innerHTML = `
@@ -1687,6 +1706,12 @@
                     return calculateProfileScore(b) - calculateProfileScore(a);
                 });
                 
+                // Populate location filter with counts
+                populateLocationFilter(allCandidates);
+                
+                // Categorize candidates for category filter
+                categorizeCandidates(allCandidates);
+                
                 filteredCandidates = [...allCandidates];
                 displayCandidatesPage();
                 
@@ -1702,6 +1727,67 @@
             
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.getElementById('poolDetailView').classList.add('active');
+        }
+        
+        // Populate location filter with counts
+        function populateLocationFilter(candidates) {
+            const locationCounts = {};
+            
+            candidates.forEach(candidate => {
+                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+                if (!locationCounts[location]) {
+                    locationCounts[location] = 0;
+                }
+                locationCounts[location]++;
+            });
+            
+            // Sort locations alphabetically, with "Location Not Specified" at the end
+            const sortedLocations = Object.entries(locationCounts).sort((a, b) => {
+                if (a[0] === 'Location Not Specified') return 1;
+                if (b[0] === 'Location Not Specified') return -1;
+                return a[0].localeCompare(b[0]);
+            });
+            
+            const locationFilter = document.getElementById('locationFilter');
+            locationFilter.innerHTML = `<option value="">All Locations</option>`;
+            
+            sortedLocations.forEach(([location, count]) => {
+                const option = document.createElement('option');
+                option.value = location;
+                option.textContent = `${location} (${count})`;
+                locationFilter.appendChild(option);
+            });
+        }
+        
+        // Categorize candidates based on job titles and skills
+        function categorizeCandidates(candidates) {
+            const categoryKeywords = {
+                'greenkeeping': ['greenkeeper', 'greens', 'course manager', 'turf', 'agronomist', 'irrigation'],
+                'management': ['manager', 'director', 'head', 'chief', 'ceo', 'coo', 'cfo', 'general manager'],
+                'pga': ['pga', 'professional', 'golf professional', 'head pro', 'assistant pro', 'teaching'],
+                'marketing': ['marketing', 'social media', 'digital', 'communications', 'brand', 'advertising'],
+                'sales': ['sales', 'business development', 'account manager', 'commercial'],
+                'hospitality': ['hospitality', 'events', 'wedding', 'conference', 'guest'],
+                'maintenance': ['maintenance', 'mechanic', 'technician', 'engineer', 'equipment'],
+                'admin': ['admin', 'administrator', 'office', 'reception', 'secretary', 'clerk'],
+                'retail': ['retail', 'shop', 'pro shop', 'merchandise'],
+                'f&b': ['food', 'beverage', 'chef', 'catering', 'kitchen', 'restaurant', 'bar', 'waitress', 'waiter']
+            };
+            
+            candidates.forEach(candidate => {
+                const jobTitle = (candidate["Current Job Title"] || candidate["Job Title"] || '').toLowerCase();
+                const skills = (candidate["Your Skills"] || '').toLowerCase();
+                const combinedText = jobTitle + ' ' + skills;
+                
+                candidate.category = 'other';
+                
+                for (const [category, keywords] of Object.entries(categoryKeywords)) {
+                    if (keywords.some(keyword => combinedText.includes(keyword))) {
+                        candidate.category = category;
+                        break;
+                    }
+                }
+            });
         }
 
         // Display candidates
@@ -1751,7 +1837,7 @@
                 const about = candidate["About You"] || candidate.Summary || '';
                 const summaryPreview = about.substring(0, 150) + (about.length > 150 ? '...' : '');
                 
-                const clickHandler = `viewCandidateProfile(${JSON.stringify(candidate).replace(/'/g, "&apos;")})`;
+                const clickHandler = `viewCandidateProfile(${JSON.stringify(candidate).replace(/'/g, "&apos;").replace(/"/g, "&quot;")})`;
                 
                 return `
                     <div class="candidate-list-item ${isSelected ? 'selected' : ''}" 
@@ -1801,7 +1887,7 @@
             }
             
             // Track profile view
-            const candidateName = candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`;
+            const candidateName = toTitleCase(candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`);
             trackProfileView(candidate.ID, candidateName);
             
             // Highlight selected item in list
@@ -1815,7 +1901,7 @@
                 selectedCard.style.borderColor = 'var(--masters-green)';
             }
             
-            const jobTitle = toTitleCase(candidateName);
+            const jobTitle = candidateName;
             const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
             const about = candidate["About You"] || 'No summary provided';
             const skills = candidate["Your Skills"] || '';
@@ -1939,7 +2025,7 @@
                 searchInput.addEventListener('input', debounce(applyFilters, 300));
             }
             
-            ['salaryFilter', 'noticeFilter', 'lookingFilter'].forEach(id => {
+            ['locationFilter', 'categoryFilter', 'salaryFilter', 'noticeFilter', 'lookingFilter'].forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
                     element.addEventListener('change', applyFilters);
@@ -1957,6 +2043,8 @@
 
         function applyFilters() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const locationFilter = document.getElementById('locationFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
             const salaryFilter = document.getElementById('salaryFilter').value;
             const noticeFilter = document.getElementById('noticeFilter').value;
             const lookingFilter = document.getElementById('lookingFilter').value;
@@ -1970,6 +2058,17 @@
                     (c["Your Skills"] || '').toLowerCase().includes(searchTerm) ||
                     (c["About You"] || '').toLowerCase().includes(searchTerm)
                 );
+            }
+            
+            if (locationFilter) {
+                filtered = filtered.filter(c => {
+                    const location = cleanAndFormatLocation(c["Town/City"], c.Country);
+                    return location === locationFilter;
+                });
+            }
+            
+            if (categoryFilter) {
+                filtered = filtered.filter(c => c.category === categoryFilter);
             }
             
             if (salaryFilter) {
@@ -2035,6 +2134,8 @@
 
         function clearFilters() {
             document.getElementById('searchInput').value = '';
+            document.getElementById('locationFilter').value = '';
+            document.getElementById('categoryFilter').value = '';
             document.getElementById('salaryFilter').value = '';
             document.getElementById('noticeFilter').value = '';
             document.getElementById('lookingFilter').value = '';
@@ -2080,10 +2181,10 @@
             currentCandidate = candidate;
             
             // Track profile view
-            const candidateName = candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`;
+            const candidateName = toTitleCase(candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`);
             await trackProfileView(candidate.ID, candidateName);
             
-            const jobTitle = toTitleCase(candidateName);
+            const jobTitle = candidateName;
             const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
             const about = candidate["About You"] || 'No summary provided';
             const skills = candidate["Your Skills"] || '';
@@ -2098,14 +2199,12 @@
             const previousMessagesDiv = document.getElementById('previousMessages');
             if (hasConversation) {
                 previousMessagesDiv.style.display = 'block';
-                const _msgs = (conversations[candidate.ID] && conversations[candidate.ID].messages) ? conversations[candidate.ID].messages : [];
-                const _html = _msgs.map(function(msg){
-                    var cls = (msg && msg.from === 'employer') ? 'sent' : 'received';
-                    var time = (msg && msg.timestamp) ? new Date(msg.timestamp).toLocaleString() : '';
-                    var text = (msg && msg.text) ? String(msg.text) : '';
-                    return '<div class="message ' + cls + '">' + text + '<div class="message-time">' + time + '</div></div>';
-                }).join('');
-                previousMessagesDiv.innerHTML = _html;
+                previousMessagesDiv.innerHTML = conversations[candidate.ID].messages.map(msg => `
+                    <div class="message ${msg.from === 'employer' ? 'sent' : 'received'}">
+                        ${msg.text}
+                        <div class="message-time">${new Date(msg.timestamp).toLocaleString()}</div>
+                    </div>
+                `).join('');
             } else {
                 previousMessagesDiv.style.display = 'none';
             }
@@ -2230,7 +2329,7 @@
             if (!conversations[currentCandidate.ID]) {
                 conversations[currentCandidate.ID] = {
                     candidateId: currentCandidate.ID,
-                    candidateName: currentCandidate["Current Job Title"] || currentCandidate.Name,
+                    candidateName: toTitleCase(currentCandidate["Current Job Title"] || currentCandidate["Job Title"] || `Candidate #${currentCandidate.ID}`),
                     messages: []
                 };
             }
@@ -2250,7 +2349,7 @@
                     employer_id: currentUser.id,
                     employer_email: currentUser.email,
                     candidate_id: currentCandidate.ID,
-                    candidate_name: currentCandidate["Current Job Title"] || currentCandidate.Name,
+                    candidate_name: toTitleCase(currentCandidate["Current Job Title"] || currentCandidate["Job Title"] || `Candidate #${currentCandidate.ID}`),
                     message_text: messageText,
                     is_first_message: isFirstMessage,
                     credit_used: isFirstMessage ? 1 : 0,
@@ -2442,7 +2541,7 @@
             shortlist.forEach(item => {
                 const c = item.candidates;
                 if (c) {
-                    const jobTitle = c["Current Job Title"] || c["Job Title"] || '';
+                    const jobTitle = toTitleCase(c["Current Job Title"] || c["Job Title"] || '');
                     const location = cleanAndFormatLocation(c["Town/City"], c.Country);
                     const salary = c["What are your salary expectations?"] || 'Negotiable';
                     const notice = c["Notice Period"] || 'Unknown';

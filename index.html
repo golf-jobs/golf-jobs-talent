@@ -1539,7 +1539,20 @@
         }
 
         // Load pools - FIXED with proper error handling
-        async function loadPools() {
+        
+    // --- Slug helpers for pool matching (array-based pool_id) ---
+    function toSlug(name) {
+      return String(name || '')
+        .trim()
+        .toLowerCase()
+        .replace(/&/g, 'and')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+    function poolSlug(pool) {
+      return pool?.slug || toSlug(pool?.name || pool?.label || '');
+    }
+    async function loadPools() {
             console.log('Starting loadPools...');
             const poolsGrid = document.getElementById('poolsGrid');
             poolsGrid.innerHTML = `
@@ -1585,7 +1598,7 @@
                         const { count, error: countError } = await supabase
                             .from('candidates')
                             .select('*', { count: 'exact', head: true })
-                            .eq('pool_id', pool.id);
+                            .contains('pool_id', [poolSlug(pool)]);
                         
                         console.log(`Count for pool ${pool.id}:`, { count, countError });
                         
@@ -1613,7 +1626,7 @@
                 poolsGrid.innerHTML = '';
                 
                 for (const pool of pools) {
-                    const hasAccess = userPools.includes(pool.id);
+                    const hasAccess = userPools.includes(poolSlug(pool));
                     
                     const poolCard = document.createElement('div');
                     poolCard.className = hasAccess ? 'pool-card' : 'pool-card locked';
@@ -1670,7 +1683,7 @@
                 const { data: candidates, error } = await supabase
                     .from('candidates')
                     .select('*')
-                    .eq('pool_id', pool.id);
+                    .contains('pool_id', [poolSlug(pool)]);
                 
                 if (error) {
                     console.error('Error loading candidates:', error);

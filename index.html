@@ -1539,20 +1539,7 @@
         }
 
         // Load pools - FIXED with proper error handling
-        
-    // --- Slug helpers for pool matching (array-based pool_id) ---
-    function toSlug(name) {
-      return String(name || '')
-        .trim()
-        .toLowerCase()
-        .replace(/&/g, 'and')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-    }
-    function poolSlug(pool) {
-      return pool?.slug || toSlug(pool?.name || pool?.label || '');
-    }
-    async function loadPools() {
+        async function loadPools() {
             console.log('Starting loadPools...');
             const poolsGrid = document.getElementById('poolsGrid');
             poolsGrid.innerHTML = `
@@ -1563,8 +1550,8 @@
             
             try {
                 const { data: pools, error: poolsError } = await supabase
-                    .from('talent_pools')
-                    .select('*');
+                    .from('talent_pools').select('slug, label, sort_order')
+  .order('sort_order', { ascending: true });
                 
                 console.log('Pools query result:', { pools, poolsError });
                 
@@ -1598,7 +1585,7 @@
                         const { count, error: countError } = await supabase
                             .from('candidates')
                             .select('*', { count: 'exact', head: true })
-                            .contains('pool_id', [poolSlug(pool)]);
+                            .eq('pool_id', pool.id);
                         
                         console.log(`Count for pool ${pool.id}:`, { count, countError });
                         
@@ -1626,7 +1613,7 @@
                 poolsGrid.innerHTML = '';
                 
                 for (const pool of pools) {
-                    const hasAccess = userPools.includes(poolSlug(pool));
+                    const hasAccess = userPools.includes(pool.id);
                     
                     const poolCard = document.createElement('div');
                     poolCard.className = hasAccess ? 'pool-card' : 'pool-card locked';
@@ -1683,7 +1670,7 @@
                 const { data: candidates, error } = await supabase
                     .from('candidates')
                     .select('*')
-                    .contains('pool_id', [poolSlug(pool)]);
+                    .eq('pool_id', pool.id);
                 
                 if (error) {
                     console.error('Error loading candidates:', error);

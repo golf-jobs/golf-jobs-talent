@@ -1447,13 +1447,16 @@
                 
                 if (poolAccessError) {
                     console.error('Error loading pool access:', poolAccessError);
-                    userPools = [];
+                    // Default to allowing access to 'all' pool if there's an error
+                    userPools = ['all'];
                 } else {
-                    userPools = poolAccess ? poolAccess.map(p => p.pool_id) : [];
+                    userPools = poolAccess ? poolAccess.map(p => p.pool_id) : ['all'];
+                    console.log('User pool access:', userPools);
                 }
             } catch (err) {
                 console.error('Error loading pool access:', err);
-                userPools = [];
+                // Default to allowing access to 'all' pool if there's an error
+                userPools = ['all'];
             }
             
             await refreshShortlist();
@@ -1601,22 +1604,36 @@
                 // Try to get candidate counts, but don't fail if we can't
                 for (let pool of pools) {
                     try {
-                        const { count, error: countError } = await supabase
-                            .from('candidates')
-                            .select('*', { count: 'exact', head: true })
-                            .eq('pool_id', pool.slug);
+                        let count, countError;
+                        
+                        // Special handling for 'all' pool - count all candidates
+                        if (pool.slug === 'all') {
+                            const result = await supabase
+                                .from('candidates')
+                                .select('*', { count: 'exact', head: true });
+                            count = result.count;
+                            countError = result.error;
+                        } else {
+                            // For specific pools, filter by pool_id
+                            const result = await supabase
+                                .from('candidates')
+                                .select('*', { count: 'exact', head: true })
+                                .eq('pool_id', pool.slug);
+                            count = result.count;
+                            countError = result.error;
+                        }
                         
                         console.log(`Count for pool ${pool.slug}:`, { count, countError });
                         
                         if (countError) {
                             console.warn(`Could not count candidates for pool ${pool.slug}:`, countError);
-                            pool.total_candidates = 'N/A';
+                            pool.total_candidates = 0;
                         } else {
                             pool.total_candidates = count || 0;
                         }
                     } catch (err) {
                         console.warn(`Error counting candidates for pool ${pool.slug}:`, err);
-                        pool.total_candidates = 'N/A';
+                        pool.total_candidates = 0;
                     }
                 }
                 
@@ -1632,7 +1649,8 @@
                 poolsGrid.innerHTML = '';
                 
                 for (const pool of pools) {
-                    const hasAccess = userPools.includes(pool.id);
+                    // Special handling for 'all' pool - always accessible
+                    const hasAccess = pool.slug === 'all' ? true : userPools.includes(pool.slug) || userPools.includes(pool.label);
                     
                     const poolCard = document.createElement('div');
                     poolCard.className = hasAccess ? 'pool-card' : 'pool-card locked';
@@ -1686,10 +1704,24 @@
             `;
             
             try {
-                const { data: candidates, error } = await supabase
-                    .from('candidates')
-                    .select('*')
-                    .eq('pool_id', pool.id);
+                let candidates, error;
+                
+                // Special handling for 'all' pool - load all candidates
+                if (pool.slug === 'all') {
+                    const result = await supabase
+                        .from('candidates')
+                        .select('*');
+                    candidates = result.data;
+                    error = result.error;
+                } else {
+                    // For specific pools, filter by pool_id
+                    const result = await supabase
+                        .from('candidates')
+                        .select('*')
+                        .eq('pool_id', pool.slug);
+                    candidates = result.data;
+                    error = result.error;
+                }
                 
                 if (error) {
                     console.error('Error loading candidates:', error);

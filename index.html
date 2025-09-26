@@ -1569,7 +1569,7 @@
             try {
                 const { data: pools, error: poolsError } = await supabase
                     .from('talent_pools')
-                    .select('id, slug, label, sort_order')
+                    .select('slug, label, sort_order')
                     .order('sort_order', { ascending: true });
                 
                 console.log('Pools query result:', { pools, poolsError });
@@ -1604,18 +1604,18 @@
                         const { count, error: countError } = await supabase
                             .from('candidates')
                             .select('*', { count: 'exact', head: true })
-                            .eq('pool_id', pool.id);
+                            .eq('pool_id', pool.slug);
                         
-                        console.log(`Count for pool ${pool.id}:`, { count, countError });
+                        console.log(`Count for pool ${pool.slug}:`, { count, countError });
                         
                         if (countError) {
-                            console.warn(`Could not count candidates for pool ${pool.id}:`, countError);
+                            console.warn(`Could not count candidates for pool ${pool.slug}:`, countError);
                             pool.total_candidates = 'N/A';
                         } else {
                             pool.total_candidates = count || 0;
                         }
                     } catch (err) {
-                        console.warn(`Error counting candidates for pool ${pool.id}:`, err);
+                        console.warn(`Error counting candidates for pool ${pool.slug}:`, err);
                         pool.total_candidates = 'N/A';
                     }
                 }

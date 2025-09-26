@@ -1021,6 +1021,14 @@
                             <option value="NO">Not Actively Looking</option>
                         </select>
                         
+                        <select id="locationFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
+                            <option value="">All Locations</option>
+                        </select>
+                        
+                        <select id="categoryFilter" style="padding: 0.5rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 0.95rem;">
+                            <option value="">All Categories</option>
+                        </select>
+                        
                         <button onclick="clearFilters()" class="btn btn-small" style="background: #e5e7eb; color: var(--rough-gray);">
                             Clear All
                         </button>
@@ -1269,7 +1277,67 @@
             }).join('');
         }
 
-        function cleanAndFormatLocation(townCity, country) {
+        
+        function getJobTitle(c){
+            return c["Current Job Title"] || c["Job Title"] || c.current_job_title || c.job_title || null;
+        }
+
+        // Category rules & helpers
+        const CATEGORY_RULES = [
+          { key:'Greenkeeping', rx:/(^|\b)(greenkeeper|green keeping|greenkeeping|deputy head greenkeeper|head greenkeeper|course manager|course maintenance|greens team)(\b|$)/i },
+          { key:'Club Management', rx:/(^|\b)(general manager|club manager|deputy manager|operations manager|director of golf|head of golf operations|club secretary)(\b|$)/i },
+          { key:'Golf Operations', rx:/(^|\b)(golf operations|ops assistant|starter|marshal|ranger|membership coordinator|receptionist)(\b|$)/i },
+          { key:'PGA Professional', rx:/(^|\b)(pga|golf professional|club professional|head pro|assistant pro|teaching professional|academy coach)(\b|$)/i },
+          { key:'Coaching', rx:/(^|\b)(coach|coaching|instructor|swing coach|junior coach|performance coach)(\b|$)/i },
+          { key:'Retail / Pro Shop', rx:/(^|\b)(retail|pro shop|shop manager|merchandiser|merchandising|sales assistant|custom fitter|club fitter)(\b|$)/i },
+          { key:'Marketing', rx:/(^|\b)(marketing|brand|social media|content|copywriter|videographer|seo|ppc|crm|email|digital marketer|growth marketer)(\b|$)/i },
+          { key:'Sales / Commercial', rx:/(^|\b)(sales|business development|bdm|partnerships|account manager|sponsorship|commercial manager)(\b|$)/i },
+          { key:'Events / Hospitality', rx:/(^|\b)(events|event|hospitality|f&b|food|beverage|banqueting|weddings|functions|bar manager|restaurant manager)(\b|$)/i },
+          { key:'Finance / Admin', rx:/(^|\b)(finance|bookkeeper|accounts|payroll|administrator|admin|hr|human resources)(\b|$)/i },
+          { key:'Course / Facilities', rx:/(^|\b)(course maintenance|mechanic|greens mechanic|facilities|estates|grounds|irrigation|machinery)(\b|$)/i },
+          { key:'IT / Data', rx:/(^|\b)(it|systems|data|analyst|bi|business intelligence|web developer)(\b|$)/i },
+          { key:'Other', rx:/.*/i }
+        ];
+
+        function detectCategory(c){
+            const text = [
+              getJobTitle(c) || '',
+              c["Your Skills"] || c.skills || '',
+              c["About You"] || c.Summary || ''
+            ].join(' ').toLowerCase();
+            const rule = CATEGORY_RULES.find(r => r.rx.test(text));
+            return rule ? rule.key : 'Other';
+        }
+
+        function buildLocationOptions(cands){
+            const counts = {};
+            for (const c of cands){
+                const town = (c["Town/City"] || c.town_city || '').trim();
+                const key = town ? toTitleCase(town) : 'Unknown';
+                counts[key] = (counts[key] || 0) + 1;
+            }
+            const entries = Object.entries(counts).sort((a,b)=>{
+                if (a[0]==='Unknown') return 1;
+                if (b[0]==='Unknown') return -1;
+                return a[0].localeCompare(b[0]);
+            });
+            const sel = document.getElementById('locationFilter');
+            if (!sel) return;
+            sel.innerHTML = '<option value="">All Locations</option>' + entries.map(([loc,cnt])=>`<option value="${loc}">${loc} (${cnt})</option>`).join('');
+        }
+
+        function buildCategoryOptions(cands){
+            const counts = {};
+            for (const c of cands){
+                const cat = detectCategory(c);
+                counts[cat] = (counts[cat] || 0) + 1;
+            }
+            const entries = Object.entries(counts).sort((a,b)=>a[0].localeCompare(b[0]));
+            const sel = document.getElementById('categoryFilter');
+            if (!sel) return;
+            sel.innerHTML = '<option value="">All Categories</option>' + entries.map(([cat,cnt])=>`<option value="${cat}">${cat} (${cnt})</option>`).join('');
+        }
+function cleanAndFormatLocation(townCity, country) {
             const excludeTerms = ['England', 'United Kingdom', 'UK', 'Scotland', 'Wales', 'Northern Ireland'];
             
             let cleanedTown = townCity ? townCity.trim() : '';
@@ -1305,26 +1373,35 @@
             return notice + ' notice';
         }
 
-        function calculateProfileScore(candidate) {
+        
+        function calculateProfileScore(candidate){
             let score = 0;
-            let maxScore = 100;
-            
-            const aboutYou = candidate["About You"] || '';
-            if (aboutYou.length > 200) score += 30;
-            else if (aboutYou.length > 100) score += 20;
-            else if (aboutYou.length > 50) score += 10;
-            
-            const skills = candidate["Your Skills"] || '';
-            if (skills.length > 100) score += 20;
-            else if (skills.length > 50) score += 15;
-            else if (skills.length > 20) score += 10;
-            
-            if (candidate["Current Job Title"] || candidate["Job Title"]) score += 10;
-            if (candidate["What are your salary expectations?"]) score += 10;
-            if (candidate["Notice Period"]) score += 10;
-            if (candidate["Town/City"]) score += 5;
-            
-            return Math.min((score / maxScore) * 100, 100);
+
+            if (getJobTitle(candidate)) score += 30; // Job title
+
+            const town = (candidate["Town/City"] || candidate.town_city || '').trim();
+            if (town) score += 10; // Town/City
+
+            const about = (candidate["About You"] || candidate.Summary || '').trim();
+            if (about.length > 200) score += 25;
+            else if (about.length > 100) score += 15;
+            else if (about.length > 50) score += 8;
+
+            const skills = (candidate["Your Skills"] || candidate.skills || '').trim();
+            if (skills.length > 100) score += 15;
+            else if (skills.length > 50) score += 10;
+            else if (skills.length > 20) score += 5;
+
+            const looking = (candidate["Actively looking for work"] || candidate.actively_looking_for_work || '').toString().toUpperCase();
+            const notice = (candidate["Notice Period"] || candidate.notice_period || '').toLowerCase();
+            if (looking === 'YES' || notice.includes('immed')) score += 10; // Availability
+
+            if (notice) score += 5; // Notice present
+
+            const sal = candidate["What are your salary expectations?"];
+            if (sal && !isNaN(parseFloat(sal))) score += 5; // Salary present
+
+            return Math.min(100, score);
         }
 
         // Track profile view
@@ -1550,7 +1627,7 @@
             
             try {
                 const { data: pools, error: poolsError } = await supabase
-                    .from('talent_pools').select('slug, label, sort_order')
+                    .from('talent_pools').select('id, name, slug, label, sort_order')
   .order('sort_order', { ascending: true });
                 
                 console.log('Pools query result:', { pools, poolsError });
@@ -1687,6 +1764,8 @@
                     return calculateProfileScore(b) - calculateProfileScore(a);
                 });
                 
+                buildLocationOptions(allCandidates);
+                buildCategoryOptions(allCandidates);
                 filteredCandidates = [...allCandidates];
                 displayCandidatesPage();
                 
@@ -1801,7 +1880,7 @@
             }
             
             // Track profile view
-            const candidateName = candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`;
+            const candidateName = getJobTitle(candidate) || `Candidate #${candidate.ID}`;
             trackProfileView(candidate.ID, candidateName);
             
             // Highlight selected item in list
@@ -1815,7 +1894,7 @@
                 selectedCard.style.borderColor = 'var(--masters-green)';
             }
             
-            const jobTitle = toTitleCase(candidateName);
+            const jobTitle = toTitleCase(candidateName); // uses getJobTitle fallback
             const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
             const about = candidate["About You"] || 'No summary provided';
             const skills = candidate["Your Skills"] || '';
@@ -1939,7 +2018,7 @@
                 searchInput.addEventListener('input', debounce(applyFilters, 300));
             }
             
-            ['salaryFilter', 'noticeFilter', 'lookingFilter'].forEach(id => {
+            ['salaryFilter','noticeFilter','lookingFilter','locationFilter','categoryFilter'].forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
                     element.addEventListener('change', applyFilters);
@@ -1955,104 +2034,71 @@
             }
         }
 
-        function applyFilters() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const salaryFilter = document.getElementById('salaryFilter').value;
-            const noticeFilter = document.getElementById('noticeFilter').value;
-            const lookingFilter = document.getElementById('lookingFilter').value;
-            
-            let filtered = [...allCandidates];
-            
-            if (searchTerm) {
-                filtered = filtered.filter(c => 
-                    (c["Current Job Title"] || '').toLowerCase().includes(searchTerm) ||
-                    (c["Town/City"] || '').toLowerCase().includes(searchTerm) ||
-                    (c["Your Skills"] || '').toLowerCase().includes(searchTerm) ||
-                    (c["About You"] || '').toLowerCase().includes(searchTerm)
-                );
-            }
-            
-            if (salaryFilter) {
-                filtered = filtered.filter(c => {
-                    const salary = parseFloat(c["What are your salary expectations?"]) || 0;
-                    if (salaryFilter === '70000+') return salary >= 70000;
-                    const [min, max] = salaryFilter.split('-').map(Number);
-                    return salary >= min && salary <= max;
-                });
-            }
-            
-            if (noticeFilter) {
-                filtered = filtered.filter(c => {
-                    const notice = (c["Notice Period"] || '').toLowerCase();
-                    return notice.includes(noticeFilter.toLowerCase());
-                });
-            }
-            
-            if (lookingFilter) {
-                filtered = filtered.filter(c => 
-                    (c["Actively looking for work"] || '').toUpperCase() === lookingFilter
-                );
-            }
-            
-            filteredCandidates = filtered;
-            currentPage = 0;
-            displayCandidatesPage();
-        }
+        
+function applyFilters() {
+    const q = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
+    const salarySel = document.getElementById('salaryFilter')?.value || '';
+    const noticeSel = (document.getElementById('noticeFilter')?.value || '').toLowerCase();
+    const lookingSel = document.getElementById('lookingFilter')?.value || '';
+    const locSel = document.getElementById('locationFilter')?.value || '';
+    const catSel = document.getElementById('categoryFilter')?.value || '';
 
-        function applySort() {
-            const sortValue = document.getElementById('sortSelect').value;
-            
-            switch (sortValue) {
-                case 'relevance':
-                    filteredCandidates.sort((a, b) => calculateProfileScore(b) - calculateProfileScore(a));
-                    break;
-                case 'newest':
-                    filteredCandidates.sort((a, b) => {
-                        const dateA = new Date(a.created_at || 0);
-                        const dateB = new Date(b.created_at || 0);
-                        return dateB - dateA;
-                    });
-                    break;
-                case 'salary-high':
-                    filteredCandidates.sort((a, b) => {
-                        const salaryA = parseFloat(a["What are your salary expectations?"]) || 0;
-                        const salaryB = parseFloat(b["What are your salary expectations?"]) || 0;
-                        return salaryB - salaryA;
-                    });
-                    break;
-                case 'salary-low':
-                    filteredCandidates.sort((a, b) => {
-                        const salaryA = parseFloat(a["What are your salary expectations?"]) || 0;
-                        const salaryB = parseFloat(b["What are your salary expectations?"]) || 0;
-                        return salaryA - salaryB;
-                    });
-                    break;
-            }
-            
-            currentPage = 0;
-            displayCandidatesPage();
-        }
+    let filtered = [...allCandidates];
 
-        function clearFilters() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('salaryFilter').value = '';
-            document.getElementById('noticeFilter').value = '';
-            document.getElementById('lookingFilter').value = '';
-            filteredCandidates = [...allCandidates];
-            currentPage = 0;
-            displayCandidatesPage();
-        }
+    if (q) {
+        filtered = filtered.filter(c => {
+            const hay = [
+              getJobTitle(c) || '',
+              c["Your Skills"] || c.skills || '',
+              c["About You"] || c.Summary || '',
+              c["Town/City"] || c.town_city || '',
+              c.Country || ''
+            ].join(' ').toLowerCase();
+            return hay.includes(q);
+        });
+    }
 
-        // Selection
-        function toggleCandidateSelection(candidateId) {
-            if (selectedCandidates.has(candidateId)) {
-                selectedCandidates.delete(candidateId);
-                document.getElementById(`card-${candidateId}`).classList.remove('selected');
-            } else {
-                selectedCandidates.add(candidateId);
-                document.getElementById(`card-${candidateId}`).classList.add('selected');
-            }
-        }
+    if (salarySel) {
+        filtered = filtered.filter(c => {
+            const salary = parseFloat(c["What are your salary expectations?"]) || 0;
+            if (salarySel === '70000+') return salary >= 70000;
+            const [min, max] = salarySel.split('-').map(Number);
+            return salary >= (min||0) && salary < (max||Infinity);
+        });
+    }
+
+    if (noticeSel) {
+        filtered = filtered.filter(c => {
+            const n = (c["Notice Period"] || c.notice_period || '').toLowerCase();
+            if (noticeSel === 'immediately') return n.includes('immed');
+            return n.includes(noticeSel);
+        });
+    }
+
+    if (lookingSel) {
+        filtered = filtered.filter(c => {
+            const flag = (c["Actively looking for work"] || c.actively_looking_for_work || '').toString().toUpperCase();
+            return flag === lookingSel;
+        });
+    }
+
+    if (locSel) {
+        filtered = filtered.filter(c => {
+            const town = toTitleCase((c["Town/City"] || c.town_city || '').trim());
+            const resolved = town || 'Unknown';
+            return resolved === locSel;
+        });
+    }
+
+    if (catSel) {
+        filtered = filtered.filter(c => detectCategory(c) === catSel);
+    }
+
+    filteredCandidates = filtered;
+    currentPage = 0;
+    applySort();
+}
+}
 
         function selectAll() {
             displayedCandidates.forEach(candidate => {
@@ -2080,10 +2126,10 @@
             currentCandidate = candidate;
             
             // Track profile view
-            const candidateName = candidate["Current Job Title"] || candidate["Job Title"] || `Candidate #${candidate.ID}`;
+            const candidateName = getJobTitle(candidate) || `Candidate #${candidate.ID}`;
             await trackProfileView(candidate.ID, candidateName);
             
-            const jobTitle = toTitleCase(candidateName);
+            const jobTitle = toTitleCase(candidateName); // uses getJobTitle fallback
             const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
             const about = candidate["About You"] || 'No summary provided';
             const skills = candidate["Your Skills"] || '';

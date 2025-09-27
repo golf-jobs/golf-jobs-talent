@@ -10,7 +10,24 @@
     <link rel="apple-touch-icon" sizes="180x180" href="https://ik.imagekit.io/golfjobs/Golf%20Jobs%20logo%20white.png?updatedAt=1758280288759">
 
     <!-- Add Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+/* CANDIDATE_NAME_HELPERS_INSERTED */
+
+// === Name helpers (Title Case job title, else Candidate #ID) ===
+function toTitleCase(str) {
+  return String(str)
+    .toLowerCase()
+    .replace(/(^|[^A-Za-z'])([A-Za-z])/g, function(_, b, ch){ return b + ch.toUpperCase(); })
+    .replace(/\b(PGA|F&B|UK|USA|US)\b/gi, function(s){ return s.toUpperCase(); });
+}
+function getJobTitle(c) {
+  return c["Current Job Title"] || c["Job Title"] || c.current_job_title || c.job_title || "";
+}
+function candidateDisplayName(c) {
+  const t = (getJobTitle(c) || "").trim();
+  return t ? toTitleCase(t) : `Candidate #${c["ID"]}`;
+}
+</script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1261,7 +1278,7 @@
                             const { count } = await supabase
                                 .from('candidates')
                                 .select('*', { count: 'exact', head: true })
-                                .eq('pool_id', pool.slug);
+                                .contains('pool_id', [pool.slug]);
                             pool.total_candidates = count || 0;
                         }
                         console.log(`Pool ${pool.slug} has ${pool.total_candidates} candidates`);
@@ -1337,7 +1354,7 @@
                     const result = await supabase
                         .from('candidates')
                         .select('*')
-                        .eq('pool_id', pool.slug);
+                        .contains('pool_id', [pool.slug]);
                     candidates = result.data;
                     error = result.error;
                 }

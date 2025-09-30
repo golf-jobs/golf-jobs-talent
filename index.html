@@ -10,24 +10,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="https://ik.imagekit.io/golfjobs/Golf%20Jobs%20logo%20white.png?updatedAt=1758280288759">
 
     <!-- Add Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-/* CANDIDATE_NAME_HELPERS_INSERTED */
-
-// === Name helpers (Title Case job title, else Candidate #ID) ===
-function toTitleCase(str) {
-  return String(str)
-    .toLowerCase()
-    .replace(/(^|[^A-Za-z'])([A-Za-z])/g, function(_, b, ch){ return b + ch.toUpperCase(); })
-    .replace(/\b(PGA|F&B|UK|USA|US)\b/gi, function(s){ return s.toUpperCase(); });
-}
-function getJobTitle(c) {
-  return c["Current Job Title"] || c["Job Title"] || c.current_job_title || c.job_title || "";
-}
-function candidateDisplayName(c) {
-  const t = (getJobTitle(c) || "").trim();
-  return t ? toTitleCase(t) : `Candidate #${c["ID"]}`;
-}
-</script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1236,7 +1219,7 @@ function candidateDisplayName(c) {
             else if (view === 'admin' && userProfile?.role === 'admin') loadAdmin();
         }
 
-        // COMPLETELY FIXED: Load pools with correct counting
+        // UPDATED: Load pools with junction table counting
         async function loadPools() {
             console.log('Loading pools...');
             const poolsGrid = document.getElementById('poolsGrid');
@@ -1274,11 +1257,11 @@ function candidateDisplayName(c) {
                                 .select('*', { count: 'exact', head: true });
                             pool.total_candidates = count || 0;
                         } else {
-                            // Count candidates with matching pool_id
+                            // Count candidates from junction table
                             const { count } = await supabase
-                                .from('candidates')
+                                .from('candidate_pools')
                                 .select('*', { count: 'exact', head: true })
-                                .contains('pool_id', [pool.slug]);
+                                .eq('pool_slug', pool.slug);
                             pool.total_candidates = count || 0;
                         }
                         console.log(`Pool ${pool.slug} has ${pool.total_candidates} candidates`);
@@ -1326,7 +1309,7 @@ function candidateDisplayName(c) {
             }
         }
 
-        // FIXED: Open pool and load candidates
+        // UPDATED: Open pool using junction table
         async function openPool(pool) {
             currentPool = pool;
             currentPage = 0;
@@ -1350,13 +1333,30 @@ function candidateDisplayName(c) {
                     candidates = result.data;
                     error = result.error;
                 } else {
-                    // Load candidates for specific pool
-                    const result = await supabase
-                        .from('candidates')
-                        .select('*')
-                        .contains('pool_id', [pool.slug]);
-                    candidates = result.data;
-                    error = result.error;
+                    // First get candidate IDs from junction table
+                    const { data: poolCandidates, error: poolError } = await supabase
+                        .from('candidate_pools')
+                        .select('candidate_id')
+                        .eq('pool_slug', pool.slug);
+                    
+                    if (poolError) {
+                        console.error('Error loading pool candidates:', poolError);
+                        candidatesListView.innerHTML = `<div class="error-message">Error loading candidates</div>`;
+                        return;
+                    }
+                    
+                    if (poolCandidates && poolCandidates.length > 0) {
+                        // Get the actual candidate data
+                        const candidateIds = poolCandidates.map(pc => pc.candidate_id);
+                        const result = await supabase
+                            .from('candidates')
+                            .select('*')
+                            .in('ID', candidateIds);
+                        candidates = result.data;
+                        error = result.error;
+                    } else {
+                        candidates = [];
+                    }
                 }
                 
                 if (error) {

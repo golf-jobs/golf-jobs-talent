@@ -998,13 +998,11 @@
             <div id="shortlistView" class="view-section">
                 <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Your Lists</h1>
                 <div style="margin-bottom: 2rem;">
-                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
-                        <div style="flex: 1; position: relative;">
-                            <select id="listSelector" onchange="switchList()" style="width: 100%; padding: 0.875rem 3rem 0.875rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 1rem; appearance: none; background: white;">
-                                <option value="">Select a list...</option>
-                            </select>
-                            <button id="deleteCurrentListBtn" onclick="deleteCurrentList()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--hazard-red); cursor: pointer; font-size: 1.25rem; padding: 0.5rem; display: none;" title="Delete this list">×</button>
-                        </div>
+                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap;">
+                        <select id="listSelector" onchange="switchList()" style="padding: 0.875rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 1rem; min-width: 250px; background: white;">
+                            <option value="">Select a list...</option>
+                        </select>
+                        <button id="deleteCurrentListBtn" onclick="deleteCurrentList()" class="btn btn-danger btn-small" style="display: none;">Delete List</button>
                         <button class="btn btn-primary" onclick="showCreateListModal()">+ New List</button>
                     </div>
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap;">

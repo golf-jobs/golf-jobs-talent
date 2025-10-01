@@ -1069,17 +1069,6 @@
         </div>
     </div>
 
-    <div id="candidateModal" class="modal">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeModal()">×</button>
-            <h2 id="modalTitle" style="color: var(--augusta-green); margin-bottom: 1rem;"></h2>
-            <div id="modalBody"></div>
-            <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end; flex-wrap: wrap;">
-                <button class="btn btn-secondary" onclick="addToShortlistFromModal()">Save to List</button>
-            </div>
-        </div>
-    </div>
-
     <div id="listSelectorModal" class="modal">
         <div class="modal-content" style="max-width: 500px;">
             <button class="modal-close" onclick="closeListSelectorModal()">×</button>
@@ -1121,10 +1110,22 @@
     </div>
 
     <script>
+        // ============================================================================
+        // CONFIGURATION & INITIALIZATION
+        // ============================================================================
+        
         const SUPABASE_URL = 'https://kbadedwbcjetxiertztv.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiYWRlZHdiY2pldHhpZXJ0enR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzMDAyNDMsImV4cCI6MjA3Mzg3NjI0M30.igm3XjM8l1OXfilQaAHtmJyCDe9eXILV_P9B3_sUzwg';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        const CONFIG = {
+            PAGE_SIZE: 50,
+            ALL_POOL_PAGE_SIZE: 150,
+            TOP_PICK_THRESHOLD: 85,
+            DEBOUNCE_DELAY: 300
+        };
+
+        // State management
         let currentUser = null;
         let currentPool = null;
         let currentCandidate = null;
@@ -1140,14 +1141,24 @@
         let currentPage = 0;
         let currentFilters = { search: '', location: '', category: '', salary: '', notice: '', looking: '' };
         let currentSort = 'relevance';
-        const PAGE_SIZE = 50;
-        const ALL_POOL_RELEVANCE_PAGE_SIZE = 150;
         let hasMoreCandidates = true;
         let currentMessageThread = null;
         let pendingCandidatesForList = [];
 
+        // ============================================================================
+        // UTILITY FUNCTIONS
+        // ============================================================================
+        
+        function sanitizeSearchInput(input) {
+            // Escape SQL wildcards and special characters
+            return input
+                .replace(/[%_\\]/g, '\\$&')  // Escape wildcards
+                .replace(/"/g, '""')          // Escape quotes
+                .trim();
+        }
+
         function showError(message, error = null) {
-            console.error('Application Error:', error);
+            console.error('Application Error:', message, error);
             let errorToast = document.getElementById('errorToast');
             if (!errorToast) {
                 errorToast = document.createElement('div');
@@ -1221,11 +1232,7 @@
                 'golf retail', 'pro shop', 'golf merchandising',
                 'golf events', 'tournament director', 'golf tournament',
                 'golf hospitality', 'clubhouse manager', 'f&b manager',
-                'golf marketing', 'golf sales', 'membership sales',
-                'titleist', 'taylormade', 'callaway', 'ping', 'mizuno', 'cobra', 'cleveland',
-                'golf digest', 'golf monthly', 'usga', 'r&a', 'european tour', 'pga tour',
-                'handicap system', 'golf instruction', 'golf coaching',
-                'links course', 'parkland course', 'championship course'
+                'golf marketing', 'golf sales', 'membership sales'
             ];
             
             let golfTermMatches = 0;
@@ -1253,45 +1260,80 @@
             return score;
         }
 
-        function goHome() {
-            switchView('pools');
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), delay);
+            };
         }
 
+        // ============================================================================
+        // AUTHENTICATION
+        // ============================================================================
+        
         window.onload = async function() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                await loadUserData(session.user);
-                showApp();
-            } else {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    await loadUserData(session.user);
+                    showApp();
+                } else {
+                    document.getElementById('loginScreen').style.display = 'flex';
+                }
+                setupHistoryHandling();
+            } catch (error) {
+                showError('Failed to initialize application', error);
                 document.getElementById('loginScreen').style.display = 'flex';
             }
-            setupHistoryHandling();
-        }
+        };
 
         async function handleLogin(event) {
             event.preventDefault();
-            const email = document.getElementById('loginEmail').value;
+            const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
-            const { data, error } = await supabase.auth.signInWithPassword({ email: email, password: password });
-            if (error) {
-                document.getElementById('loginError').style.display = 'block';
-                setTimeout(() => { document.getElementById('loginError').style.display = 'none'; }, 3000);
-            } else {
+            
+            if (!email || !password) {
+                showError('Please enter both email and password');
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ 
+                    email: email, 
+                    password: password 
+                });
+                
+                if (error) throw error;
+                
                 await loadUserData(data.user);
                 showApp();
+            } catch (error) {
+                console.error('Login error:', error);
+                document.getElementById('loginError').style.display = 'block';
+                setTimeout(() => { 
+                    document.getElementById('loginError').style.display = 'none'; 
+                }, 3000);
             }
         }
 
         async function loadUserData(user) {
             currentUser = user;
             try {
-                const { data: profile } = await supabase.from('users').select('*').eq('id', user.id).single();
+                const { data: profile, error: profileError } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (profileError) throw profileError;
+                
                 if (profile) {
                     userProfile = profile;
                     document.getElementById('userName').textContent = profile.name || user.email.split('@')[0];
                     document.getElementById('mobileUserName').textContent = profile.name || user.email.split('@')[0];
-                    document.getElementById('creditsCount').textContent = profile.credits || 0;
-                    document.getElementById('mobileCreditsCount').textContent = profile.credits || 0;
+                    updateCreditsDisplay(profile.credits || 0);
+                    
                     if (profile.role === 'admin') {
                         document.getElementById('adminTab').style.display = 'block';
                         document.getElementById('mobileAdminItem').style.display = 'block';
@@ -1303,177 +1345,35 @@
                 console.error('Error loading user profile:', err);
                 userProfile = { id: user.id, email: user.email, credits: 0 };
             }
+            
             try {
-                const { data: poolAccess } = await supabase.from('user_pool_access').select('pool_id').eq('user_id', user.id);
+                const { data: poolAccess, error: poolError } = await supabase
+                    .from('user_pool_access')
+                    .select('pool_id')
+                    .eq('user_id', user.id);
+                
+                if (poolError) throw poolError;
+                
                 userPools = poolAccess ? poolAccess.map(p => p.pool_id) : [];
             } catch (err) {
                 console.error('Error loading pool access:', err);
                 userPools = [];
             }
+            
             await loadUserLists();
         }
 
-        async function loadUserLists() {
+        function updateCreditsDisplay(credits) {
+            document.getElementById('creditsCount').textContent = credits;
+            document.getElementById('mobileCreditsCount').textContent = credits;
+        }
+
+        async function handleLogout() {
             try {
-                const { data: lists, error } = await supabase.from('user_lists').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
-                if (error) throw error;
-                userLists = lists || [];
-                const listSelector = document.getElementById('listSelector');
-                listSelector.innerHTML = '<option value="">Select a list...</option>';
-                userLists.forEach(list => {
-                    const option = document.createElement('option');
-                    option.value = list.id;
-                    option.textContent = list.name;
-                    listSelector.appendChild(option);
-                });
-                if (userLists.length > 0 && !currentListId) {
-                    currentListId = userLists[0].id;
-                    listSelector.value = currentListId;
-                    await loadShortlistForList(currentListId);
-                }
-                updateShortlistBadge();
-            } catch (err) {
-                console.error('Error loading lists:', err);
-            }
-        }
-
-        async function switchList() {
-            const listId = document.getElementById('listSelector').value;
-            const deleteBtn = document.getElementById('deleteCurrentListBtn');
-            
-            if (listId) {
-                currentListId = listId;
-                await loadShortlistForList(listId);
-                deleteBtn.style.display = 'block';
-            } else {
-                currentListId = null;
-                shortlist = [];
-                displayShortlistContent();
-                deleteBtn.style.display = 'none';
-            }
-        }
-
-        async function loadShortlistForList(listId) {
-            try {
-                const { data: shortlistData } = await supabase.from('shortlists').select('*').eq('user_id', currentUser.id).eq('list_id', listId);
-                if (shortlistData && shortlistData.length > 0) {
-                    const candidateIds = shortlistData.map(item => String(item.candidate_id));
-                    const { data: candidatesData } = await supabase.from('candidates').select('*').in('ID', candidateIds);
-                    const byId = new Map((candidatesData || []).map(c => [String(c.ID), c]));
-                    shortlist = shortlistData.map(item => ({ ...item, candidate: byId.get(String(item.candidate_id)) || null }));
-                } else {
-                    shortlist = [];
-                }
-                selectedShortlistItems.clear();
-                displayShortlistContent();
-            } catch (err) {
-                console.error('Error loading shortlist for list:', err);
-                shortlist = [];
-                displayShortlistContent();
-            }
-        }
-
-        function displayShortlistContent() {
-            const content = document.getElementById('shortlistContent');
-            const countElem = document.getElementById('shortlistCount');
-            if (!currentListId) {
-                countElem.textContent = 'Select a list to view candidates';
-                content.innerHTML = '<div class="empty-state"><h3>Select a list to view candidates</h3></div>';
-                return;
-            }
-            countElem.textContent = `${shortlist.length} candidate${shortlist.length !== 1 ? 's' : ''} in this list`;
-            if (shortlist.length === 0) {
-                content.innerHTML = '<div class="empty-state"><h3>No candidates in this list</h3><p>Browse talent pools and add candidates to this list</p></div>';
-                return;
-            }
-            content.innerHTML = shortlist.map(item => {
-                const c = item.candidate;
-                if (!c) return '';
-                let rawJobTitle = c["Current Job Title"];
-                if (typeof rawJobTitle === 'number' || !rawJobTitle) rawJobTitle = c["Job Title"] || '';
-                const jobTitle = rawJobTitle ? toTitleCase(String(rawJobTitle)) : `Candidate #${c.ID}`;
-                const location = cleanAndFormatLocation(c["Town/City"], c.Country);
-                const salary = formatSalaryExact(c["What are your salary expectations?"]);
-                const notice = formatNoticePeriod(c["Notice Period"]);
-                const isSelected = selectedShortlistItems.has(String(item.id));
-                const about = c["About You"] || '';
-                const summaryPreview = about.substring(0, 150) + (about.length > 150 ? '...' : '');
-                return `<div class="candidate-list-item ${isSelected ? 'selected' : ''}" id="shortlist-card-${item.id}" style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border: 2px solid ${isSelected ? 'var(--masters-green)' : '#e5e7eb'}; cursor: pointer; transition: all 0.3s ease; position: relative;" onclick='viewShortlistCandidate("${c.ID}")'><input type="checkbox" style="position: absolute; top: 1rem; left: 1rem; width: 20px; height: 20px; cursor: pointer; z-index: 10;" ${isSelected ? 'checked' : ''} onchange='toggleShortlistSelection("${item.id}")' onclick="event.stopPropagation()"><div style="padding-left: 2.5rem;"><h3 style="color: var(--augusta-green); margin-bottom: 0.25rem; font-size: 1.2rem; font-weight: 600;">${jobTitle}</h3><p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 0.5rem;">${location}</p>${summaryPreview ? `<p style="color: #555; font-size: 0.85rem; line-height: 1.4; margin-bottom: 0.75rem;">${summaryPreview}</p>` : ''}<div style="display: flex; justify-content: space-between; align-items: center;"><span style="color: var(--rough-gray); font-size: 0.85rem;">${salary} • ${notice}</span><span style="color: var(--masters-green); font-weight: 600;">View →</span></div></div></div>`;
-            }).join('');
-            const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
-            if (selectedShortlistItems.size > 0) {
-                bulkDeleteBtn.style.display = 'inline-block';
-            } else {
-                bulkDeleteBtn.style.display = 'none';
-            }
-        }
-
-        function showCreateListModal() {
-            document.getElementById('createListNameInput').value = '';
-            document.getElementById('createListModal').classList.add('active');
-        }
-
-        function closeCreateListModal() {
-            document.getElementById('createListModal').classList.remove('active');
-        }
-
-        async function confirmCreateList() {
-            const listName = document.getElementById('createListNameInput').value.trim();
-            if (!listName) {
-                alert('Please enter a list name');
-                return;
-            }
-            await createNewList(listName);
-            closeCreateListModal();
-        }
-
-        async function deleteCurrentList() {
-            if (!currentListId) return;
-            
-            const listName = userLists.find(l => l.id === currentListId)?.name || 'this list';
-            if (!confirm(`Delete "${listName}" and all its candidates?\n\nThis cannot be undone.`)) return;
-            
-            try {
-                const { error } = await supabase.from('user_lists').delete().eq('id', currentListId);
-                if (error) throw error;
-                
-                const deletedListId = currentListId;
-                currentListId = null;
-                
-                await loadUserLists();
-                
-                // If there are other lists, select the first one
-                if (userLists.length > 0) {
-                    currentListId = userLists[0].id;
-                    document.getElementById('listSelector').value = currentListId;
-                    await loadShortlistForList(currentListId);
-                } else {
-                    // No lists left
-                    document.getElementById('listSelector').value = '';
-                    shortlist = [];
-                    displayShortlistContent();
-                    document.getElementById('deleteCurrentListBtn').style.display = 'none';
-                }
-            } catch (err) {
-                showError('Failed to delete list: ' + err.message, err);
-            }
-        }
-
-        function showManageListsModal() {
-            // Deprecated - no longer used
-        }
-
-        function updateShortlistBadge() {
-            const badge = document.getElementById('shortlistBadge');
-            const mobileBadge = document.getElementById('mobileShortlistBadge');
-            if (userLists.length > 0) {
-                badge.style.display = 'inline';
-                badge.textContent = userLists.length;
-                mobileBadge.style.display = 'inline';
-                mobileBadge.textContent = `(${userLists.length})`;
-            } else {
-                badge.style.display = 'none';
-                mobileBadge.style.display = 'none';
+                await supabase.auth.signOut();
+                location.reload();
+            } catch (error) {
+                showError('Failed to logout', error);
             }
         }
 
@@ -1483,9 +1383,12 @@
             loadPools();
         }
 
-        async function handleLogout() {
-            await supabase.auth.signOut();
-            location.reload();
+        // ============================================================================
+        // NAVIGATION & HISTORY
+        // ============================================================================
+        
+        function goHome() {
+            switchView('pools');
         }
 
         function setupHistoryHandling() {
@@ -1494,24 +1397,36 @@
                     switchView(event.state.view, true);
                 } else {
                     const hash = window.location.hash.slice(1);
-                    if (hash && ['pools', 'shortlist', 'messages', 'account', 'admin'].includes(hash)) switchView(hash, true);
+                    if (hash && ['pools', 'shortlist', 'messages', 'account', 'admin'].includes(hash)) {
+                        switchView(hash, true);
+                    }
                 }
             });
+            
             const hash = window.location.hash.slice(1);
-            if (hash && ['pools', 'shortlist', 'messages', 'account', 'admin'].includes(hash)) switchView(hash, true);
+            if (hash && ['pools', 'shortlist', 'messages', 'account', 'admin'].includes(hash)) {
+                switchView(hash, true);
+            }
         }
 
         function switchView(view, skipHistory = false) {
             document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.view-section').forEach(section => section.classList.remove('active'));
             document.querySelectorAll('.mobile-nav-item').forEach(item => item.classList.remove('active'));
+            
             const section = document.getElementById(view + 'View');
             if (section) section.classList.add('active');
+            
             const tabBtn = document.querySelector(`.nav-tabs .nav-tab[onclick*="'${view}'"]`);
             if (tabBtn) tabBtn.classList.add('active');
+            
             const mobileItem = document.querySelector(`.mobile-nav-item[onclick*="'${view}'"]`);
             if (mobileItem) mobileItem.classList.add('active');
-            if (!skipHistory) window.history.pushState({ view: view }, '', `#${view}`);
+            
+            if (!skipHistory) {
+                window.history.pushState({ view: view }, '', `#${view}`);
+            }
+            
             if (view === 'pools') loadPools();
             else if (view === 'shortlist') loadShortlist();
             else if (view === 'messages') loadMessages();
@@ -1537,59 +1452,84 @@
             });
         }
 
+        // ============================================================================
+        // TALENT POOLS
+        // ============================================================================
+        
         async function loadPools() {
             const poolsGrid = document.getElementById('poolsGrid');
             poolsGrid.innerHTML = '<div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div><div class="skeleton skeleton-card"></div>';
+            
             try {
-                const { data: pools, error: poolsError } = await supabase.from('talent_pools').select('slug, label, sort_order').order('sort_order', { ascending: true });
-                if (poolsError) {
-                    showError('Unable to load talent pools. Please refresh the page.', poolsError);
-                    poolsGrid.innerHTML = '<div class="empty-state"><h3>Error loading pools</h3><p>Please refresh the page or contact support if the issue persists.</p><button class="btn btn-primary" onclick="loadPools()">Retry</button></div>';
-                    return;
-                }
+                const { data: pools, error: poolsError } = await supabase
+                    .from('talent_pools')
+                    .select('slug, label, sort_order')
+                    .order('sort_order', { ascending: true });
+                
+                if (poolsError) throw poolsError;
+                
                 if (!pools || pools.length === 0) {
                     poolsGrid.innerHTML = '<div class="empty-state"><h3>No talent pools available</h3></div>';
                     return;
                 }
                 
-                for (const pool of pools) {
+                // FIXED: Load all pool counts in parallel instead of sequentially
+                const countPromises = pools.map(async (pool) => {
                     try {
                         if (pool.slug === 'all') {
-                            const { count, error: countError } = await supabase
+                            const { count } = await supabase
                                 .from('candidates')
                                 .select('*', { count: 'exact', head: true });
-                            if (countError) throw countError;
-                            pool.total_candidates = count || 0;
+                            return { slug: pool.slug, count: count || 0 };
                         } else {
-                            const { count, error: countError } = await supabase
+                            const { count } = await supabase
                                 .from('candidate_pools')
                                 .select('*', { count: 'exact', head: true })
                                 .eq('pool_slug', pool.slug);
-                            if (countError) throw countError;
-                            pool.total_candidates = count || 0;
+                            return { slug: pool.slug, count: count || 0 };
                         }
                     } catch (err) {
                         console.warn(`Error counting for pool ${pool.slug}:`, err);
-                        pool.total_candidates = 0;
+                        return { slug: pool.slug, count: 0 };
                     }
-                }
+                });
+                
+                const counts = await Promise.all(countPromises);
+                const countMap = new Map(counts.map(c => [c.slug, c.count]));
+                
+                pools.forEach(pool => {
+                    pool.total_candidates = countMap.get(pool.slug) || 0;
+                });
                 
                 poolsGrid.innerHTML = '';
                 for (const pool of pools) {
                     const hasAccess = userPools.includes('all') || userPools.includes(pool.slug);
                     const poolCard = document.createElement('div');
                     poolCard.className = hasAccess ? 'pool-card' : 'pool-card locked';
-                    poolCard.innerHTML = `<div class="pool-header"><div class="pool-title">${pool.label}</div><div class="pool-badge">${hasAccess ? 'Available' : 'Locked'}</div></div><div class="pool-stats"><div class="pool-stat"><span>Total Candidates</span><span style="font-size: 1.25rem; font-weight: 700; color: var(--augusta-green);">${pool.total_candidates}</span></div></div>`;
+                    poolCard.innerHTML = `
+                        <div class="pool-header">
+                            <div class="pool-title">${pool.label}</div>
+                            <div class="pool-badge">${hasAccess ? 'Available' : 'Locked'}</div>
+                        </div>
+                        <div class="pool-stats">
+                            <div class="pool-stat">
+                                <span>Total Candidates</span>
+                                <span style="font-size: 1.25rem; font-weight: 700; color: var(--augusta-green);">${pool.total_candidates}</span>
+                            </div>
+                        </div>
+                    `;
+                    
                     if (hasAccess) {
                         poolCard.onclick = () => openPool(pool);
                     } else {
                         poolCard.onclick = () => alert('Contact graham@golf-jobs.com to request access to this pool.');
                     }
+                    
                     poolsGrid.appendChild(poolCard);
                 }
             } catch (err) {
-                showError('An unexpected error occurred. Please try again.', err);
-                poolsGrid.innerHTML = '<div class="empty-state"><h3>Something went wrong</h3><button class="btn btn-primary" onclick="loadPools()">Try Again</button></div>';
+                showError('Failed to load talent pools', err);
+                poolsGrid.innerHTML = '<div class="empty-state"><h3>Error loading pools</h3><button class="btn btn-primary" onclick="loadPools()">Try Again</button></div>';
             }
         }
 
@@ -1602,6 +1542,7 @@
             displayedCandidates = [];
             currentFilters = { search: '', location: '', category: '', salary: '', notice: '', looking: '' };
             currentSort = 'relevance';
+            
             document.getElementById('currentPoolName').textContent = pool.label;
             document.getElementById('searchInput').value = '';
             document.getElementById('locationFilter').value = '';
@@ -1610,25 +1551,36 @@
             document.getElementById('noticeFilter').value = '';
             document.getElementById('lookingFilter').value = '';
             document.getElementById('sortSelect').value = 'relevance';
+            
             const candidatesListView = document.getElementById('candidatesListView');
             candidatesListView.innerHTML = '<div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div><div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div><div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div>';
+            
             try {
                 await loadCandidatesForLocationFilter();
                 await loadCandidatesPage(true);
             } catch (err) {
-                console.error('Error in openPool:', err);
-                showError('Failed to load candidates. Please try again.', err);
+                showError('Failed to load candidates', err);
                 candidatesListView.innerHTML = '<div class="empty-state"><h3>Error loading candidates</h3><button class="btn btn-primary" onclick="openPool(currentPool)">Try Again</button></div>';
             }
+            
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.getElementById('poolDetailView').classList.add('active');
         }
 
+        // ============================================================================
+        // CANDIDATES LOADING & FILTERING
+        // ============================================================================
+        
         async function loadCandidatesForLocationFilter() {
             try {
                 let query = supabase.from('candidates').select('"Town/City", Country');
+                
                 if (currentPool.slug !== 'all') {
-                    const { data: poolCandidates } = await supabase.from('candidate_pools').select('candidate_id').eq('pool_slug', currentPool.slug);
+                    const { data: poolCandidates } = await supabase
+                        .from('candidate_pools')
+                        .select('candidate_id')
+                        .eq('pool_slug', currentPool.slug);
+                    
                     if (poolCandidates && poolCandidates.length > 0) {
                         const candidateIds = poolCandidates.map(pc => String(pc.candidate_id));
                         query = query.in('ID', candidateIds);
@@ -1636,11 +1588,36 @@
                         return;
                     }
                 }
+                
                 const { data: candidates } = await query;
                 if (candidates) populateLocationFilter(candidates);
             } catch (err) {
                 console.error('Error loading location data:', err);
             }
+        }
+
+        function populateLocationFilter(candidates) {
+            const locationCounts = {};
+            candidates.forEach(candidate => {
+                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+                if (!locationCounts[location]) locationCounts[location] = 0;
+                locationCounts[location]++;
+            });
+            
+            const sortedLocations = Object.entries(locationCounts).sort((a, b) => {
+                if (a[0] === 'Location Not Specified') return 1;
+                if (b[0] === 'Location Not Specified') return -1;
+                return a[0].localeCompare(b[0]);
+            });
+            
+            const locationFilter = document.getElementById('locationFilter');
+            locationFilter.innerHTML = `<option value="">All Locations</option>`;
+            sortedLocations.forEach(([location, count]) => {
+                const option = document.createElement('option');
+                option.value = location;
+                option.textContent = `${location} (${count})`;
+                locationFilter.appendChild(option);
+            });
         }
 
         async function loadCandidatesPage(resetList = false) {
@@ -1649,51 +1626,88 @@
                 displayedCandidates = [];
                 hasMoreCandidates = true;
             }
+            
             const candidatesListView = document.getElementById('candidatesListView');
-            if (resetList) candidatesListView.innerHTML = '<div style="text-align: center; padding: 2rem;">Loading...</div>';
+            if (resetList) {
+                candidatesListView.innerHTML = '<div style="text-align: center; padding: 2rem;">Loading...</div>';
+            }
             
             try {
                 let query = supabase.from('candidates').select('*');
                 
+                // Filter by pool
                 if (currentPool.slug !== 'all') {
-                    const { data: poolCandidates, error: poolError } = await supabase.from('candidate_pools').select('candidate_id').eq('pool_slug', currentPool.slug);
+                    const { data: poolCandidates, error: poolError } = await supabase
+                        .from('candidate_pools')
+                        .select('candidate_id')
+                        .eq('pool_slug', currentPool.slug);
+                    
                     if (poolError) throw poolError;
+                    
                     if (!poolCandidates || poolCandidates.length === 0) {
-                        if (resetList) candidatesListView.innerHTML = '<div class="empty-state"><h3>No candidates in this pool</h3></div>';
+                        if (resetList) {
+                            candidatesListView.innerHTML = '<div class="empty-state"><h3>No candidates in this pool</h3></div>';
+                        }
                         hasMoreCandidates = false;
                         document.getElementById('loadMoreContainer').style.display = 'none';
                         return;
                     }
+                    
                     const candidateIds = poolCandidates.map(pc => String(pc.candidate_id));
                     query = query.in('ID', candidateIds);
                 }
                 
-                // FIXED: Properly quoted column names with spaces for search
+                // FIXED: Properly sanitized search filter
                 if (currentFilters.search) {
-                    const s = currentFilters.search.replace(/"/g, '""'); // escape double quotes
-                    query = query.or(
-                        `"Current Job Title".ilike.%${s}%,` +
-                        `"Town/City".ilike.%${s}%,` +
-                        `"Your Skills".ilike.%${s}%,` +
-                        `"About You".ilike.%${s}%`
-                    );
+                    const sanitized = sanitizeSearchInput(currentFilters.search);
+                    if (sanitized) {
+                        query = query.or(
+                            `"Current Job Title".ilike.%${sanitized}%,` +
+                            `"Town/City".ilike.%${sanitized}%,` +
+                            `"Your Skills".ilike.%${sanitized}%,` +
+                            `"About You".ilike.%${sanitized}%`
+                        );
+                    }
                 }
+                
+                // Location filter
                 if (currentFilters.location && currentFilters.location !== 'Location Not Specified') {
-                    query = query.ilike('"Town/City"', `%${currentFilters.location}%`);
+                    const sanitized = sanitizeSearchInput(currentFilters.location);
+                    query = query.ilike('"Town/City"', `%${sanitized}%`);
                 }
-                if (currentFilters.category) query = query.eq('category', currentFilters.category);
+                
+                // Category filter
+                if (currentFilters.category) {
+                    query = query.eq('category', currentFilters.category);
+                }
+                
+                // Salary filter
                 if (currentFilters.salary) {
                     if (currentFilters.salary === '70000+') {
                         query = query.gte('"What are your salary expectations?"', 70000);
                     } else {
                         const [min, max] = currentFilters.salary.split('-').map(Number);
-                        query = query.gte('"What are your salary expectations?"', min).lte('"What are your salary expectations?"', max);
+                        if (!isNaN(min) && !isNaN(max)) {
+                            query = query.gte('"What are your salary expectations?"', min)
+                                         .lte('"What are your salary expectations?"', max);
+                        }
                     }
                 }
-                if (currentFilters.notice) query = query.ilike('"Notice Period"', `%${currentFilters.notice}%`);
-                if (currentFilters.looking) query = query.eq('"Actively looking for work"', currentFilters.looking);
                 
-                const pageSize = (currentPool.slug === 'all' && currentSort === 'relevance') ? ALL_POOL_RELEVANCE_PAGE_SIZE : PAGE_SIZE;
+                // Notice period filter
+                if (currentFilters.notice) {
+                    query = query.ilike('"Notice Period"', `%${currentFilters.notice}%`);
+                }
+                
+                // Looking filter
+                if (currentFilters.looking) {
+                    query = query.eq('"Actively looking for work"', currentFilters.looking);
+                }
+                
+                // Sorting (except relevance which is done client-side)
+                const pageSize = (currentPool.slug === 'all' && currentSort === 'relevance') 
+                    ? CONFIG.ALL_POOL_PAGE_SIZE 
+                    : CONFIG.PAGE_SIZE;
                 
                 if (currentSort !== 'relevance') {
                     switch (currentSort) {
@@ -1709,6 +1723,7 @@
                     }
                 }
                 
+                // Pagination
                 const from = currentPage * pageSize;
                 const to = from + pageSize - 1;
                 query = query.range(from, to);
@@ -1718,11 +1733,14 @@
                 
                 if (!candidates || candidates.length === 0) {
                     hasMoreCandidates = false;
-                    if (resetList) candidatesListView.innerHTML = '<div class="empty-state"><h3>No candidates match your criteria</h3><p>Try adjusting your filters</p><button class="btn btn-primary" onclick="clearFilters()">Clear Filters</button></div>';
+                    if (resetList) {
+                        candidatesListView.innerHTML = '<div class="empty-state"><h3>No candidates match your criteria</h3><p>Try adjusting your filters</p><button class="btn btn-primary" onclick="clearFilters()">Clear Filters</button></div>';
+                    }
                     document.getElementById('loadMoreContainer').style.display = 'none';
                     return;
                 }
                 
+                // Apply relevance scoring if needed
                 if (currentSort === 'relevance') {
                     candidates.forEach(c => c._score = calculateProfileScore(c));
                     candidates.sort((a, b) => b._score - a._score);
@@ -1748,54 +1766,14 @@
                 document.getElementById('candidateCount').textContent = `Showing ${displayedCandidates.length} candidates`;
                 
                 const loadMoreContainer = document.getElementById('loadMoreContainer');
-                if (hasMoreCandidates) {
-                    loadMoreContainer.style.display = 'block';
-                } else {
-                    loadMoreContainer.style.display = 'none';
-                }
+                loadMoreContainer.style.display = hasMoreCandidates ? 'block' : 'none';
+                
             } catch (err) {
-                console.error('Error in loadCandidatesPage:', err);
-                showError('Failed to load candidates. Please try again.', err);
-                if (resetList) candidatesListView.innerHTML = '<div class="empty-state"><h3>Error loading candidates</h3><button class="btn btn-primary" onclick="loadCandidatesPage(true)">Try Again</button></div>';
+                showError('Failed to load candidates', err);
+                if (resetList) {
+                    candidatesListView.innerHTML = '<div class="empty-state"><h3>Error loading candidates</h3><button class="btn btn-primary" onclick="loadCandidatesPage(true)">Try Again</button></div>';
+                }
             }
-        }
-
-        function generateCandidateCardHTML(candidate) {
-            let rawJobTitle = candidate["Current Job Title"];
-            if (typeof rawJobTitle === 'number' || !rawJobTitle || rawJobTitle === '') rawJobTitle = candidate["Job Title"] || '';
-            const jobTitle = rawJobTitle ? toTitleCase(String(rawJobTitle)) : `Candidate #${candidate.ID}`;
-            const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-            const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
-            const notice = formatNoticePeriod(candidate["Notice Period"]);
-            const profileScore = calculateProfileScore(candidate);
-            const isTopPick = profileScore >= 85;
-            const isSelected = selectedCandidates.has(String(candidate.ID));
-            const activelyLooking = (candidate["Actively looking for work"] || '').toUpperCase() === 'YES';
-            const about = candidate["About You"] || '';
-            const summaryPreview = about.substring(0, 150) + (about.length > 150 ? '...' : '');
-            return `<div class="candidate-list-item ${isSelected ? 'selected' : ''}" id="card-${candidate.ID}" style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border: 2px solid ${isSelected ? 'var(--masters-green)' : '#e5e7eb'}; cursor: pointer; transition: all 0.3s ease; position: relative;" onclick='viewCandidateProfile("${candidate.ID}")'><input type="checkbox" style="position: absolute; top: 1rem; left: 1rem; width: 20px; height: 20px; cursor: pointer; z-index: 10;" ${isSelected ? 'checked' : ''} onchange='toggleCandidateSelection("${candidate.ID}")' onclick="event.stopPropagation()">${isTopPick ? '<div class="top-pick-badge">⭐ TOP PICK</div>' : ''}<div style="padding-left: 2.5rem;"><h3 style="color: var(--augusta-green); margin-bottom: 0.25rem; font-size: 1.2rem; font-weight: 600;">${jobTitle}</h3><p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 0.5rem;">${location}</p>${summaryPreview ? `<p style="color: #555; font-size: 0.85rem; line-height: 1.4; margin-bottom: 0.75rem;">${summaryPreview}</p>` : ''}<div style="display: flex; justify-content: space-between; align-items: center;"><span style="color: var(--rough-gray); font-size: 0.85rem;">${salary} • ${notice}${activelyLooking ? ' • Actively looking' : ''}</span><span style="color: var(--masters-green); font-weight: 600;">View →</span></div></div></div>`;
-        }
-
-        function populateLocationFilter(candidates) {
-            const locationCounts = {};
-            candidates.forEach(candidate => {
-                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-                if (!locationCounts[location]) locationCounts[location] = 0;
-                locationCounts[location]++;
-            });
-            const sortedLocations = Object.entries(locationCounts).sort((a, b) => {
-                if (a[0] === 'Location Not Specified') return 1;
-                if (b[0] === 'Location Not Specified') return -1;
-                return a[0].localeCompare(b[0]);
-            });
-            const locationFilter = document.getElementById('locationFilter');
-            locationFilter.innerHTML = `<option value="">All Locations</option>`;
-            sortedLocations.forEach(([location, count]) => {
-                const option = document.createElement('option');
-                option.value = location;
-                option.textContent = `${location} (${count})`;
-                locationFilter.appendChild(option);
-            });
         }
 
         function displayCandidates(candidates) {
@@ -1807,179 +1785,44 @@
             candidatesListView.innerHTML = candidates.map(candidate => generateCandidateCardHTML(candidate)).join('');
         }
 
-        async function loadCandidateNotes(candidateId) {
-            try {
-                const { data: notes } = await supabase.from('candidate_notes').select('*').eq('user_id', currentUser.id).eq('candidate_id', String(candidateId)).order('created_at', { ascending: false });
-                return notes || [];
-            } catch (err) {
-                console.error('Error loading notes:', err);
-                return [];
-            }
-        }
-
-        async function saveNote(candidateId, noteText) {
-            if (!noteText.trim()) return;
-            try {
-                const { data, error } = await supabase.from('candidate_notes').insert({ user_id: currentUser.id, candidate_id: String(candidateId), note: noteText.trim() }).select();
-                if (error) throw error;
-                await viewCandidateProfile(candidateId);
-            } catch (err) {
-                showError('Failed to save note: ' + err.message, err);
-            }
-        }
-
-        async function editNote(noteId, newText) {
-            if (!newText.trim()) return;
-            try {
-                const { error } = await supabase.from('candidate_notes').update({ note: newText.trim(), updated_at: new Date().toISOString() }).eq('id', noteId);
-                if (error) throw error;
-                await viewCandidateProfile(currentCandidate.ID);
-            } catch (err) {
-                showError('Failed to update note: ' + err.message, err);
-            }
-        }
-
-        async function deleteNote(noteId) {
-            if (!confirm('Delete this note?')) return;
-            try {
-                const { error } = await supabase.from('candidate_notes').delete().eq('id', noteId);
-                if (error) throw error;
-                await viewCandidateProfile(currentCandidate.ID);
-            } catch (err) {
-                showError('Failed to delete note: ' + err.message, err);
-            }
-        }
-
-        async function viewCandidateProfile(candidateId) {
-            const candidate = allCandidates.find(c => String(c.ID) === String(candidateId));
-            if (!candidate) {
-                console.error('Candidate not found:', candidateId);
-                return;
-            }
-            currentCandidate = candidate;
+        function generateCandidateCardHTML(candidate) {
             let rawJobTitle = candidate["Current Job Title"];
-            if (typeof rawJobTitle === 'number' || !rawJobTitle || rawJobTitle === '') rawJobTitle = candidate["Job Title"] || '';
+            if (typeof rawJobTitle === 'number' || !rawJobTitle || rawJobTitle === '') {
+                rawJobTitle = candidate["Job Title"] || '';
+            }
             const jobTitle = rawJobTitle ? toTitleCase(String(rawJobTitle)) : `Candidate #${candidate.ID}`;
             const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-            const about = candidate["About You"] || 'No summary provided';
-            const skills = candidate["Your Skills"] || '';
             const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
             const notice = formatNoticePeriod(candidate["Notice Period"]);
-            const activelyLooking = candidate["Actively looking for work"];
-            const activeStatus = (activelyLooking && activelyLooking.toUpperCase() === 'YES') ? 'Actively Looking For Work' : 'Not Actively Looking';
             const profileScore = calculateProfileScore(candidate);
-            const isTopPick = profileScore >= 85;
-            const notes = await loadCandidateNotes(candidateId);
+            const isTopPick = profileScore >= CONFIG.TOP_PICK_THRESHOLD;
+            const isSelected = selectedCandidates.has(String(candidate.ID));
+            const activelyLooking = (candidate["Actively looking for work"] || '').toUpperCase() === 'YES';
+            const about = candidate["About You"] || '';
+            const summaryPreview = about.substring(0, 150) + (about.length > 150 ? '...' : '');
             
-            const profileDetailView = document.getElementById('profileDetailView');
-            profileDetailView.innerHTML = `<div style="margin-bottom: 2rem;"><h1 style="color: var(--augusta-green); margin-bottom: 0.5rem; font-size: 1.8rem;">${jobTitle}</h1>${isTopPick ? '<div class="top-pick-badge" style="position: relative; top: 0; right: auto; margin-top: 0.5rem; display: inline-flex;">⭐ TOP PICK</div>' : ''}<p style="color: var(--rough-gray); font-size: 1.1rem; margin-top: 0.5rem;">${location}</p></div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;"><div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;"><div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">Salary Expectations</div><div style="font-weight: 600; font-size: 1.1rem;">${salary}</div></div><div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;"><div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">Notice Period</div><div style="font-weight: 600; font-size: 1.1rem;">${notice}</div></div><div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;"><div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">Job Search Status</div><div style="font-weight: 600; font-size: 1.1rem;">${activeStatus}</div></div></div><div style="margin-bottom: 2rem;"><h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Professional Summary</h3><p style="line-height: 1.8; color: #333; white-space: pre-wrap;">${about}</p></div>${skills ? `<div style="margin-bottom: 2rem;"><h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3><p style="line-height: 1.6; color: #333; white-space: pre-wrap;">${skills}</p></div>` : ''}<div class="notes-section"><h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Your Notes</h3><div style="margin-bottom: 1rem;"><textarea id="newNoteInput" placeholder="Add a note about this candidate..." style="width: 100%; padding: 0.75rem; border: 2px solid #e1e8e4; border-radius: 8px; font-family: inherit; resize: vertical; min-height: 80px;"></textarea><button class="btn btn-primary btn-small" onclick='saveNote("${candidateId}", document.getElementById("newNoteInput").value)' style="margin-top: 0.5rem;">Save Note</button></div>${notes.length > 0 ? `<div style="margin-top: 1.5rem;">${notes.map(note => `<div class="note-item"><div class="note-text">${note.note}</div><div class="note-meta"><span>${new Date(note.created_at).toLocaleDateString()}</span><div class="note-actions"><button class="btn btn-secondary btn-small" onclick='const newText = prompt("Edit note:", ${JSON.stringify(note.note)}); if (newText) editNote("${note.id}", newText);'>Edit</button><button class="btn btn-danger btn-small" onclick='deleteNote("${note.id}")'>Delete</button></div></div></div>`).join('')}</div>` : '<p style="color: var(--rough-gray); font-style: italic;">No notes yet. Add one above!</p>'}</div><div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;"><button class="btn btn-secondary btn-small" onclick="addToShortlist()">Save to List</button><button class="btn btn-primary btn-small" onclick='sendMessageToCandidate("${candidate.ID}")'>Send Message (1 Credit)</button></div>`;
-            
-            const isMobile = window.innerWidth <= 768;
-            if (isMobile) document.querySelector('.split-view-right').classList.add('mobile-active');
-        }
-
-        async function sendMessageToCandidate(candidateId) {
-            if (!userProfile || userProfile.credits <= 0) {
-                alert('Insufficient credits. Please contact graham@golf-jobs.com to purchase more credits.');
-                return;
-            }
-            const candidate = allCandidates.find(c => String(c.ID) === String(candidateId));
-            if (!candidate) return;
-            const message = prompt('Enter your message to the candidate:');
-            if (!message || !message.trim()) return;
-            try {
-                const { data: existingMessages } = await supabase.from('messages').select('id').eq('employer_id', currentUser.id).eq('candidate_id', String(candidateId)).limit(1);
-                const isFirstMessage = !existingMessages || existingMessages.length === 0;
-                if (isFirstMessage) {
-                    const { data: updatedUser, error: creditError } = await supabase.from('users').update({ credits: userProfile.credits - 1 }).eq('id', currentUser.id).select().single();
-                    if (creditError) throw creditError;
-                    userProfile.credits = updatedUser.credits;
-                    document.getElementById('creditsCount').textContent = userProfile.credits;
-                    document.getElementById('mobileCreditsCount').textContent = userProfile.credits;
-                }
-                const { data: messageData, error: messageError } = await supabase.from('messages').insert({ employer_id: currentUser.id, employer_email: currentUser.email, candidate_id: String(candidateId), candidate_name: candidate["Current Job Title"] || `Candidate ${candidateId}`, message: message.trim(), sender_type: 'employer', created_at: new Date().toISOString() }).select();
-                if (messageError) {
-                    if (isFirstMessage) {
-                        await supabase.from('users').update({ credits: userProfile.credits + 1 }).eq('id', currentUser.id);
-                    }
-                    throw messageError;
-                }
-                await supabase.from('profile_views').insert({ candidate_id: String(candidateId), candidate_name: candidate["Current Job Title"] || `Candidate ${candidateId}`, viewed_at: new Date().toISOString() });
-                alert(`Message sent successfully! ${isFirstMessage ? '1 credit deducted. ' : ''}We will forward your message to the candidate.`);
-            } catch (err) {
-                console.error('Error sending message:', err);
-                showError('Failed to send message: ' + err.message, err);
-            }
-        }
-
-        async function viewShortlistCandidate(candidateId) {
-            const shortlistItem = shortlist.find(item => String(item.candidate?.ID) === String(candidateId));
-            if (!shortlistItem || !shortlistItem.candidate) return;
-            
-            const candidate = shortlistItem.candidate;
-            
-            // Make sure candidate is in allCandidates array
-            if (!allCandidates.find(c => String(c.ID) === String(candidateId))) {
-                allCandidates = [candidate, ...allCandidates];
-            }
-            
-            // Set as current candidate
-            currentCandidate = candidate;
-            
-            // Build the profile HTML
-            let rawJobTitle = candidate["Current Job Title"];
-            if (typeof rawJobTitle === 'number' || !rawJobTitle || rawJobTitle === '') rawJobTitle = candidate["Job Title"] || '';
-            const jobTitle = rawJobTitle ? toTitleCase(String(rawJobTitle)) : `Candidate #${candidate.ID}`;
-            const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-            const about = candidate["About You"] || 'No summary provided';
-            const skills = candidate["Your Skills"] || '';
-            const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
-            const notice = formatNoticePeriod(candidate["Notice Period"]);
-            const activelyLooking = candidate["Actively looking for work"];
-            const activeStatus = (activelyLooking && activelyLooking.toUpperCase() === 'YES') ? 'Actively Looking For Work' : 'Not Actively Looking';
-            const profileScore = calculateProfileScore(candidate);
-            const isTopPick = profileScore >= 85;
-            const notes = await loadCandidateNotes(candidateId);
-            
-            const profileHTML = `<div style="margin-bottom: 2rem;"><h1 style="color: var(--augusta-green); margin-bottom: 0.5rem; font-size: 1.8rem;">${jobTitle}</h1>${isTopPick ? '<div class="top-pick-badge" style="position: relative; top: 0; right: auto; margin-top: 0.5rem; display: inline-flex;">⭐ TOP PICK</div>' : ''}<p style="color: var(--rough-gray); font-size: 1.1rem; margin-top: 0.5rem;">${location}</p></div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;"><div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;"><div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">Salary Expectations</div><div style="font-weight: 600; font-size: 1.1rem;">${salary}</div></div><div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;"><div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">Notice Period</div><div style="font-weight: 600; font-size: 1.1rem;">${notice}</div></div><div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;"><div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">Job Search Status</div><div style="font-weight: 600; font-size: 1.1rem;">${activeStatus}</div></div></div><div style="margin-bottom: 2rem;"><h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Professional Summary</h3><p style="line-height: 1.8; color: #333; white-space: pre-wrap;">${about}</p></div>${skills ? `<div style="margin-bottom: 2rem;"><h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3><p style="line-height: 1.6; color: #333; white-space: pre-wrap;">${skills}</p></div>` : ''}<div class="notes-section"><h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Your Notes</h3><div style="margin-bottom: 1rem;"><textarea id="newNoteInput" placeholder="Add a note about this candidate..." style="width: 100%; padding: 0.75rem; border: 2px solid #e1e8e4; border-radius: 8px; font-family: inherit; resize: vertical; min-height: 80px;"></textarea><button class="btn btn-primary btn-small" onclick='saveNote("${candidateId}", document.getElementById("newNoteInput").value)' style="margin-top: 0.5rem;">Save Note</button></div>${notes.length > 0 ? `<div style="margin-top: 1.5rem;">${notes.map(note => `<div class="note-item"><div class="note-text">${note.note}</div><div class="note-meta"><span>${new Date(note.created_at).toLocaleDateString()}</span><div class="note-actions"><button class="btn btn-secondary btn-small" onclick='const newText = prompt("Edit note:", ${JSON.stringify(note.note)}); if (newText) editNote("${note.id}", newText);'>Edit</button><button class="btn btn-danger btn-small" onclick='deleteNote("${note.id}")'>Delete</button></div></div></div>`).join('')}</div>` : '<p style="color: var(--rough-gray); font-style: italic;">No notes yet. Add one above!</p>'}</div><div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;"><button class="btn btn-secondary btn-small" onclick="addToShortlist()">Add to Another List</button><button class="btn btn-primary btn-small" onclick='sendMessageToCandidate("${candidate.ID}")'>Send Message (1 Credit)</button><button class="btn btn-danger btn-small" onclick='removeFromShortlistByCandidate("${candidate.ID}")'>Remove from List</button></div>`;
-            
-            // Render into the shortlist profile view
-            document.getElementById('shortlistProfileView').innerHTML = profileHTML;
-            
-            // On mobile, show it as an overlay
-            const isMobile = window.innerWidth <= 768;
-            if (isMobile) {
-                const rightPanel = document.querySelector('#shortlistView .split-view-right');
-                if (rightPanel) rightPanel.classList.add('mobile-active');
-            }
-        }
-        
-        async function removeFromShortlistByCandidate(candidateId) {
-            const item = shortlist.find(i => String(i.candidate?.ID) === String(candidateId));
-            if (item) {
-                await removeFromShortlist(item.id);
-            }
-        }
-
-        function openCandidate(candidateId) {
-            const candidate = allCandidates.find(c => String(c.ID) === String(candidateId));
-            if (!candidate) return;
-            currentCandidate = candidate;
-            let rawJobTitle = candidate["Current Job Title"];
-            if (typeof rawJobTitle === 'number' || !rawJobTitle || rawJobTitle === '') rawJobTitle = candidate["Job Title"] || '';
-            const jobTitle = rawJobTitle ? toTitleCase(String(rawJobTitle)) : `Candidate #${candidate.ID}`;
-            const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-            const about = candidate["About You"] || 'No summary provided';
-            const skills = candidate["Your Skills"] || '';
-            const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
-            const notice = formatNoticePeriod(candidate["Notice Period"]);
-            document.getElementById('modalTitle').textContent = jobTitle;
-            document.getElementById('modalBody').innerHTML = `<p style="color: var(--rough-gray); font-size: 1.1rem; margin-bottom: 2rem;">${location}</p><div style="margin-bottom: 2rem;"><h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Professional Summary</h3><p style="line-height: 1.8;">${about}</p></div>${skills ? `<div style="margin-bottom: 2rem;"><h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3><p style="line-height: 1.6;">${skills}</p></div>` : ''}<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;"><div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;"><div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">Salary Expectations</div><div style="font-weight: 600;">${salary}</div></div><div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;"><div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">Notice Period</div><div style="font-weight: 600;">${notice}</div></div></div>`;
-            document.getElementById('candidateModal').classList.add('active');
-        }
-
-        function closeModal() {
-            document.getElementById('candidateModal').classList.remove('active');
+            return `
+                <div class="candidate-list-item ${isSelected ? 'selected' : ''}" 
+                     id="card-${candidate.ID}" 
+                     style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border: 2px solid ${isSelected ? 'var(--masters-green)' : '#e5e7eb'}; cursor: pointer; transition: all 0.3s ease; position: relative;" 
+                     onclick='viewCandidateProfile("${candidate.ID}")'>
+                    <input type="checkbox" 
+                           style="position: absolute; top: 1rem; left: 1rem; width: 20px; height: 20px; cursor: pointer; z-index: 10;" 
+                           ${isSelected ? 'checked' : ''} 
+                           onchange='toggleCandidateSelection("${candidate.ID}")' 
+                           onclick="event.stopPropagation()">
+                    ${isTopPick ? '<div class="top-pick-badge">⭐ TOP PICK</div>' : ''}
+                    <div style="padding-left: 2.5rem;">
+                        <h3 style="color: var(--augusta-green); margin-bottom: 0.25rem; font-size: 1.2rem; font-weight: 600;">${jobTitle}</h3>
+                        <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 0.5rem;">${location}</p>
+                        ${summaryPreview ? `<p style="color: #555; font-size: 0.85rem; line-height: 1.4; margin-bottom: 0.75rem;">${summaryPreview}</p>` : ''}
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--rough-gray); font-size: 0.85rem;">${salary} • ${notice}${activelyLooking ? ' • Actively looking' : ''}</span>
+                            <span style="color: var(--masters-green); font-weight: 600;">View →</span>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         function loadMore() {
@@ -1987,22 +1830,18 @@
             loadCandidatesPage(false);
         }
 
+        // Setup event listeners for filters
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');
-            if (searchInput) searchInput.addEventListener('input', debounce(applyFilters, 300));
+            if (searchInput) {
+                searchInput.addEventListener('input', debounce(applyFilters, CONFIG.DEBOUNCE_DELAY));
+            }
+            
             ['locationFilter', 'categoryFilter', 'salaryFilter', 'noticeFilter', 'lookingFilter'].forEach(id => {
                 const element = document.getElementById(id);
                 if (element) element.addEventListener('change', applyFilters);
             });
         });
-
-        function debounce(func, delay) {
-            let timeout;
-            return function() {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, arguments), delay);
-            }
-        }
 
         function applyFilters() {
             currentFilters.search = document.getElementById('searchInput').value.toLowerCase();
@@ -2032,6 +1871,10 @@
             loadCandidatesPage(true);
         }
 
+        // ============================================================================
+        // CANDIDATE SELECTION
+        // ============================================================================
+        
         function toggleCandidateSelection(candidateId) {
             const id = String(candidateId);
             if (selectedCandidates.has(id)) {
@@ -2075,130 +1918,667 @@
             });
         }
 
-        async function addToShortlist() {
-            if (!currentCandidate) return;
-            pendingCandidatesForList = [String(currentCandidate.ID)];
-            showListSelectorModal();
-        }
-
-        async function addToShortlistFromModal() {
-            await addToShortlist();
-        }
-
-        async function bulkAddToShortlist() {
-            if (selectedCandidates.size === 0) {
-                alert('Please select candidates first');
-                return;
-            }
-            pendingCandidatesForList = Array.from(selectedCandidates);
-            showListSelectorModal();
-        }
-
-        function showListSelectorModal() {
-            // Populate the existing lists dropdown
-            const modalListSelector = document.getElementById('modalListSelector');
-            modalListSelector.innerHTML = '<option value="">Choose a list...</option>';
-            userLists.forEach(list => {
-                const option = document.createElement('option');
-                option.value = list.id;
-                option.textContent = list.name;
-                modalListSelector.appendChild(option);
-            });
-            
-            // Clear the new list name input
-            document.getElementById('newListNameInput').value = '';
-            
-            // Show the modal
-            document.getElementById('listSelectorModal').classList.add('active');
-        }
-
-        function closeListSelectorModal() {
-            document.getElementById('listSelectorModal').classList.remove('active');
-            pendingCandidatesForList = [];
-        }
-
-        async function confirmListSelection() {
-            const selectedListId = document.getElementById('modalListSelector').value;
-            const newListName = document.getElementById('newListNameInput').value.trim();
-            
-            let targetListId = null;
-            
-            // User wants to create a new list
-            if (newListName) {
-                try {
-                    const { data, error } = await supabase.from('user_lists').insert({ 
-                        user_id: currentUser.id, 
-                        name: newListName 
-                    }).select().single();
-                    if (error) throw error;
-                    targetListId = data.id;
-                    await loadUserLists();
-                } catch (err) {
-                    showError('Failed to create list: ' + err.message, err);
-                    return;
-                }
-            }
-            // User selected an existing list
-            else if (selectedListId) {
-                targetListId = selectedListId;
-            }
-            // No selection made
-            else {
-                alert('Please select a list or create a new one');
+        // ============================================================================
+        // CANDIDATE PROFILE VIEW
+        // ============================================================================
+        
+        async function viewCandidateProfile(candidateId) {
+            const candidate = allCandidates.find(c => String(c.ID) === String(candidateId));
+            if (!candidate) {
+                showError('Candidate not found');
                 return;
             }
             
-            // Add candidates to the selected/created list
-            let added = 0;
-            let skipped = 0;
+            currentCandidate = candidate;
             
-            for (const candidateId of pendingCandidatesForList) {
-                // Check if already in this list
-                const { data: existing } = await supabase
-                    .from('shortlists')
-                    .select('id')
+            let rawJobTitle = candidate["Current Job Title"];
+            if (typeof rawJobTitle === 'number' || !rawJobTitle || rawJobTitle === '') {
+                rawJobTitle = candidate["Job Title"] || '';
+            }
+            const jobTitle = rawJobTitle ? toTitleCase(String(rawJobTitle)) : `Candidate #${candidate.ID}`;
+            const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+            const about = candidate["About You"] || 'No summary provided';
+            const skills = candidate["Your Skills"] || '';
+            const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
+            const notice = formatNoticePeriod(candidate["Notice Period"]);
+            const activelyLooking = candidate["Actively looking for work"];
+            const activeStatus = (activelyLooking && activelyLooking.toUpperCase() === 'YES') 
+                ? 'Actively Looking For Work' 
+                : 'Not Actively Looking';
+            const profileScore = calculateProfileScore(candidate);
+            const isTopPick = profileScore >= CONFIG.TOP_PICK_THRESHOLD;
+            const notes = await loadCandidateNotes(candidateId);
+            
+            const profileDetailView = document.getElementById('profileDetailView');
+            profileDetailView.innerHTML = `
+                <div style="margin-bottom: 2rem;">
+                    <h1 style="color: var(--augusta-green); margin-bottom: 0.5rem; font-size: 1.8rem;">${jobTitle}</h1>
+                    ${isTopPick ? '<div class="top-pick-badge" style="position: relative; top: 0; right: auto; margin-top: 0.5rem; display: inline-flex;">⭐ TOP PICK</div>' : ''}
+                    <p style="color: var(--rough-gray); font-size: 1.1rem; margin-top: 0.5rem;">${location}</p>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">Salary Expectations</div>
+                        <div style="font-weight: 600; font-size: 1.1rem;">${salary}</div>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">Notice Period</div>
+                        <div style="font-weight: 600; font-size: 1.1rem;">${notice}</div>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">Job Search Status</div>
+                        <div style="font-weight: 600; font-size: 1.1rem;">${activeStatus}</div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Professional Summary</h3>
+                    <p style="line-height: 1.8; color: #333; white-space: pre-wrap;">${about}</p>
+                </div>
+                ${skills ? `
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
+                        <p style="line-height: 1.6; color: #333; white-space: pre-wrap;">${skills}</p>
+                    </div>
+                ` : ''}
+                <div class="notes-section">
+                    <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Your Notes</h3>
+                    <div style="margin-bottom: 1rem;">
+                        <textarea id="newNoteInput" placeholder="Add a note about this candidate..." 
+                                  style="width: 100%; padding: 0.75rem; border: 2px solid #e1e8e4; border-radius: 8px; font-family: inherit; resize: vertical; min-height: 80px;"></textarea>
+                        <button class="btn btn-primary btn-small" 
+                                onclick='saveNote("${candidateId}", document.getElementById("newNoteInput").value)' 
+                                style="margin-top: 0.5rem;">Save Note</button>
+                    </div>
+                    ${notes.length > 0 ? `
+                        <div style="margin-top: 1.5rem;">
+                            ${notes.map(note => `
+                                <div class="note-item">
+                                    <div class="note-text">${note.note}</div>
+                                    <div class="note-meta">
+                                        <span>${new Date(note.created_at).toLocaleDateString()}</span>
+                                        <div class="note-actions">
+                                            <button class="btn btn-secondary btn-small" 
+                                                    onclick='const newText = prompt("Edit note:", ${JSON.stringify(note.note)}); if (newText) editNote("${note.id}", newText);'>Edit</button>
+                                            <button class="btn btn-danger btn-small" 
+                                                    onclick='deleteNote("${note.id}")'>Delete</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '<p style="color: var(--rough-gray); font-style: italic;">No notes yet. Add one above!</p>'}
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+                    <button class="btn btn-secondary btn-small" onclick="addToShortlist()">Save to List</button>
+                    <button class="btn btn-primary btn-small" onclick='sendMessageToCandidate("${candidate.ID}")'>Send Message (1 Credit)</button>
+                </div>
+            `;
+            
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                document.querySelector('.split-view-right').classList.add('mobile-active');
+            }
+        }
+
+        // ============================================================================
+        // CANDIDATE NOTES
+        // ============================================================================
+        
+        async function loadCandidateNotes(candidateId) {
+            try {
+                const { data: notes, error } = await supabase
+                    .from('candidate_notes')
+                    .select('*')
                     .eq('user_id', currentUser.id)
                     .eq('candidate_id', String(candidateId))
-                    .eq('list_id', targetListId)
-                    .single();
+                    .order('created_at', { ascending: false });
                 
-                if (!existing) {
-                    const { error } = await supabase.from('shortlists').insert({ 
-                        user_id: currentUser.id, 
-                        candidate_id: String(candidateId), 
-                        list_id: targetListId 
-                    });
-                    if (!error) added++;
-                } else {
-                    skipped++;
+                if (error) throw error;
+                return notes || [];
+            } catch (err) {
+                console.error('Error loading notes:', err);
+                return [];
+            }
+        }
+
+        async function saveNote(candidateId, noteText) {
+            if (!noteText.trim()) {
+                showError('Please enter a note');
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabase
+                    .from('candidate_notes')
+                    .insert({
+                        user_id: currentUser.id,
+                        candidate_id: String(candidateId),
+                        note: noteText.trim()
+                    })
+                    .select();
+                
+                if (error) throw error;
+                
+                await viewCandidateProfile(candidateId);
+            } catch (err) {
+                showError('Failed to save note', err);
+            }
+        }
+
+        async function editNote(noteId, newText) {
+            if (!newText || !newText.trim()) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('candidate_notes')
+                    .update({
+                        note: newText.trim(),
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', noteId);
+                
+                if (error) throw error;
+                
+                await viewCandidateProfile(currentCandidate.ID);
+            } catch (err) {
+                showError('Failed to update note', err);
+            }
+        }
+
+        async function deleteNote(noteId) {
+            if (!confirm('Delete this note?')) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('candidate_notes')
+                    .delete()
+                    .eq('id', noteId);
+                
+                if (error) throw error;
+                
+                await viewCandidateProfile(currentCandidate.ID);
+            } catch (err) {
+                showError('Failed to delete note', err);
+            }
+        }
+
+        // ============================================================================
+        // MESSAGING
+        // ============================================================================
+        
+        async function sendMessageToCandidate(candidateId) {
+            if (!userProfile || userProfile.credits <= 0) {
+                alert('Insufficient credits. Please contact graham@golf-jobs.com to purchase more credits.');
+                return;
+            }
+            
+            const candidate = allCandidates.find(c => String(c.ID) === String(candidateId));
+            if (!candidate) return;
+            
+            const message = prompt('Enter your message to the candidate:');
+            if (!message || !message.trim()) return;
+            
+            try {
+                const { data: existingMessages } = await supabase
+                    .from('messages')
+                    .select('id')
+                    .eq('employer_id', currentUser.id)
+                    .eq('candidate_id', String(candidateId))
+                    .limit(1);
+                
+                const isFirstMessage = !existingMessages || existingMessages.length === 0;
+                
+                if (isFirstMessage) {
+                    const { data: updatedUser, error: creditError } = await supabase
+                        .from('users')
+                        .update({ credits: userProfile.credits - 1 })
+                        .eq('id', currentUser.id)
+                        .select()
+                        .single();
+                    
+                    if (creditError) throw creditError;
+                    
+                    userProfile.credits = updatedUser.credits;
+                    updateCreditsDisplay(userProfile.credits);
                 }
+                
+                const { data: messageData, error: messageError } = await supabase
+                    .from('messages')
+                    .insert({
+                        employer_id: currentUser.id,
+                        employer_email: currentUser.email,
+                        candidate_id: String(candidateId),
+                        candidate_name: candidate["Current Job Title"] || `Candidate ${candidateId}`,
+                        message: message.trim(),
+                        sender_type: 'employer',
+                        created_at: new Date().toISOString()
+                    })
+                    .select();
+                
+                if (messageError) {
+                    if (isFirstMessage) {
+                        await supabase
+                            .from('users')
+                            .update({ credits: userProfile.credits + 1 })
+                            .eq('id', currentUser.id);
+                    }
+                    throw messageError;
+                }
+                
+                await supabase
+                    .from('profile_views')
+                    .insert({
+                        candidate_id: String(candidateId),
+                        candidate_name: candidate["Current Job Title"] || `Candidate ${candidateId}`,
+                        viewed_at: new Date().toISOString()
+                    });
+                
+                alert(`Message sent successfully! ${isFirstMessage ? '1 credit deducted. ' : ''}We will forward your message to the candidate.`);
+            } catch (err) {
+                showError('Failed to send message', err);
+            }
+        }
+
+        async function loadMessages() {
+            const conversationsList = document.getElementById('conversationsList');
+            conversationsList.innerHTML = '<div style="text-align: center; padding: 2rem;">Loading messages...</div>';
+            
+            try {
+                const { data: messages, error } = await supabase
+                    .from('messages')
+                    .select('*')
+                    .eq('employer_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                if (!messages || messages.length === 0) {
+                    conversationsList.innerHTML = '<div class="empty-state"><h3>No messages yet</h3><p>Start a conversation by messaging a candidate</p></div>';
+                    return;
+                }
+                
+                const threadMap = new Map();
+                messages.forEach(msg => {
+                    const key = msg.candidate_id;
+                    if (!threadMap.has(key)) {
+                        threadMap.set(key, {
+                            candidate_id: msg.candidate_id,
+                            candidate_name: msg.candidate_name,
+                            messages: [],
+                            last_message: msg.created_at
+                        });
+                    }
+                    threadMap.get(key).messages.push(msg);
+                });
+                
+                const threads = Array.from(threadMap.values()).sort((a, b) => 
+                    new Date(b.last_message) - new Date(a.last_message)
+                );
+                
+                conversationsList.innerHTML = threads.map(thread => `
+                    <div class="message-thread" onclick='openMessageThread(${JSON.stringify(thread).replace(/'/g, "&apos;")})'>
+                        <h3 style="color: var(--augusta-green); margin-bottom: 0.5rem;">${thread.candidate_name}</h3>
+                        <div class="message-preview">${thread.messages.length} message${thread.messages.length !== 1 ? 's' : ''}</div>
+                        <div style="color: var(--rough-gray); font-size: 0.85rem; margin-top: 0.5rem;">
+                            Last message: ${new Date(thread.last_message).toLocaleString()}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                showError('Failed to load messages', err);
+                conversationsList.innerHTML = '<div class="error-message">Failed to load messages</div>';
+            }
+        }
+
+        function openMessageThread(thread) {
+            currentMessageThread = thread;
+            document.getElementById('conversationsList').style.display = 'none';
+            document.getElementById('conversationDetail').style.display = 'block';
+            document.getElementById('conversationTitle').textContent = thread.candidate_name;
+            
+            const messageConversation = document.getElementById('messageConversation');
+            messageConversation.innerHTML = thread.messages
+                .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+                .map(msg => {
+                    const isSent = msg.sender_type === 'employer';
+                    return `
+                        <div class="message-bubble ${isSent ? 'sent' : 'received'}">
+                            <div style="margin-bottom: 0.5rem;">${msg.message}</div>
+                            <div style="font-size: 0.75rem; opacity: 0.8;">${new Date(msg.created_at).toLocaleString()}</div>
+                        </div>
+                    `;
+                }).join('');
+            
+            messageConversation.scrollTop = messageConversation.scrollHeight;
+        }
+
+        async function sendReplyMessage() {
+            if (!currentMessageThread) return;
+            
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            
+            if (!message) {
+                showError('Please enter a message');
+                return;
             }
             
-            // Close modal and show success message
-            closeListSelectorModal();
-            
-            if (added > 0) {
-                const listName = userLists.find(l => l.id === targetListId)?.name || 'list';
-                alert(`Added ${added} candidate${added !== 1 ? 's' : ''} to "${listName}"${skipped > 0 ? ` (${skipped} already in list)` : ''}`);
-            } else if (skipped > 0) {
-                alert('All selected candidates are already in this list');
+            try {
+                const { error } = await supabase
+                    .from('messages')
+                    .insert({
+                        employer_id: currentUser.id,
+                        employer_email: currentUser.email,
+                        candidate_id: currentMessageThread.candidate_id,
+                        candidate_name: currentMessageThread.candidate_name,
+                        message: message,
+                        sender_type: 'employer',
+                        created_at: new Date().toISOString()
+                    });
+                
+                if (error) throw error;
+                
+                messageInput.value = '';
+                await loadMessages();
+                
+                const { data: updatedMessages } = await supabase
+                    .from('messages')
+                    .select('*')
+                    .eq('employer_id', currentUser.id)
+                    .eq('candidate_id', currentMessageThread.candidate_id)
+                    .order('created_at', { ascending: false });
+                
+                if (updatedMessages) {
+                    currentMessageThread.messages = updatedMessages;
+                    openMessageThread(currentMessageThread);
+                }
+            } catch (err) {
+                showError('Failed to send message', err);
             }
+        }
+
+        function backToConversations() {
+            document.getElementById('conversationsList').style.display = 'block';
+            document.getElementById('conversationDetail').style.display = 'none';
+            currentMessageThread = null;
+        }
+
+        // ============================================================================
+        // USER LISTS & SHORTLIST
+        // ============================================================================
+        
+        async function loadUserLists() {
+            try {
+                const { data: lists, error } = await supabase
+                    .from('user_lists')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                userLists = lists || [];
+                
+                const listSelector = document.getElementById('listSelector');
+                listSelector.innerHTML = '<option value="">Select a list...</option>';
+                userLists.forEach(list => {
+                    const option = document.createElement('option');
+                    option.value = list.id;
+                    option.textContent = list.name;
+                    listSelector.appendChild(option);
+                });
+                
+                if (userLists.length > 0 && !currentListId) {
+                    currentListId = userLists[0].id;
+                    listSelector.value = currentListId;
+                    await loadShortlistForList(currentListId);
+                }
+                
+                updateShortlistBadge();
+            } catch (err) {
+                console.error('Error loading lists:', err);
+            }
+        }
+
+        function updateShortlistBadge() {
+            const badge = document.getElementById('shortlistBadge');
+            const mobileBadge = document.getElementById('mobileShortlistBadge');
+            if (userLists.length > 0) {
+                badge.style.display = 'inline';
+                badge.textContent = userLists.length;
+                mobileBadge.style.display = 'inline';
+                mobileBadge.textContent = `(${userLists.length})`;
+            } else {
+                badge.style.display = 'none';
+                mobileBadge.style.display = 'none';
+            }
+        }
+
+        async function switchList() {
+            const listId = document.getElementById('listSelector').value;
+            const deleteBtn = document.getElementById('deleteCurrentListBtn');
             
-            // Clear selections and reload
-            deselectAll();
-            closeModal();
-            closeMobileProfile();
-            
-            // If we're on the shortlist view, reload it
-            if (document.getElementById('shortlistView').classList.contains('active')) {
-                currentListId = targetListId;
-                document.getElementById('listSelector').value = targetListId;
-                await loadShortlistForList(targetListId);
+            if (listId) {
+                currentListId = listId;
+                await loadShortlistForList(listId);
+                deleteBtn.style.display = 'block';
+            } else {
+                currentListId = null;
+                shortlist = [];
+                displayShortlistContent();
+                deleteBtn.style.display = 'none';
+            }
+        }
+
+        async function loadShortlistForList(listId) {
+            try {
+                const { data: shortlistData, error: shortlistError } = await supabase
+                    .from('shortlists')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .eq('list_id', listId);
+                
+                if (shortlistError) throw shortlistError;
+                
+                if (shortlistData && shortlistData.length > 0) {
+                    const candidateIds = shortlistData.map(item => String(item.candidate_id));
+                    
+                    const { data: candidatesData, error: candidatesError } = await supabase
+                        .from('candidates')
+                        .select('*')
+                        .in('ID', candidateIds);
+                    
+                    if (candidatesError) throw candidatesError;
+                    
+                    const byId = new Map((candidatesData || []).map(c => [String(c.ID), c]));
+                    shortlist = shortlistData.map(item => ({
+                        ...item,
+                        candidate: byId.get(String(item.candidate_id)) || null
+                    }));
+                } else {
+                    shortlist = [];
+                }
+                
+                selectedShortlistItems.clear();
+                displayShortlistContent();
+            } catch (err) {
+                showError('Failed to load shortlist', err);
+                shortlist = [];
+                displayShortlistContent();
             }
         }
 
         function loadShortlist() {
             loadUserLists();
+        }
+
+        function displayShortlistContent() {
+            const content = document.getElementById('shortlistContent');
+            const countElem = document.getElementById('shortlistCount');
+            
+            if (!currentListId) {
+                countElem.textContent = 'Select a list to view candidates';
+                content.innerHTML = '<div class="empty-state"><h3>Select a list to view candidates</h3></div>';
+                return;
+            }
+            
+            countElem.textContent = `${shortlist.length} candidate${shortlist.length !== 1 ? 's' : ''} in this list`;
+            
+            if (shortlist.length === 0) {
+                content.innerHTML = '<div class="empty-state"><h3>No candidates in this list</h3><p>Browse talent pools and add candidates to this list</p></div>';
+                return;
+            }
+            
+            content.innerHTML = shortlist.map(item => {
+                const c = item.candidate;
+                if (!c) return '';
+                
+                let rawJobTitle = c["Current Job Title"];
+                if (typeof rawJobTitle === 'number' || !rawJobTitle) rawJobTitle = c["Job Title"] || '';
+                const jobTitle = rawJobTitle ? toTitleCase(String(rawJobTitle)) : `Candidate #${c.ID}`;
+                const location = cleanAndFormatLocation(c["Town/City"], c.Country);
+                const salary = formatSalaryExact(c["What are your salary expectations?"]);
+                const notice = formatNoticePeriod(c["Notice Period"]);
+                const isSelected = selectedShortlistItems.has(String(item.id));
+                const about = c["About You"] || '';
+                const summaryPreview = about.substring(0, 150) + (about.length > 150 ? '...' : '');
+                
+                return `
+                    <div class="candidate-list-item ${isSelected ? 'selected' : ''}" 
+                         id="shortlist-card-${item.id}" 
+                         style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border: 2px solid ${isSelected ? 'var(--masters-green)' : '#e5e7eb'}; cursor: pointer; transition: all 0.3s ease; position: relative;" 
+                         onclick='viewShortlistCandidate("${c.ID}")'>
+                        <input type="checkbox" 
+                               style="position: absolute; top: 1rem; left: 1rem; width: 20px; height: 20px; cursor: pointer; z-index: 10;" 
+                               ${isSelected ? 'checked' : ''} 
+                               onchange='toggleShortlistSelection("${item.id}")' 
+                               onclick="event.stopPropagation()">
+                        <div style="padding-left: 2.5rem;">
+                            <h3 style="color: var(--augusta-green); margin-bottom: 0.25rem; font-size: 1.2rem; font-weight: 600;">${jobTitle}</h3>
+                            <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 0.5rem;">${location}</p>
+                            ${summaryPreview ? `<p style="color: #555; font-size: 0.85rem; line-height: 1.4; margin-bottom: 0.75rem;">${summaryPreview}</p>` : ''}
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: var(--rough-gray); font-size: 0.85rem;">${salary} • ${notice}</span>
+                                <span style="color: var(--masters-green); font-weight: 600;">View →</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+            bulkDeleteBtn.style.display = selectedShortlistItems.size > 0 ? 'inline-block' : 'none';
+        }
+
+        async function viewShortlistCandidate(candidateId) {
+            const shortlistItem = shortlist.find(item => String(item.candidate?.ID) === String(candidateId));
+            if (!shortlistItem || !shortlistItem.candidate) return;
+            
+            const candidate = shortlistItem.candidate;
+            
+            if (!allCandidates.find(c => String(c.ID) === String(candidateId))) {
+                allCandidates = [candidate, ...allCandidates];
+            }
+            
+            currentCandidate = candidate;
+            
+            let rawJobTitle = candidate["Current Job Title"];
+            if (typeof rawJobTitle === 'number' || !rawJobTitle || rawJobTitle === '') {
+                rawJobTitle = candidate["Job Title"] || '';
+            }
+            const jobTitle = rawJobTitle ? toTitleCase(String(rawJobTitle)) : `Candidate #${candidate.ID}`;
+            const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+            const about = candidate["About You"] || 'No summary provided';
+            const skills = candidate["Your Skills"] || '';
+            const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
+            const notice = formatNoticePeriod(candidate["Notice Period"]);
+            const activelyLooking = candidate["Actively looking for work"];
+            const activeStatus = (activelyLooking && activelyLooking.toUpperCase() === 'YES') 
+                ? 'Actively Looking For Work' 
+                : 'Not Actively Looking';
+            const profileScore = calculateProfileScore(candidate);
+            const isTopPick = profileScore >= CONFIG.TOP_PICK_THRESHOLD;
+            const notes = await loadCandidateNotes(candidateId);
+            
+            const profileHTML = `
+                <div style="margin-bottom: 2rem;">
+                    <h1 style="color: var(--augusta-green); margin-bottom: 0.5rem; font-size: 1.8rem;">${jobTitle}</h1>
+                    ${isTopPick ? '<div class="top-pick-badge" style="position: relative; top: 0; right: auto; margin-top: 0.5rem; display: inline-flex;">⭐ TOP PICK</div>' : ''}
+                    <p style="color: var(--rough-gray); font-size: 1.1rem; margin-top: 0.5rem;">${location}</p>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">Salary Expectations</div>
+                        <div style="font-weight: 600; font-size: 1.1rem;">${salary}</div>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">Notice Period</div>
+                        <div style="font-weight: 600; font-size: 1.1rem;">${notice}</div>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;">
+                        <div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">Job Search Status</div>
+                        <div style="font-weight: 600; font-size: 1.1rem;">${activeStatus}</div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Professional Summary</h3>
+                    <p style="line-height: 1.8; color: #333; white-space: pre-wrap;">${about}</p>
+                </div>
+                ${skills ? `
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3>
+                        <p style="line-height: 1.6; color: #333; white-space: pre-wrap;">${skills}</p>
+                    </div>
+                ` : ''}
+                <div class="notes-section">
+                    <h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Your Notes</h3>
+                    <div style="margin-bottom: 1rem;">
+                        <textarea id="newNoteInput" placeholder="Add a note about this candidate..." 
+                                  style="width: 100%; padding: 0.75rem; border: 2px solid #e1e8e4; border-radius: 8px; font-family: inherit; resize: vertical; min-height: 80px;"></textarea>
+                        <button class="btn btn-primary btn-small" 
+                                onclick='saveNote("${candidateId}", document.getElementById("newNoteInput").value)' 
+                                style="margin-top: 0.5rem;">Save Note</button>
+                    </div>
+                    ${notes.length > 0 ? `
+                        <div style="margin-top: 1.5rem;">
+                            ${notes.map(note => `
+                                <div class="note-item">
+                                    <div class="note-text">${note.note}</div>
+                                    <div class="note-meta">
+                                        <span>${new Date(note.created_at).toLocaleDateString()}</span>
+                                        <div class="note-actions">
+                                            <button class="btn btn-secondary btn-small" 
+                                                    onclick='const newText = prompt("Edit note:", ${JSON.stringify(note.note)}); if (newText) editNote("${note.id}", newText);'>Edit</button>
+                                            <button class="btn btn-danger btn-small" 
+                                                    onclick='deleteNote("${note.id}")'>Delete</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : '<p style="color: var(--rough-gray); font-style: italic;">No notes yet. Add one above!</p>'}
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+                    <button class="btn btn-secondary btn-small" onclick="addToShortlist()">Add to Another List</button>
+                    <button class="btn btn-primary btn-small" onclick='sendMessageToCandidate("${candidate.ID}")'>Send Message (1 Credit)</button>
+                    <button class="btn btn-danger btn-small" onclick='removeFromShortlistByCandidate("${candidate.ID}")'>Remove from List</button>
+                </div>
+            `;
+            
+            document.getElementById('shortlistProfileView').innerHTML = profileHTML;
+            
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                const rightPanel = document.querySelector('#shortlistView .split-view-right');
+                if (rightPanel) rightPanel.classList.add('mobile-active');
+            }
+        }
+
+        async function removeFromShortlistByCandidate(candidateId) {
+            const item = shortlist.find(i => String(i.candidate?.ID) === String(candidateId));
+            if (item) {
+                await removeFromShortlist(item.id);
+            }
         }
 
         function toggleShortlistSelection(itemId) {
@@ -2218,12 +2598,9 @@
                     card.style.borderColor = 'var(--masters-green)';
                 }
             }
+            
             const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
-            if (selectedShortlistItems.size > 0) {
-                bulkDeleteBtn.style.display = 'inline-block';
-            } else {
-                bulkDeleteBtn.style.display = 'none';
-            }
+            bulkDeleteBtn.style.display = selectedShortlistItems.size > 0 ? 'inline-block' : 'none';
         }
 
         function selectAllShortlist() {
@@ -2252,13 +2629,204 @@
             document.getElementById('bulkDeleteBtn').style.display = 'none';
         }
 
+        async function addToShortlist() {
+            if (!currentCandidate) return;
+            pendingCandidatesForList = [String(currentCandidate.ID)];
+            showListSelectorModal();
+        }
+
+        async function bulkAddToShortlist() {
+            if (selectedCandidates.size === 0) {
+                alert('Please select candidates first');
+                return;
+            }
+            pendingCandidatesForList = Array.from(selectedCandidates);
+            showListSelectorModal();
+        }
+
+        function showListSelectorModal() {
+            const modalListSelector = document.getElementById('modalListSelector');
+            modalListSelector.innerHTML = '<option value="">Choose a list...</option>';
+            userLists.forEach(list => {
+                const option = document.createElement('option');
+                option.value = list.id;
+                option.textContent = list.name;
+                modalListSelector.appendChild(option);
+            });
+            
+            document.getElementById('newListNameInput').value = '';
+            document.getElementById('listSelectorModal').classList.add('active');
+        }
+
+        function closeListSelectorModal() {
+            document.getElementById('listSelectorModal').classList.remove('active');
+            pendingCandidatesForList = [];
+        }
+
+        async function confirmListSelection() {
+            const selectedListId = document.getElementById('modalListSelector').value;
+            const newListName = document.getElementById('newListNameInput').value.trim();
+            
+            let targetListId = null;
+            
+            if (newListName) {
+                try {
+                    const { data, error } = await supabase
+                        .from('user_lists')
+                        .insert({ 
+                            user_id: currentUser.id, 
+                            name: newListName 
+                        })
+                        .select()
+                        .single();
+                    
+                    if (error) throw error;
+                    
+                    targetListId = data.id;
+                    await loadUserLists();
+                } catch (err) {
+                    showError('Failed to create list', err);
+                    return;
+                }
+            } else if (selectedListId) {
+                targetListId = selectedListId;
+            } else {
+                alert('Please select a list or create a new one');
+                return;
+            }
+            
+            let added = 0;
+            let skipped = 0;
+            
+            for (const candidateId of pendingCandidatesForList) {
+                const { data: existing } = await supabase
+                    .from('shortlists')
+                    .select('id')
+                    .eq('user_id', currentUser.id)
+                    .eq('candidate_id', String(candidateId))
+                    .eq('list_id', targetListId)
+                    .single();
+                
+                if (!existing) {
+                    const { error } = await supabase
+                        .from('shortlists')
+                        .insert({ 
+                            user_id: currentUser.id, 
+                            candidate_id: String(candidateId), 
+                            list_id: targetListId 
+                        });
+                    
+                    if (!error) added++;
+                } else {
+                    skipped++;
+                }
+            }
+            
+            closeListSelectorModal();
+            
+            if (added > 0) {
+                const listName = userLists.find(l => l.id === targetListId)?.name || 'list';
+                alert(`Added ${added} candidate${added !== 1 ? 's' : ''} to "${listName}"${skipped > 0 ? ` (${skipped} already in list)` : ''}`);
+            } else if (skipped > 0) {
+                alert('All selected candidates are already in this list');
+            }
+            
+            deselectAll();
+            closeMobileProfile();
+            
+            if (document.getElementById('shortlistView').classList.contains('active')) {
+                currentListId = targetListId;
+                document.getElementById('listSelector').value = targetListId;
+                await loadShortlistForList(targetListId);
+            }
+        }
+
+        function showCreateListModal() {
+            document.getElementById('createListNameInput').value = '';
+            document.getElementById('createListModal').classList.add('active');
+        }
+
+        function closeCreateListModal() {
+            document.getElementById('createListModal').classList.remove('active');
+        }
+
+        async function confirmCreateList() {
+            const listName = document.getElementById('createListNameInput').value.trim();
+            if (!listName) {
+                alert('Please enter a list name');
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabase
+                    .from('user_lists')
+                    .insert({ 
+                        user_id: currentUser.id, 
+                        name: listName 
+                    })
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                
+                await loadUserLists();
+                
+                currentListId = data.id;
+                document.getElementById('listSelector').value = currentListId;
+                await loadShortlistForList(currentListId);
+                
+                closeCreateListModal();
+            } catch (err) {
+                showError('Failed to create list', err);
+            }
+        }
+
+        async function deleteCurrentList() {
+            if (!currentListId) return;
+            
+            const listName = userLists.find(l => l.id === currentListId)?.name || 'this list';
+            if (!confirm(`Delete "${listName}" and all its candidates?\n\nThis cannot be undone.`)) return;
+            
+            try {
+                const { error } = await supabase
+                    .from('user_lists')
+                    .delete()
+                    .eq('id', currentListId);
+                
+                if (error) throw error;
+                
+                currentListId = null;
+                await loadUserLists();
+                
+                if (userLists.length > 0) {
+                    currentListId = userLists[0].id;
+                    document.getElementById('listSelector').value = currentListId;
+                    await loadShortlistForList(currentListId);
+                } else {
+                    document.getElementById('listSelector').value = '';
+                    shortlist = [];
+                    displayShortlistContent();
+                    document.getElementById('deleteCurrentListBtn').style.display = 'none';
+                }
+            } catch (err) {
+                showError('Failed to delete list', err);
+            }
+        }
+
         async function removeFromShortlist(itemId) {
             if (!confirm('Remove this candidate from your list?')) return;
-            const { error } = await supabase.from('shortlists').delete().eq('id', itemId);
-            if (!error) {
+            
+            try {
+                const { error } = await supabase
+                    .from('shortlists')
+                    .delete()
+                    .eq('id', itemId);
+                
+                if (error) throw error;
+                
                 await loadShortlistForList(currentListId);
-            } else {
-                showError('Failed to remove from list: ' + error.message, error);
+            } catch (err) {
+                showError('Failed to remove from list', err);
             }
         }
 
@@ -2267,14 +2835,22 @@
                 alert('Please select candidates first');
                 return;
             }
+            
             if (!confirm(`Remove ${selectedShortlistItems.size} candidates from your list?`)) return;
-            const ids = Array.from(selectedShortlistItems);
-            const { error } = await supabase.from('shortlists').delete().in('id', ids);
-            if (!error) {
+            
+            try {
+                const ids = Array.from(selectedShortlistItems);
+                const { error } = await supabase
+                    .from('shortlists')
+                    .delete()
+                    .in('id', ids);
+                
+                if (error) throw error;
+                
                 selectedShortlistItems.clear();
                 await loadShortlistForList(currentListId);
-            } else {
-                showError('Failed to remove candidates: ' + error.message, error);
+            } catch (err) {
+                showError('Failed to remove candidates', err);
             }
         }
 
@@ -2283,6 +2859,7 @@
                 alert('No candidates in current list');
                 return;
             }
+            
             let csv = 'Job Title,Location,Salary,Notice Period\n';
             shortlist.forEach(item => {
                 const c = item.candidate;
@@ -2296,6 +2873,7 @@
                     csv += `"${jobTitle}","${location}","${salary}","${notice}"\n`;
                 }
             });
+            
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -2305,78 +2883,21 @@
             a.click();
         }
 
-        async function loadMessages() {
-            const conversationsList = document.getElementById('conversationsList');
-            conversationsList.innerHTML = '<div style="text-align: center; padding: 2rem;">Loading messages...</div>';
-            try {
-                const { data: messages, error } = await supabase.from('messages').select('*').eq('employer_id', currentUser.id).order('created_at', { ascending: false });
-                if (error) throw error;
-                if (!messages || messages.length === 0) {
-                    conversationsList.innerHTML = '<div class="empty-state"><h3>No messages yet</h3><p>Start a conversation by messaging a candidate</p></div>';
-                    return;
-                }
-                const threadMap = new Map();
-                messages.forEach(msg => {
-                    const key = msg.candidate_id;
-                    if (!threadMap.has(key)) {
-                        threadMap.set(key, { candidate_id: msg.candidate_id, candidate_name: msg.candidate_name, messages: [], last_message: msg.created_at });
-                    }
-                    threadMap.get(key).messages.push(msg);
-                });
-                const threads = Array.from(threadMap.values()).sort((a, b) => new Date(b.last_message) - new Date(a.last_message));
-                conversationsList.innerHTML = threads.map(thread => `<div class="message-thread" onclick='openMessageThread(${JSON.stringify(thread).replace(/'/g, "&apos;")})'><h3 style="color: var(--augusta-green); margin-bottom: 0.5rem;">${thread.candidate_name}</h3><div class="message-preview">${thread.messages.length} message${thread.messages.length !== 1 ? 's' : ''}</div><div style="color: var(--rough-gray); font-size: 0.85rem; margin-top: 0.5rem;">Last message: ${new Date(thread.last_message).toLocaleString()}</div></div>`).join('');
-            } catch (err) {
-                console.error('Error loading messages:', err);
-                conversationsList.innerHTML = '<div class="error-message">Failed to load messages</div>';
-            }
-        }
-
-        function openMessageThread(thread) {
-            currentMessageThread = thread;
-            document.getElementById('conversationsList').style.display = 'none';
-            document.getElementById('conversationDetail').style.display = 'block';
-            document.getElementById('conversationTitle').textContent = thread.candidate_name;
-            const messageConversation = document.getElementById('messageConversation');
-            messageConversation.innerHTML = thread.messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).map(msg => {
-                const isSent = msg.sender_type === 'employer';
-                return `<div class="message-bubble ${isSent ? 'sent' : 'received'}"><div style="margin-bottom: 0.5rem;">${msg.message}</div><div style="font-size: 0.75rem; opacity: 0.8;">${new Date(msg.created_at).toLocaleString()}</div></div>`;
-            }).join('');
-            messageConversation.scrollTop = messageConversation.scrollHeight;
-        }
-
-        async function sendReplyMessage() {
-            if (!currentMessageThread) return;
-            const messageInput = document.getElementById('messageInput');
-            const message = messageInput.value.trim();
-            if (!message) return;
-            try {
-                const { error } = await supabase.from('messages').insert({ employer_id: currentUser.id, employer_email: currentUser.email, candidate_id: currentMessageThread.candidate_id, candidate_name: currentMessageThread.candidate_name, message: message, sender_type: 'employer', created_at: new Date().toISOString() });
-                if (error) throw error;
-                messageInput.value = '';
-                await loadMessages();
-                const { data: updatedMessages } = await supabase.from('messages').select('*').eq('employer_id', currentUser.id).eq('candidate_id', currentMessageThread.candidate_id).order('created_at', { ascending: false });
-                if (updatedMessages) {
-                    currentMessageThread.messages = updatedMessages;
-                    openMessageThread(currentMessageThread);
-                }
-            } catch (err) {
-                console.error('Error sending reply:', err);
-                showError('Failed to send message: ' + err.message, err);
-            }
-        }
-
-        function backToConversations() {
-            document.getElementById('conversationsList').style.display = 'block';
-            document.getElementById('conversationDetail').style.display = 'none';
-            currentMessageThread = null;
-        }
-
+        // ============================================================================
+        // ACCOUNT PAGE
+        // ============================================================================
+        
         async function loadAccount() {
             document.getElementById('accountName').textContent = userProfile?.name || '-';
             document.getElementById('accountEmail').textContent = currentUser?.email || '-';
             document.getElementById('accountCredits').textContent = userProfile?.credits || 0;
+            
             try {
-                const { data: messages } = await supabase.from('messages').select('id').eq('employer_id', currentUser.id);
+                const { data: messages } = await supabase
+                    .from('messages')
+                    .select('id')
+                    .eq('employer_id', currentUser.id);
+                
                 document.getElementById('totalMessages').textContent = messages ? messages.length : 0;
             } catch (err) {
                 console.error('Error loading message count:', err);
@@ -2384,31 +2905,138 @@
             }
         }
 
+        // ============================================================================
+        // ADMIN PAGE
+        // ============================================================================
+        
         async function loadAdmin() {
             if (userProfile?.role !== 'admin') {
                 document.getElementById('adminContent').innerHTML = '<p>Access denied.</p>';
                 return;
             }
+            
             const adminContent = document.getElementById('adminContent');
             adminContent.innerHTML = '<div class="skeleton" style="height: 300px; border-radius: 16px;"></div>';
+            
             try {
-                const { data: users } = await supabase.from('users').select('*').order('created_at', { ascending: false });
-                const { data: messages } = await supabase.from('messages').select('employer_id, employer_email, created_at, candidate_name, message');
-                const { data: views } = await supabase.from('profile_views').select('candidate_id, candidate_name, viewed_at');
+                const { data: users } = await supabase
+                    .from('users')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                const { data: messages } = await supabase
+                    .from('messages')
+                    .select('employer_id, employer_email, created_at, candidate_name, message');
+                
+                const { data: views } = await supabase
+                    .from('profile_views')
+                    .select('candidate_id, candidate_name, viewed_at');
+                
                 const messagesByUser = (messages || []).reduce((acc, msg) => {
                     acc[msg.employer_id] = (acc[msg.employer_id] || 0) + 1;
                     return acc;
                 }, {});
+                
                 const viewsByCandidate = (views || []).reduce((acc, view) => {
                     const key = view.candidate_id;
-                    if (!acc[key]) acc[key] = { id: view.candidate_id, name: view.candidate_name, count: 0 };
+                    if (!acc[key]) {
+                        acc[key] = { id: view.candidate_id, name: view.candidate_name, count: 0 };
+                    }
                     acc[key].count++;
                     return acc;
                 }, {});
-                const topViewedCandidates = Object.values(viewsByCandidate).sort((a, b) => b.count - a.count).slice(0, 10);
-                adminContent.innerHTML = `<div class="section-box"><h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">User Management</h2><div style="overflow-x: auto;"><table class="admin-table"><thead><tr><th>Name</th><th>Email</th><th style="text-align: center;">Credits</th><th style="text-align: center;">Messages Sent</th><th style="text-align: center;">Role</th></tr></thead><tbody>${(users || []).map(user => `<tr><td>${user.name || '-'}</td><td>${user.email}</td><td style="text-align: center; font-weight: 600;">${user.credits || 0}</td><td style="text-align: center;">${messagesByUser[user.id] || 0}</td><td style="text-align: center;"><span class="role-badge ${user.role === 'admin' ? 'admin' : 'employer'}">${user.role || 'employer'}</span></td></tr>`).join('')}</tbody></table></div></div><div class="section-box"><h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">Most Viewed Candidates</h2><div style="overflow-x: auto;"><table class="admin-table"><thead><tr><th>Candidate ID</th><th>Name</th><th style="text-align: center;">View Count</th></tr></thead><tbody>${topViewedCandidates.map(candidate => `<tr><td>${candidate.id}</td><td>${candidate.name || 'Unknown'}</td><td style="text-align: center; font-weight: 700; color: var(--augusta-green);">${candidate.count}</td></tr>`).join('')}</tbody></table></div></div><div class="section-box"><h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">All Messages</h2><div style="overflow-x: auto;"><table class="admin-table"><thead><tr><th>Date</th><th>From</th><th>To Candidate</th><th>Message Preview</th></tr></thead><tbody>${(messages || []).map(msg => `<tr><td>${new Date(msg.created_at).toLocaleString()}</td><td>${msg.employer_email}</td><td>${msg.candidate_name}</td><td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${msg.message}</td></tr>`).join('')}</tbody></table></div></div>`;
+                
+                const topViewedCandidates = Object.values(viewsByCandidate)
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 10);
+                
+                adminContent.innerHTML = `
+                    <div class="section-box">
+                        <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">User Management</h2>
+                        <div style="overflow-x: auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th style="text-align: center;">Credits</th>
+                                        <th style="text-align: center;">Messages Sent</th>
+                                        <th style="text-align: center;">Role</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(users || []).map(user => `
+                                        <tr>
+                                            <td>${user.name || '-'}</td>
+                                            <td>${user.email}</td>
+                                            <td style="text-align: center; font-weight: 600;">${user.credits || 0}</td>
+                                            <td style="text-align: center;">${messagesByUser[user.id] || 0}</td>
+                                            <td style="text-align: center;">
+                                                <span class="role-badge ${user.role === 'admin' ? 'admin' : 'employer'}">
+                                                    ${user.role || 'employer'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="section-box">
+                        <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">Most Viewed Candidates</h2>
+                        <div style="overflow-x: auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Candidate ID</th>
+                                        <th>Name</th>
+                                        <th style="text-align: center;">View Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${topViewedCandidates.map(candidate => `
+                                        <tr>
+                                            <td>${candidate.id}</td>
+                                            <td>${candidate.name || 'Unknown'}</td>
+                                            <td style="text-align: center; font-weight: 700; color: var(--augusta-green);">
+                                                ${candidate.count}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="section-box">
+                        <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">All Messages</h2>
+                        <div style="overflow-x: auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>From</th>
+                                        <th>To Candidate</th>
+                                        <th>Message Preview</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(messages || []).map(msg => `
+                                        <tr>
+                                            <td>${new Date(msg.created_at).toLocaleString()}</td>
+                                            <td>${msg.employer_email}</td>
+                                            <td>${msg.candidate_name}</td>
+                                            <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                ${msg.message}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
             } catch (err) {
-                console.error('Error loading admin data:', err);
+                showError('Failed to load admin data', err);
                 adminContent.innerHTML = '<div class="error-message">Failed to load admin data</div>';
             }
         }

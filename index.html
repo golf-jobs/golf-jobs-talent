@@ -793,6 +793,12 @@
             color: var(--pro-shop-navy);
         }
 
+        /* Error Toast */
+        @keyframes slideInRight {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
         /* Mobile Responsive */
         @media (max-width: 768px) {
             .mobile-menu-toggle {
@@ -813,7 +819,6 @@
                 margin: 1rem auto;
             }
             
-            /* Mobile split view */
             .split-view-container {
                 display: block !important;
                 height: auto !important;
@@ -855,7 +860,6 @@
                 font-weight: 600;
             }
             
-            /* Mobile filters */
             .filter-panel > div {
                 flex-direction: column;
             }
@@ -899,7 +903,6 @@
                 margin-bottom: 1rem;
             }
 
-            /* Mobile tables */
             .admin-table {
                 font-size: 0.85rem;
             }
@@ -1216,6 +1219,53 @@
         let currentSort = 'relevance';
         const PAGE_SIZE = 20;
         let hasMoreCandidates = true;
+        let lastError = null;
+
+        // Error handling
+        function showError(message, error = null) {
+            console.error('Application Error:', error);
+            lastError = error;
+            
+            let errorToast = document.getElementById('errorToast');
+            if (!errorToast) {
+                errorToast = document.createElement('div');
+                errorToast.id = 'errorToast';
+                errorToast.style.cssText = `
+                    position: fixed;
+                    top: 100px;
+                    right: 20px;
+                    background: white;
+                    border-left: 4px solid var(--hazard-red);
+                    padding: 1rem 1.5rem;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    z-index: 10000;
+                    max-width: 400px;
+                    animation: slideInRight 0.3s ease;
+                `;
+                document.body.appendChild(errorToast);
+            }
+            
+            errorToast.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem;">
+                    <div>
+                        <div style="font-weight: 600; color: var(--hazard-red); margin-bottom: 0.5rem;">Error</div>
+                        <div style="color: var(--pro-shop-navy);">${message}</div>
+                    </div>
+                    <button onclick="closeError()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--rough-gray);">×</button>
+                </div>
+            `;
+            
+            errorToast.style.display = 'block';
+            setTimeout(() => closeError(), 5000);
+        }
+
+        function closeError() {
+            const errorToast = document.getElementById('errorToast');
+            if (errorToast) {
+                errorToast.style.display = 'none';
+            }
+        }
 
         // Utility functions
         function toTitleCase(str) {
@@ -1425,17 +1475,17 @@
                     .eq('list_id', listId);
                 
                 if (shortlistData && shortlistData.length > 0) {
-                    const candidateIds = shortlistData.map(item => String(item.candidate_id));
+                    const candidateIds = shortlistData.map(item => item.candidate_id);
                     const { data: candidatesData } = await supabase
                         .from('candidates')
                         .select('*')
                         .in('ID', candidateIds);
                     
-                    const byId = new Map((candidatesData || []).map(c => [String(c.ID), c]));
+                    const byId = new Map((candidatesData || []).map(c => [c.ID, c]));
                     
                     shortlist = shortlistData.map(item => ({
                         ...item,
-                        candidate: byId.get(String(item.candidate_id)) || null
+                        candidate: byId.get(item.candidate_id) || null
                     }));
                 } else {
                     shortlist = [];
@@ -1543,7 +1593,7 @@
                 document.getElementById('listSelector').value = currentListId;
                 await loadShortlistForList(currentListId);
             } catch (err) {
-                alert('Error creating list: ' + err.message);
+                showError('Failed to create list: ' + err.message, err);
             }
         }
 
@@ -1580,7 +1630,7 @@
                 }
                 await loadUserLists();
             } catch (err) {
-                alert('Error deleting list: ' + err.message);
+                showError('Failed to delete list: ' + err.message, err);
             }
         }
 
@@ -1685,8 +1735,14 @@
                     .order('sort_order', { ascending: true });
                 
                 if (poolsError) {
-                    console.error('Error fetching pools:', poolsError);
-                    poolsGrid.innerHTML = `<div class="error-message">Error loading pools: ${poolsError.message}</div>`;
+                    showError('Unable to load talent pools. Please refresh the page.', poolsError);
+                    poolsGrid.innerHTML = `
+                        <div class="empty-state">
+                            <h3>Error loading pools</h3>
+                            <p>Please refresh the page or contact support if the issue persists.</p>
+                            <button class="btn btn-primary" onclick="loadPools()">Retry</button>
+                        </div>
+                    `;
                     return;
                 }
                 
@@ -1753,8 +1809,13 @@
                 }
                 
             } catch (err) {
-                console.error('Unexpected error:', err);
-                poolsGrid.innerHTML = `<div class="error-message">An error occurred: ${err.message}</div>`;
+                showError('An unexpected error occurred. Please try again.', err);
+                poolsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <h3>Something went wrong</h3>
+                        <button class="btn btn-primary" onclick="loadPools()">Try Again</button>
+                    </div>
+                `;
             }
         }
 
@@ -1798,7 +1859,13 @@
                 await loadCandidatesPage(true);
             } catch (err) {
                 console.error('Error in openPool:', err);
-                candidatesListView.innerHTML = `<div class="error-message">Error loading candidates</div>`;
+                showError('Failed to load candidates. Please try again.', err);
+                candidatesListView.innerHTML = `
+                    <div class="empty-state">
+                        <h3>Error loading candidates</h3>
+                        <button class="btn btn-primary" onclick="openPool(currentPool)">Try Again</button>
+                    </div>
+                `;
             }
             
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
@@ -1816,7 +1883,7 @@
                         .eq('pool_slug', currentPool.slug);
                     
                     if (poolCandidates && poolCandidates.length > 0) {
-                        const candidateIds = poolCandidates.map(pc => String(pc.candidate_id));
+                        const candidateIds = poolCandidates.map(pc => pc.candidate_id);
                         query = query.in('ID', candidateIds);
                     } else {
                         return;
@@ -1849,11 +1916,16 @@
             try {
                 let query = supabase.from('candidates').select('*');
                 
+                // CRITICAL FIX: Pool filtering with proper type handling
                 if (currentPool.slug !== 'all') {
-                    const { data: poolCandidates } = await supabase
+                    const { data: poolCandidates, error: poolError } = await supabase
                         .from('candidate_pools')
                         .select('candidate_id')
                         .eq('pool_slug', currentPool.slug);
+                    
+                    if (poolError) {
+                        throw poolError;
+                    }
                     
                     if (!poolCandidates || poolCandidates.length === 0) {
                         if (resetList) {
@@ -1864,8 +1936,14 @@
                         return;
                     }
                     
-                    const candidateIds = poolCandidates.map(pc => String(pc.candidate_id));
+                    // Don't convert to string - keep the original type
+                    const candidateIds = poolCandidates.map(pc => pc.candidate_id);
                     query = query.in('ID', candidateIds);
+                }
+                
+                // Category filter (server-side with pre-computed categories)
+                if (currentFilters.category) {
+                    query = query.eq('category', currentFilters.category);
                 }
                 
                 if (currentFilters.search) {
@@ -1920,11 +1998,7 @@
                 const { data: candidates, error } = await query;
                 
                 if (error) {
-                    console.error('Error loading candidates:', error);
-                    if (resetList) {
-                        candidatesListView.innerHTML = `<div class="error-message">Error loading candidates</div>`;
-                    }
-                    return;
+                    throw error;
                 }
                 
                 if (!candidates || candidates.length === 0) {
@@ -1942,23 +2016,16 @@
                     return;
                 }
                 
-                categorizeCandidates(candidates);
-                
-                let filteredResults = candidates;
-                if (currentFilters.category) {
-                    filteredResults = candidates.filter(c => c.category === currentFilters.category);
-                }
-                
                 if (currentSort === 'relevance') {
-                    filteredResults.sort((a, b) => calculateProfileScore(b) - calculateProfileScore(a));
+                    candidates.sort((a, b) => calculateProfileScore(b) - calculateProfileScore(a));
                 }
                 
                 if (resetList) {
-                    displayedCandidates = filteredResults;
-                    allCandidates = filteredResults;
+                    displayedCandidates = candidates;
+                    allCandidates = candidates;
                 } else {
-                    displayedCandidates = [...displayedCandidates, ...filteredResults];
-                    allCandidates = [...allCandidates, ...filteredResults];
+                    displayedCandidates = [...displayedCandidates, ...candidates];
+                    allCandidates = [...allCandidates, ...candidates];
                 }
                 
                 hasMoreCandidates = candidates.length === PAGE_SIZE;
@@ -1966,7 +2033,7 @@
                 if (resetList) {
                     displayCandidates(displayedCandidates);
                 } else {
-                    const newHtml = filteredResults.map(candidate => generateCandidateCardHTML(candidate)).join('');
+                    const newHtml = candidates.map(candidate => generateCandidateCardHTML(candidate)).join('');
                     candidatesListView.insertAdjacentHTML('beforeend', newHtml);
                 }
                 
@@ -1981,8 +2048,14 @@
                 
             } catch (err) {
                 console.error('Error in loadCandidatesPage:', err);
+                showError('Failed to load candidates. Please try again.', err);
                 if (resetList) {
-                    candidatesListView.innerHTML = `<div class="error-message">Error loading candidates</div>`;
+                    candidatesListView.innerHTML = `
+                        <div class="empty-state">
+                            <h3>Error loading candidates</h3>
+                            <button class="btn btn-primary" onclick="loadCandidatesPage(true)">Try Again</button>
+                        </div>
+                    `;
                 }
             }
         }
@@ -2072,37 +2145,6 @@
             });
         }
 
-        function categorizeCandidates(candidates) {
-            const categoryKeywords = {
-                'greenkeeping': ['greenkeeper', 'greens', 'course manager', 'turf', 'agronomist'],
-                'management': ['manager', 'director', 'head', 'chief', 'ceo', 'coo', 'cfo'],
-                'pga': ['pga', 'professional', 'golf professional', 'head pro', 'assistant pro'],
-                'marketing': ['marketing', 'social media', 'digital', 'communications', 'brand'],
-                'sales': ['sales', 'business development', 'account manager', 'commercial'],
-                'hospitality': ['hospitality', 'events', 'wedding', 'conference', 'guest'],
-                'maintenance': ['maintenance', 'mechanic', 'technician', 'engineer', 'equipment'],
-                'admin': ['admin', 'administrator', 'office', 'reception', 'secretary'],
-                'retail': ['retail', 'shop', 'pro shop', 'merchandise'],
-                'f&b': ['food', 'beverage', 'chef', 'catering', 'kitchen', 'restaurant', 'bar']
-            };
-            
-            candidates.forEach(candidate => {
-                const jobTitle = (candidate["Current Job Title"] || candidate["Job Title"] || '');
-                const jobTitleStr = typeof jobTitle === 'string' ? jobTitle.toLowerCase() : '';
-                const skills = (candidate["Your Skills"] || '').toLowerCase();
-                const combinedText = jobTitleStr + ' ' + skills;
-                
-                candidate.category = 'other';
-                
-                for (const [category, keywords] of Object.entries(categoryKeywords)) {
-                    if (keywords.some(keyword => combinedText.includes(keyword))) {
-                        candidate.category = category;
-                        break;
-                    }
-                }
-            });
-        }
-
         function displayCandidates(candidates) {
             const candidatesListView = document.getElementById('candidatesListView');
             
@@ -2187,15 +2229,85 @@
                     </div>
                 ` : ''}
                 
-                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
                     <button class="btn btn-secondary btn-small" onclick="addToShortlist()">Save to List</button>
-                    <button class="btn btn-primary btn-small" onclick='openCandidate("${candidate.ID}")'>View Full Profile</button>
+                    <button class="btn btn-primary btn-small" onclick='sendMessageToCandidate("${candidate.ID}")'>
+                        Send Message (1 Credit)
+                    </button>
                 </div>
             `;
             
             const isMobile = window.innerWidth <= 768;
             if (isMobile) {
                 document.querySelector('.split-view-right').classList.add('mobile-active');
+            }
+        }
+
+        // Message Credits Implementation
+        async function sendMessageToCandidate(candidateId) {
+            if (!userProfile || userProfile.credits <= 0) {
+                alert('Insufficient credits. Please contact graham@golf-jobs.com to purchase more credits.');
+                return;
+            }
+            
+            const candidate = allCandidates.find(c => String(c.ID) === String(candidateId));
+            if (!candidate) return;
+            
+            const message = prompt('Enter your message to the candidate:');
+            if (!message || !message.trim()) return;
+            
+            try {
+                // 1. Deduct credit
+                const { data: updatedUser, error: creditError } = await supabase
+                    .from('users')
+                    .update({ credits: userProfile.credits - 1 })
+                    .eq('id', currentUser.id)
+                    .select()
+                    .single();
+                
+                if (creditError) throw creditError;
+                
+                // 2. Record the message
+                const { data: messageData, error: messageError } = await supabase
+                    .from('messages')
+                    .insert({
+                        employer_id: currentUser.id,
+                        employer_email: currentUser.email,
+                        candidate_id: candidateId,
+                        candidate_name: candidate["Current Job Title"] || `Candidate ${candidateId}`,
+                        message: message.trim(),
+                        created_at: new Date().toISOString()
+                    })
+                    .select();
+                
+                if (messageError) {
+                    // Rollback: add credit back
+                    await supabase
+                        .from('users')
+                        .update({ credits: userProfile.credits })
+                        .eq('id', currentUser.id);
+                    throw messageError;
+                }
+                
+                // 3. Record profile view
+                await supabase
+                    .from('profile_views')
+                    .insert({
+                        candidate_id: candidateId,
+                        candidate_name: candidate["Current Job Title"] || `Candidate ${candidateId}`,
+                        viewed_at: new Date().toISOString()
+                    });
+                
+                // Update local state
+                userProfile.credits = updatedUser.credits;
+                document.getElementById('creditsCount').textContent = userProfile.credits;
+                document.getElementById('mobileCreditsCount').textContent = userProfile.credits;
+                
+                alert('Message sent successfully! We will forward your message to the candidate.');
+                
+            } catch (err) {
+                console.error('Error sending message:', err);
+                showError('Failed to send message: ' + err.message, err);
             }
         }
 
@@ -2409,7 +2521,7 @@
             }
             
             const existing = shortlist.find(item => 
-                String(item.candidate_id) === String(currentCandidate.ID) && 
+                item.candidate_id === currentCandidate.ID && 
                 item.list_id === currentListId
             );
             
@@ -2433,7 +2545,7 @@
                 closeMobileProfile();
                 await loadShortlistForList(currentListId);
             } else {
-                alert('Error adding to list');
+                showError('Failed to add to list: ' + error.message, error);
             }
         }
 
@@ -2481,7 +2593,7 @@
                         .from('shortlists')
                         .insert({
                             user_id: currentUser.id,
-                            candidate_id: candidateId,
+                            candidate_id: parseInt(candidateId),
                             list_id: currentListId
                         })
                         .select();
@@ -2562,7 +2674,7 @@
             if (!error) {
                 await loadShortlistForList(currentListId);
             } else {
-                alert('Error removing from list');
+                showError('Failed to remove from list: ' + error.message, error);
             }
         }
 
@@ -2584,7 +2696,7 @@
                 selectedShortlistItems.clear();
                 await loadShortlistForList(currentListId);
             } else {
-                alert('Error removing candidates');
+                showError('Failed to remove candidates: ' + error.message, error);
             }
         }
 
@@ -2756,6 +2868,7 @@
                 `;
             } catch (err) {
                 console.error('Admin load error:', err);
+                showError('Failed to load admin data: ' + err.message, err);
                 adminContent.innerHTML = '<div class="error-message">Failed to load admin data</div>';
             }
         }

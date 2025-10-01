@@ -1914,58 +1914,58 @@
             }
             
             try {
-                let candidateIds = null;
+                let query = supabase.from('candidates').select('*');
                 
-                // Get candidate IDs for non-all pools
+                // CRITICAL FIX: Pool filtering with proper type handling
                 if (currentPool.slug !== 'all') {
-                    console.log('Loading pool:', currentPool.slug);
-                    
                     const { data: poolCandidates, error: poolError } = await supabase
                         .from('candidate_pools')
                         .select('candidate_id')
                         .eq('pool_slug', currentPool.slug);
                     
                     if (poolError) {
-                        console.error('Pool query error:', poolError);
                         throw poolError;
                     }
                     
                     if (!poolCandidates || poolCandidates.length === 0) {
-                        console.log('No candidates found in pool');
                         if (resetList) {
                             candidatesListView.innerHTML = '<div class="empty-state"><h3>No candidates in this pool</h3></div>';
                         }
                         hasMoreCandidates = false;
                         document.getElementById('loadMoreContainer').style.display = 'none';
-                        document.getElementById('candidateCount').textContent = '0 candidates';
                         return;
                     }
                     
-                    candidateIds = poolCandidates.map(pc => pc.candidate_id);
-                    console.log('Found', candidateIds.length, 'candidate IDs for pool');
-                }
-                
-                // Build the candidates query
-                let query = supabase.from('candidates').select('*');
-                
-                // Apply pool filter using IN with uppercase ID column
-                if (candidateIds && candidateIds.length > 0) {
-                    // Supabase should handle the uppercase column automatically
+                    // FIX: Convert all IDs to integers to ensure type consistency
+                    const candidateIds = poolCandidates.map(pc => {
+                        const id = pc.candidate_id;
+                        // Handle both string and number types
+                        return typeof id === 'string' ? parseInt(id, 10) : id;
+                    }).filter(id => !isNaN(id)); // Remove any invalid IDs
+                    
+                    if (candidateIds.length === 0) {
+                        if (resetList) {
+                            candidatesListView.innerHTML = '<div class="empty-state"><h3>No valid candidates in this pool</h3></div>';
+                        }
+                        hasMoreCandidates = false;
+                        return;
+                    }
+                    
+                    console.log('Filtering by candidate IDs:', candidateIds.length, 'candidates');
                     query = query.in('ID', candidateIds);
                 }
                 
-                // Apply other filters
+                // Category filter (server-side with pre-computed categories)
                 if (currentFilters.category) {
                     query = query.eq('category', currentFilters.category);
                 }
                 
                 if (currentFilters.search) {
-                    const searchTerm = currentFilters.search.replace(/[%_]/g, '\\$&');
                     query = query.or(
-                        `Current Job Title.ilike.%${searchTerm}%,` +
-                        `Town/City.ilike.%${searchTerm}%,` +
-                        `Your Skills.ilike.%${searchTerm}%,` +
-                        `About You.ilike.%${searchTerm}%`
+                        `Current Job Title.ilike.%${currentFilters.search}%,` +
+                        `Town/City.ilike.%${currentFilters.search}%,` +
+                        `Your Skills.ilike.%${currentFilters.search}%,` +
+                        `About You.ilike.%${currentFilters.search}%`
                     );
                 }
                 
@@ -1991,7 +1991,6 @@
                     query = query.eq('Actively looking for work', currentFilters.looking);
                 }
                 
-                // Apply sorting
                 switch (currentSort) {
                     case 'newest':
                         query = query.order('created_at', { ascending: false, nullsFirst: false });
@@ -2003,28 +2002,20 @@
                         query = query.order('What are your salary expectations?', { ascending: true, nullsFirst: false });
                         break;
                     default:
-                        // Default sorting by ID descending
-                        query = query.order('ID', { ascending: false });
+                        query = query.order('created_at', { ascending: false, nullsFirst: false });
                 }
                 
-                // Apply pagination
                 const from = currentPage * PAGE_SIZE;
                 const to = from + PAGE_SIZE - 1;
                 query = query.range(from, to);
                 
-                console.log('Executing query for page', currentPage);
                 const { data: candidates, error } = await query;
                 
-                console.log('Query result:', { 
-                    found: candidates?.length,
-                    error: error?.message,
-                    sampleIDs: candidates?.slice(0, 3).map(c => c.ID)
-                });
-                
                 if (error) {
-                    console.error('Query error details:', error);
                     throw error;
                 }
+                
+                console.log('Loaded candidates:', candidates?.length || 0);
                 
                 if (!candidates || candidates.length === 0) {
                     hasMoreCandidates = false;
@@ -2032,17 +2023,15 @@
                         candidatesListView.innerHTML = `
                             <div class="empty-state">
                                 <h3>No candidates match your criteria</h3>
-                                <p>Try adjusting your filters or clearing them</p>
+                                <p>Try adjusting your filters</p>
                                 <button class="btn btn-primary" onclick="clearFilters()">Clear Filters</button>
                             </div>
                         `;
-                        document.getElementById('candidateCount').textContent = '0 candidates';
                     }
                     document.getElementById('loadMoreContainer').style.display = 'none';
                     return;
                 }
                 
-                // Client-side relevance sorting if needed
                 if (currentSort === 'relevance') {
                     candidates.sort((a, b) => calculateProfileScore(b) - calculateProfileScore(a));
                 }
@@ -2074,13 +2063,12 @@
                 }
                 
             } catch (err) {
-                console.error('Fatal error in loadCandidatesPage:', err);
-                showError('Failed to load candidates: ' + err.message, err);
+                console.error('Error in loadCandidatesPage:', err);
+                showError('Failed to load candidates. Please try again.', err);
                 if (resetList) {
                     candidatesListView.innerHTML = `
                         <div class="empty-state">
                             <h3>Error loading candidates</h3>
-                            <p style="color: var(--hazard-red); margin: 1rem 0; font-size: 0.9rem;">${err.message}</p>
                             <button class="btn btn-primary" onclick="loadCandidatesPage(true)">Try Again</button>
                         </div>
                     `;
@@ -2621,7 +2609,7 @@
                         .from('shortlists')
                         .insert({
                             user_id: currentUser.id,
-                            candidate_id: candidateId,
+                            candidate_id: parseInt(candidateId),
                             list_id: currentListId
                         })
                         .select();

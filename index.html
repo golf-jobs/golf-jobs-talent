@@ -283,6 +283,104 @@
             background: rgba(255,255,255,0.3);
         }
 
+        /* Mobile Navigation */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.75rem;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .mobile-nav-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 999;
+        }
+
+        .mobile-nav-overlay.active {
+            display: block;
+        }
+
+        .mobile-nav-menu {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 280px;
+            height: 100%;
+            background: white;
+            z-index: 1000;
+            transition: left 0.3s ease;
+            overflow-y: auto;
+            box-shadow: 4px 0 12px rgba(0,0,0,0.2);
+        }
+
+        .mobile-nav-menu.active {
+            left: 0;
+        }
+
+        .mobile-nav-header {
+            background: var(--augusta-green);
+            color: white;
+            padding: 1.5rem;
+        }
+
+        .mobile-user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .mobile-nav-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .mobile-credits {
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .mobile-nav-items {
+            padding: 1rem 0;
+        }
+
+        .mobile-nav-item {
+            display: block;
+            padding: 1rem 1.5rem;
+            color: var(--pro-shop-navy);
+            text-decoration: none;
+            border-left: 4px solid transparent;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .mobile-nav-item:hover,
+        .mobile-nav-item.active {
+            background: #f8f9fa;
+            border-left-color: var(--augusta-green);
+            color: var(--augusta-green);
+        }
+
+        .mobile-nav-item.logout {
+            color: var(--hazard-red);
+        }
+
         /* Container */
         .container {
             max-width: 1400px;
@@ -479,6 +577,15 @@
             color: white;
         }
 
+        .btn-danger {
+            background: var(--hazard-red);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #a02222;
+        }
+
         .btn-small {
             padding: 0.5rem 1rem;
             font-size: 0.875rem;
@@ -572,6 +679,31 @@
             border-color: var(--masters-green);
         }
 
+        /* Split View */
+        .split-view-container {
+            display: flex;
+            gap: 1.5rem;
+            height: calc(100vh - 350px);
+            min-height: 600px;
+        }
+
+        .split-view-left {
+            width: 40%;
+            overflow-y: auto;
+            padding-right: 1rem;
+            border-right: 1px solid #e5e7eb;
+        }
+
+        .split-view-right {
+            flex: 1;
+            overflow-y: auto;
+            padding-left: 1rem;
+        }
+
+        .mobile-back-btn {
+            display: none;
+        }
+
         /* Modal */
         .modal {
             display: none;
@@ -617,78 +749,153 @@
             color: var(--pro-shop-navy);
         }
 
-        /* Notes Panel */
-        .notes-panel {
-            background: #fffef5;
-            border: 1px solid var(--club-gold);
-            border-radius: 12px;
-            padding: 1rem;
+        /* Admin Tables */
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
             margin-top: 1rem;
         }
 
-        .note-textarea {
-            width: 100%;
-            min-height: 80px;
-            padding: 0.5rem;
-            border: 1px solid #e1e8e4;
-            border-radius: 8px;
-            resize: vertical;
-            font-family: inherit;
+        .admin-table thead tr {
+            border-bottom: 2px solid var(--augusta-green);
         }
 
-        /* Message Box */
-        .message-box {
-            background: #f8f9fa;
-            border: 1px solid #e1e8e4;
-            border-radius: 12px;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-
-        .message-textarea {
-            width: 100%;
-            min-height: 120px;
+        .admin-table th {
+            text-align: left;
             padding: 0.75rem;
-            border: 2px solid #e1e8e4;
-            border-radius: 8px;
-            resize: vertical;
-            font-family: inherit;
-            font-size: 1rem;
+            font-weight: 600;
+            color: var(--augusta-green);
         }
 
-        .message-textarea:focus {
-            outline: none;
-            border-color: var(--masters-green);
+        .admin-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
         }
 
-        /* Mobile Split View */
+        .admin-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .role-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .role-badge.admin {
+            background: var(--club-gold);
+            color: var(--augusta-green);
+        }
+
+        .role-badge.employer {
+            background: #e5e7eb;
+            color: var(--pro-shop-navy);
+        }
+
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            .pools-grid, .candidates-grid {
-                grid-template-columns: 1fr;
+            .mobile-menu-toggle {
+                display: block;
+            }
+            
+            .nav-tabs,
+            .user-info {
+                display: none;
             }
             
             .header-content {
+                padding: 0 1rem;
+            }
+
+            .container {
+                padding: 0 1rem;
+                margin: 1rem auto;
+            }
+            
+            /* Mobile split view */
+            .split-view-container {
+                display: block !important;
+                height: auto !important;
+            }
+            
+            .split-view-left {
+                width: 100% !important;
+                border-right: none !important;
+                padding-right: 0 !important;
+            }
+            
+            .split-view-right {
+                display: none !important;
+            }
+            
+            .split-view-right.mobile-active {
+                display: block !important;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 1500;
+                background: white;
+                overflow-y: auto;
+                padding: 1rem !important;
+                width: 100%;
+            }
+            
+            .mobile-back-btn {
+                display: inline-block !important;
+                padding: 0.75rem 1.5rem;
+                background: var(--augusta-green);
+                color: white;
+                border: none;
+                border-radius: 8px;
+                margin-bottom: 1rem;
+                cursor: pointer;
+                font-weight: 600;
+            }
+            
+            /* Mobile filters */
+            .filter-panel > div {
                 flex-direction: column;
-                align-items: stretch;
             }
             
-            .nav-tabs {
-                flex-wrap: wrap;
+            .filter-panel select,
+            .filter-panel input {
+                width: 100%;
+                margin-bottom: 0.75rem;
             }
-            
+
             .sorting-bar {
                 flex-direction: column;
                 align-items: stretch;
             }
-            
-            .modal-content {
-                margin: 10% 1rem;
-                width: calc(100% - 2rem);
+
+            .sort-options,
+            .bulk-actions {
+                width: 100%;
+                justify-content: space-between;
             }
-        }
-        
-        .mobile-back-btn {
-            display: none;
+            
+            .pools-grid,
+            .candidates-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .pool-card,
+            .candidate-card {
+                margin-bottom: 1rem;
+            }
+
+            /* Mobile tables */
+            .admin-table {
+                font-size: 0.85rem;
+            }
+
+            .admin-table th,
+            .admin-table td {
+                padding: 0.5rem 0.25rem;
+            }
         }
     </style>
 </head>
@@ -731,6 +938,9 @@
                 <div class="logo" onclick="goHome()">
                     <img src="https://ik.imagekit.io/golfjobs/Golf%20Jobs%20logo%20white.png?updatedAt=1758280288759" alt="Golf Jobs">
                 </div>
+                
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+                
                 <nav class="nav-tabs">
                     <button class="nav-tab active" onclick="switchView('pools')">Talent Pools</button>
                     <button class="nav-tab" onclick="switchView('shortlist')">
@@ -740,6 +950,7 @@
                     <button class="nav-tab" onclick="switchView('account')">My Account</button>
                     <button id="adminTab" class="nav-tab" onclick="switchView('admin')" style="display:none;">Admin</button>
                 </nav>
+                
                 <div class="user-info">
                     <span id="userName">Welcome</span>
                     <div class="credits-badge">
@@ -750,20 +961,46 @@
             </div>
         </header>
 
+        <!-- Mobile Navigation -->
+        <div id="mobileNavOverlay" class="mobile-nav-overlay" onclick="toggleMobileMenu()"></div>
+        <nav id="mobileNavMenu" class="mobile-nav-menu">
+            <div class="mobile-nav-header">
+                <div class="mobile-user-info">
+                    <div>
+                        <div id="mobileUserName" style="font-weight: 600; margin-bottom: 0.25rem;">Menu</div>
+                        <div class="mobile-credits">
+                            Credits: <span id="mobileCreditsCount">0</span>
+                        </div>
+                    </div>
+                    <button class="mobile-nav-close" onclick="toggleMobileMenu()">×</button>
+                </div>
+            </div>
+            <div class="mobile-nav-items">
+                <a href="#" class="mobile-nav-item active" onclick="switchViewMobile('pools')">Talent Pools</a>
+                <a href="#" class="mobile-nav-item" onclick="switchViewMobile('shortlist')">
+                    Shortlist <span id="mobileShortlistBadge" style="display:none;"></span>
+                </a>
+                <a href="#" class="mobile-nav-item" onclick="switchViewMobile('messages')">Messages</a>
+                <a href="#" class="mobile-nav-item" onclick="switchViewMobile('account')">My Account</a>
+                <a href="#" id="mobileAdminItem" class="mobile-nav-item" style="display:none;" onclick="switchViewMobile('admin')">Admin</a>
+                <hr style="margin: 1rem 0; border: none; border-top: 1px solid #e5e7eb;">
+                <a href="#" class="mobile-nav-item logout" onclick="handleLogout()">Sign Out</a>
+            </div>
+        </nav>
+
         <div class="container">
             <!-- Pools View -->
             <div id="poolsView" class="view-section active">
                 <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Your Talent Pools</h1>
                 <p style="color: var(--rough-gray); margin-bottom: 2rem; font-size: 1.1rem;">Select a talent pool to browse candidates</p>
                 <div class="pools-grid" id="poolsGrid">
-                    <!-- Loading skeletons -->
                     <div class="skeleton skeleton-card"></div>
                     <div class="skeleton skeleton-card"></div>
                     <div class="skeleton skeleton-card"></div>
                 </div>
             </div>
 
-            <!-- Pool Detail View with Split Layout -->
+            <!-- Pool Detail View -->
             <div id="poolDetailView" class="view-section">
                 <div class="breadcrumb">
                     <a href="#" onclick="switchView('pools')">Talent Pools</a>
@@ -771,7 +1008,6 @@
                     <span id="currentPoolName">Pool Name</span>
                 </div>
                 
-                <!-- Filter Panel -->
                 <div class="filter-panel" id="filterPanel">
                     <input type="text" id="searchInput" placeholder="Search by name, role, skills, or location..." 
                            style="width: 100%; padding: 0.875rem; border: 2px solid #e1e8e4; border-radius: 12px; font-size: 1rem; margin-bottom: 1rem;">
@@ -826,7 +1062,6 @@
                     </div>
                 </div>
                 
-                <!-- Sorting Bar -->
                 <div class="sorting-bar">
                     <div class="sort-options">
                         <label style="margin-right: 0.5rem; color: var(--rough-gray);">Sort by:</label>
@@ -847,25 +1082,20 @@
                 
                 <div id="candidateCount" style="margin-bottom: 1rem; color: var(--rough-gray);"></div>
                 
-                <!-- Split View Container -->
-                <div class="split-view-container" style="display: flex; gap: 1.5rem; height: calc(100vh - 350px); min-height: 600px;">
-                    <!-- Left Panel - Candidate List -->
-                    <div class="split-view-left" style="width: 40%; overflow-y: auto; padding-right: 1rem; border-right: 1px solid #e5e7eb;">
+                <div class="split-view-container">
+                    <div class="split-view-left">
                         <div id="candidatesListView">
-                            <!-- Loading skeletons -->
                             <div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div>
                             <div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div>
                             <div class="skeleton" style="height: 120px; margin-bottom: 1rem; border-radius: 12px;"></div>
                         </div>
                         
-                        <!-- Load More -->
                         <div class="load-more-container" id="loadMoreContainer" style="display: none; padding: 1rem 0;">
                             <button class="load-more-btn" onclick="loadMore()" style="width: 100%;">Load More</button>
                         </div>
                     </div>
                     
-                    <!-- Right Panel - Full Profile View -->
-                    <div class="split-view-right" style="flex: 1; overflow-y: auto; padding-left: 1rem;">
+                    <div class="split-view-right">
                         <button class="mobile-back-btn" onclick="closeMobileProfile()">← Back to List</button>
                         <div id="profileDetailView" style="background: white; border-radius: 16px; padding: 2rem; min-height: 100%;">
                             <div style="text-align: center; color: var(--rough-gray); padding: 4rem 2rem;">
@@ -880,10 +1110,26 @@
             <!-- Shortlist View -->
             <div id="shortlistView" class="view-section">
                 <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Your Shortlist</h1>
-                <div style="margin-bottom: 2rem;">
+                <div style="margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;">
                     <button class="btn btn-primary" onclick="exportShortlist()">Export Shortlist</button>
+                    <button class="btn btn-danger" onclick="bulkDeleteFromShortlist()" id="bulkDeleteBtn" style="display: none;">Delete Selected</button>
                 </div>
-                <div id="shortlistContent"></div>
+                
+                <!-- TODO: For multiple lists feature, you'll need to:
+                     1. Create user_lists table in database
+                     2. Add list_id column to shortlists table
+                     3. Add list management UI here
+                     For now, showing enhanced single shortlist -->
+                
+                <div class="sorting-bar" style="margin-bottom: 1rem;">
+                    <div style="color: var(--rough-gray);" id="shortlistCount">0 candidates saved</div>
+                    <div class="bulk-actions">
+                        <button class="btn btn-small btn-secondary" onclick="selectAllShortlist()">Select All</button>
+                        <button class="btn btn-small btn-secondary" onclick="deselectAllShortlist()">Clear Selection</button>
+                    </div>
+                </div>
+                
+                <div id="shortlistContent" class="candidates-grid"></div>
             </div>
 
             <!-- Messages View -->
@@ -907,7 +1153,9 @@
             <!-- Admin View -->
             <div id="adminView" class="view-section">
                 <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 2rem;">Admin Dashboard</h1>
-                <div id="adminContent"></div>
+                <div id="adminContent">
+                    <div class="skeleton" style="height: 300px; border-radius: 16px;"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -919,28 +1167,8 @@
             <h2 id="modalTitle" style="color: var(--augusta-green); margin-bottom: 1rem;"></h2>
             <div id="modalBody"></div>
             
-            <!-- Notes Section -->
-            <div class="notes-panel">
-                <h4 style="color: var(--augusta-green); margin-bottom: 0.5rem;">📝 Private Notes</h4>
-                <textarea class="note-textarea" id="candidateNotes" placeholder="Add your notes about this candidate..."></textarea>
-                <button class="btn btn-small" onclick="saveNotes()" style="margin-top: 0.5rem;">Save Notes</button>
-            </div>
-            
-            <!-- Message Section -->
-            <div class="message-box">
-                <h4 style="color: var(--augusta-green); margin-bottom: 0.5rem;">💬 Send Message</h4>
-                <p style="font-size: 0.85rem; color: var(--rough-gray); margin-bottom: 0.5rem;">
-                    First message to this candidate will use 1 credit. Follow-up messages are free.
-                </p>
-                <textarea class="message-textarea" id="messageText" 
-                          placeholder="Introduce yourself and explain why you're interested in this candidate..."></textarea>
-                <button class="btn btn-primary btn-small" onclick="sendMessage()" style="margin-top: 0.5rem;">
-                    Send Message <span id="creditCost"></span>
-                </button>
-            </div>
-            
             <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end; flex-wrap: wrap;">
-                <button class="btn btn-secondary" onclick="addToShortlist()">Save to Shortlist</button>
+                <button class="btn btn-secondary" onclick="addToShortlistFromModal()">Save to Shortlist</button>
             </div>
         </div>
     </div>
@@ -962,25 +1190,20 @@
         let filteredCandidates = [];
         let displayedCandidates = [];
         let selectedCandidates = new Set();
-        let candidateNotes = {};
-        let conversations = {};
+        let selectedShortlistItems = new Set();
         let currentPage = 0;
         const candidatesPerPage = 20;
 
         // Utility functions
         function toTitleCase(str) {
             if (!str) return str;
-            
             const acronyms = ['UK', 'USA', 'US', 'CEO', 'CFO', 'COO', 'CTO', 'PGA', 'HR', 'IT', 'F&B'];
-            
             return str.toLowerCase().split(/(\s+|-)/).map(word => {
                 const cleanWord = word.replace(/[.,;:!?]/g, '');
                 const upperClean = cleanWord.toUpperCase();
-                
                 if (acronyms.includes(upperClean)) {
                     return word.replace(cleanWord, upperClean);
                 }
-                
                 if (word.length > 0) {
                     return word.charAt(0).toUpperCase() + word.slice(1);
                 }
@@ -990,18 +1213,14 @@
 
         function cleanAndFormatLocation(townCity, country) {
             const excludeTerms = ['England', 'United Kingdom', 'UK', 'Scotland', 'Wales', 'Northern Ireland'];
-            
             let cleanedTown = townCity ? townCity.trim() : '';
             let cleanedCountry = country ? country.trim() : '';
-            
             if (excludeTerms.some(term => cleanedCountry.toLowerCase() === term.toLowerCase())) {
                 cleanedCountry = '';
             }
-            
             if (cleanedTown) {
                 return toTitleCase(cleanedTown);
             }
-            
             return 'Location Not Specified';
         }
 
@@ -1024,39 +1243,27 @@
             return notice + ' notice';
         }
 
-        // FIXED: Profile scoring function with proper weighting
         function calculateProfileScore(candidate) {
             let score = 0;
-            
-            // About You section (max 30 points)
             const aboutYou = candidate["About You"] || '';
             if (aboutYou.length > 200) score += 30;
             else if (aboutYou.length > 100) score += 20;
             else if (aboutYou.length > 50) score += 10;
             
-            // Skills section (max 20 points)
             const skills = candidate["Your Skills"] || '';
             if (skills.length > 100) score += 20;
             else if (skills.length > 50) score += 15;
             else if (skills.length > 20) score += 10;
             
-            // Job Title (10 points) - Handle float/number type
             let jobTitle = candidate["Current Job Title"] || candidate["Job Title"];
             if (typeof jobTitle === 'string' && jobTitle.trim()) score += 10;
             
-            // Salary expectations (10 points)
             if (candidate["What are your salary expectations?"]) score += 10;
-            
-            // Notice period (10 points)
             if (candidate["Notice Period"]) score += 10;
-            
-            // Location (10 points)
             if (candidate["Town/City"]) score += 10;
-            
-            // Actively looking (10 points)
             if (candidate["Actively looking for work"]) score += 10;
             
-            return score; // Out of 100
+            return score;
         }
 
         // Initialize
@@ -1068,6 +1275,9 @@
             } else {
                 document.getElementById('loginScreen').style.display = 'flex';
             }
+            
+            // Setup history handling
+            setupHistoryHandling();
         }
 
         // Login
@@ -1092,11 +1302,10 @@
             }
         }
 
-        // FIXED: Load user data with proper pool access
+        // Load user data
         async function loadUserData(user) {
             currentUser = user;
             
-            // Load user profile
             try {
                 const { data: profile } = await supabase
                     .from('users')
@@ -1107,10 +1316,13 @@
                 if (profile) {
                     userProfile = profile;
                     document.getElementById('userName').textContent = profile.name || user.email.split('@')[0];
+                    document.getElementById('mobileUserName').textContent = profile.name || user.email.split('@')[0];
                     document.getElementById('creditsCount').textContent = profile.credits || 0;
+                    document.getElementById('mobileCreditsCount').textContent = profile.credits || 0;
                     
                     if (profile.role === 'admin') {
                         document.getElementById('adminTab').style.display = 'block';
+                        document.getElementById('mobileAdminItem').style.display = 'block';
                     }
                 } else {
                     userProfile = { id: user.id, email: user.email, credits: 0 };
@@ -1120,7 +1332,6 @@
                 userProfile = { id: user.id, email: user.email, credits: 0 };
             }
             
-            // Load pool access
             try {
                 const { data: poolAccess } = await supabase
                     .from('user_pool_access')
@@ -1128,12 +1339,6 @@
                     .eq('user_id', user.id);
                 
                 userPools = poolAccess ? poolAccess.map(p => p.pool_id) : [];
-                console.log('User has access to pools:', userPools);
-                
-                // If user has 'all' access, they can see everything
-                if (userPools.includes('all')) {
-                    console.log('User has access to ALL pools');
-                }
             } catch (err) {
                 console.error('Error loading pool access:', err);
                 userPools = [];
@@ -1151,7 +1356,7 @@
                     .eq('user_id', currentUser.id);
                 
                 if (shortlistData && shortlistData.length > 0) {
-                    const candidateIds = shortlistData.map(item => item.candidate_id);
+                    const candidateIds = shortlistData.map(item => String(item.candidate_id));
                     const { data: candidatesData } = await supabase
                         .from('candidates')
                         .select('*')
@@ -1161,7 +1366,7 @@
                     
                     shortlist = shortlistData.map(item => ({
                         ...item,
-                        candidates: byId.get(String(item.candidate_id)) || null
+                        candidate: byId.get(String(item.candidate_id)) || null
                     }));
                 } else {
                     shortlist = [];
@@ -1176,11 +1381,15 @@
 
         function updateShortlistBadge() {
             const badge = document.getElementById('shortlistBadge');
+            const mobileBadge = document.getElementById('mobileShortlistBadge');
             if (shortlist.length > 0) {
                 badge.style.display = 'inline';
                 badge.textContent = shortlist.length;
+                mobileBadge.style.display = 'inline';
+                mobileBadge.textContent = `(${shortlist.length})`;
             } else {
                 badge.style.display = 'none';
+                mobileBadge.style.display = 'none';
             }
         }
 
@@ -1197,21 +1406,44 @@
             location.reload();
         }
 
-        // Switch views
-        function switchView(view) {
-            // Clear active states
+        // History handling
+        function setupHistoryHandling() {
+            window.addEventListener('popstate', function(event) {
+                if (event.state && event.state.view) {
+                    switchView(event.state.view, true);
+                } else {
+                    const hash = window.location.hash.slice(1);
+                    if (hash && ['pools', 'shortlist', 'messages', 'account', 'admin'].includes(hash)) {
+                        switchView(hash, true);
+                    }
+                }
+            });
+
+            const hash = window.location.hash.slice(1);
+            if (hash && ['pools', 'shortlist', 'messages', 'account', 'admin'].includes(hash)) {
+                switchView(hash, true);
+            }
+        }
+
+        // Switch views with history
+        function switchView(view, skipHistory = false) {
             document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.view-section').forEach(section => section.classList.remove('active'));
+            document.querySelectorAll('.mobile-nav-item').forEach(item => item.classList.remove('active'));
             
-            // Activate new view
             const section = document.getElementById(view + 'View');
             if (section) section.classList.add('active');
             
-            // Activate nav tab
-            const tabBtn = document.querySelector(`.nav-tabs .nav-tab[onclick="switchView('${view}')"]`);
+            const tabBtn = document.querySelector(`.nav-tabs .nav-tab[onclick*="'${view}'"]`);
             if (tabBtn) tabBtn.classList.add('active');
             
-            // Load view data
+            const mobileItem = document.querySelector(`.mobile-nav-item[onclick*="'${view}'"]`);
+            if (mobileItem) mobileItem.classList.add('active');
+            
+            if (!skipHistory) {
+                window.history.pushState({ view: view }, '', `#${view}`);
+            }
+            
             if (view === 'pools') loadPools();
             else if (view === 'shortlist') loadShortlist();
             else if (view === 'messages') loadMessages();
@@ -1219,9 +1451,25 @@
             else if (view === 'admin' && userProfile?.role === 'admin') loadAdmin();
         }
 
-        // UPDATED: Load pools with junction table counting
+        // Mobile menu
+        function toggleMobileMenu() {
+            const overlay = document.getElementById('mobileNavOverlay');
+            const menu = document.getElementById('mobileNavMenu');
+            overlay.classList.toggle('active');
+            menu.classList.toggle('active');
+        }
+
+        function switchViewMobile(view) {
+            switchView(view);
+            toggleMobileMenu();
+        }
+
+        function closeMobileProfile() {
+            document.querySelector('.split-view-right').classList.remove('mobile-active');
+        }
+
+        // Load pools
         async function loadPools() {
-            console.log('Loading pools...');
             const poolsGrid = document.getElementById('poolsGrid');
             poolsGrid.innerHTML = `
                 <div class="skeleton skeleton-card"></div>
@@ -1230,7 +1478,6 @@
             `;
             
             try {
-                // Get pools WITHOUT id column (use slug as identifier)
                 const { data: pools, error: poolsError } = await supabase
                     .from('talent_pools')
                     .select('slug, label, sort_order')
@@ -1247,34 +1494,28 @@
                     return;
                 }
                 
-                // Count candidates for each pool
                 for (let pool of pools) {
                     try {
                         if (pool.slug === 'all') {
-                            // Count ALL candidates for 'all' pool
                             const { count } = await supabase
                                 .from('candidates')
                                 .select('*', { count: 'exact', head: true });
                             pool.total_candidates = count || 0;
                         } else {
-                            // Count candidates from junction table
                             const { count } = await supabase
                                 .from('candidate_pools')
                                 .select('*', { count: 'exact', head: true })
                                 .eq('pool_slug', pool.slug);
                             pool.total_candidates = count || 0;
                         }
-                        console.log(`Pool ${pool.slug} has ${pool.total_candidates} candidates`);
                     } catch (err) {
                         console.warn(`Error counting for pool ${pool.slug}:`, err);
                         pool.total_candidates = 0;
                     }
                 }
                 
-                // Render pools
                 poolsGrid.innerHTML = '';
                 for (const pool of pools) {
-                    // Check if user has access (if they have 'all' or the specific pool)
                     const hasAccess = userPools.includes('all') || userPools.includes(pool.slug);
                     
                     const poolCard = document.createElement('div');
@@ -1309,10 +1550,11 @@
             }
         }
 
-        // UPDATED: Open pool using junction table
+        // Open pool
         async function openPool(pool) {
             currentPool = pool;
             currentPage = 0;
+            selectedCandidates.clear();
             document.getElementById('currentPoolName').textContent = pool.label;
             
             const candidatesListView = document.getElementById('candidatesListView');
@@ -1326,14 +1568,12 @@
                 let candidates, error;
                 
                 if (pool.slug === 'all') {
-                    // Load ALL candidates for 'all' pool
                     const result = await supabase
                         .from('candidates')
                         .select('*');
                     candidates = result.data;
                     error = result.error;
                 } else {
-                    // First get candidate IDs from junction table
                     const { data: poolCandidates, error: poolError } = await supabase
                         .from('candidate_pools')
                         .select('candidate_id')
@@ -1346,8 +1586,7 @@
                     }
                     
                     if (poolCandidates && poolCandidates.length > 0) {
-                        // Get the actual candidate data
-                        const candidateIds = poolCandidates.map(pc => pc.candidate_id);
+                        const candidateIds = poolCandidates.map(pc => String(pc.candidate_id));
                         const result = await supabase
                             .from('candidates')
                             .select('*')
@@ -1365,16 +1604,12 @@
                     return;
                 }
                 
-                // Sort candidates by profile score (BEST PROFILES FIRST)
                 allCandidates = (candidates || []).sort((a, b) => {
                     const scoreA = calculateProfileScore(a);
                     const scoreB = calculateProfileScore(b);
-                    return scoreB - scoreA; // Higher scores first
+                    return scoreB - scoreA;
                 });
                 
-                console.log(`Loaded ${allCandidates.length} candidates for pool ${pool.label}`);
-                
-                // Populate filters
                 populateLocationFilter(allCandidates);
                 categorizeCandidates(allCandidates);
                 
@@ -1389,8 +1624,7 @@
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.getElementById('poolDetailView').classList.add('active');
         }
-        
-        // Populate location filter
+
         function populateLocationFilter(candidates) {
             const locationCounts = {};
             
@@ -1418,8 +1652,7 @@
                 locationFilter.appendChild(option);
             });
         }
-        
-        // Categorize candidates
+
         function categorizeCandidates(candidates) {
             const categoryKeywords = {
                 'greenkeeping': ['greenkeeper', 'greens', 'course manager', 'turf', 'agronomist'],
@@ -1436,7 +1669,6 @@
             
             candidates.forEach(candidate => {
                 const jobTitle = (candidate["Current Job Title"] || candidate["Job Title"] || '');
-                // Handle if job title is a number/float
                 const jobTitleStr = typeof jobTitle === 'string' ? jobTitle.toLowerCase() : '';
                 const skills = (candidate["Your Skills"] || '').toLowerCase();
                 const combinedText = jobTitleStr + ' ' + skills;
@@ -1452,7 +1684,6 @@
             });
         }
 
-        // Display candidates page
         function displayCandidatesPage() {
             const startIdx = currentPage * candidatesPerPage;
             const endIdx = startIdx + candidatesPerPage;
@@ -1468,7 +1699,6 @@
             }
         }
 
-        // COMPLETELY FIXED: Display candidates with job titles and top pick badges
         function displayCandidates(candidates) {
             const candidatesListView = document.getElementById('candidatesListView');
             
@@ -1486,22 +1716,20 @@
             document.getElementById('candidateCount').textContent = `Showing ${displayedCandidates.length} of ${filteredCandidates.length} candidates`;
             
             candidatesListView.innerHTML = candidates.map(candidate => {
-                // Handle Current Job Title properly (it might be stored as a float/number)
                 let rawJobTitle = candidate["Current Job Title"];
                 if (typeof rawJobTitle === 'number' || !rawJobTitle || rawJobTitle === '') {
                     rawJobTitle = candidate["Job Title"] || '';
                 }
-                const jobTitle = rawJobTitle ? toTitleCase(rawJobTitle) : `Candidate #${candidate.ID}`;
+                const jobTitle = rawJobTitle ? toTitleCase(String(rawJobTitle)) : `Candidate #${candidate.ID}`;
                 
                 const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
                 const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
                 const notice = formatNoticePeriod(candidate["Notice Period"]);
                 const profileScore = calculateProfileScore(candidate);
                 const isTopPick = profileScore >= 85;
-                const isSelected = selectedCandidates.has(candidate.ID);
+                const isSelected = selectedCandidates.has(String(candidate.ID));
                 const activelyLooking = (candidate["Actively looking for work"] || '').toUpperCase() === 'YES';
                 
-                // Get summary preview
                 const about = candidate["About You"] || '';
                 const summaryPreview = about.substring(0, 150) + (about.length > 150 ? '...' : '');
                 
@@ -1511,12 +1739,12 @@
                          style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; 
                                 border: 2px solid ${isSelected ? 'var(--masters-green)' : '#e5e7eb'}; 
                                 cursor: pointer; transition: all 0.3s ease; position: relative;"
-                         onclick='viewCandidateProfile(${candidate.ID})'>
+                         onclick='viewCandidateProfile("${candidate.ID}")'>
                         
                         <input type="checkbox" 
                                style="position: absolute; top: 1rem; left: 1rem; width: 20px; height: 20px; cursor: pointer; z-index: 10;"
                                ${isSelected ? 'checked' : ''}
-                               onchange="toggleCandidateSelection(${candidate.ID})"
+                               onchange='toggleCandidateSelection("${candidate.ID}")'
                                onclick="event.stopPropagation()">
                         
                         ${isTopPick ? '<div class="top-pick-badge">⭐ TOP PICK</div>' : ''}
@@ -1545,19 +1773,20 @@
             }).join('');
         }
 
-        // View candidate profile (for split view)
         function viewCandidateProfile(candidateId) {
-            const candidate = allCandidates.find(c => c.ID === candidateId);
-            if (!candidate) return;
+            const candidate = allCandidates.find(c => String(c.ID) === String(candidateId));
+            if (!candidate) {
+                console.error('Candidate not found:', candidateId);
+                return;
+            }
             
             currentCandidate = candidate;
             
-            // Handle job title
             let rawJobTitle = candidate["Current Job Title"];
             if (typeof rawJobTitle === 'number' || !rawJobTitle || rawJobTitle === '') {
                 rawJobTitle = candidate["Job Title"] || '';
             }
-            const jobTitle = rawJobTitle ? toTitleCase(rawJobTitle) : `Candidate #${candidate.ID}`;
+            const jobTitle = rawJobTitle ? toTitleCase(String(rawJobTitle)) : `Candidate #${candidate.ID}`;
             
             const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
             const about = candidate["About You"] || 'No summary provided';
@@ -1613,24 +1842,28 @@
                 
                 <div style="display: flex; gap: 1rem; margin-top: 2rem;">
                     <button class="btn btn-secondary btn-small" onclick="addToShortlist()">Save to Shortlist</button>
-                    <button class="btn btn-primary btn-small" onclick="openCandidate(${candidate.ID})">View Full Profile</button>
+                    <button class="btn btn-primary btn-small" onclick='openCandidate("${candidate.ID}")'>View Full Profile</button>
                 </div>
             `;
+            
+            // Mobile handling
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                document.querySelector('.split-view-right').classList.add('mobile-active');
+            }
         }
 
-        // Open candidate modal
         function openCandidate(candidateId) {
-            const candidate = allCandidates.find(c => c.ID === candidateId);
+            const candidate = allCandidates.find(c => String(c.ID) === String(candidateId));
             if (!candidate) return;
             
             currentCandidate = candidate;
             
-            // Handle job title
             let rawJobTitle = candidate["Current Job Title"];
             if (typeof rawJobTitle === 'number' || !rawJobTitle || rawJobTitle === '') {
                 rawJobTitle = candidate["Job Title"] || '';
             }
-            const jobTitle = rawJobTitle ? toTitleCase(rawJobTitle) : `Candidate #${candidate.ID}`;
+            const jobTitle = rawJobTitle ? toTitleCase(String(rawJobTitle)) : `Candidate #${candidate.ID}`;
             
             const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
             const about = candidate["About You"] || 'No summary provided';
@@ -1670,7 +1903,6 @@
                 </div>
             `;
             
-            document.getElementById('candidateNotes').value = candidateNotes[candidate.ID] || '';
             document.getElementById('candidateModal').classList.add('active');
         }
 
@@ -1678,7 +1910,6 @@
             document.getElementById('candidateModal').classList.remove('active');
         }
 
-        // Load more candidates
         function loadMore() {
             currentPage++;
             displayCandidatesPage();
@@ -1815,21 +2046,32 @@
 
         // Selection functions
         function toggleCandidateSelection(candidateId) {
-            if (selectedCandidates.has(candidateId)) {
-                selectedCandidates.delete(candidateId);
-                document.getElementById(`card-${candidateId}`).classList.remove('selected');
+            const id = String(candidateId);
+            if (selectedCandidates.has(id)) {
+                selectedCandidates.delete(id);
+                const card = document.getElementById(`card-${candidateId}`);
+                if (card) {
+                    card.classList.remove('selected');
+                    card.style.borderColor = '#e5e7eb';
+                }
             } else {
-                selectedCandidates.add(candidateId);
-                document.getElementById(`card-${candidateId}`).classList.add('selected');
+                selectedCandidates.add(id);
+                const card = document.getElementById(`card-${candidateId}`);
+                if (card) {
+                    card.classList.add('selected');
+                    card.style.borderColor = 'var(--masters-green)';
+                }
             }
         }
 
         function selectAll() {
             displayedCandidates.forEach(candidate => {
-                selectedCandidates.add(candidate.ID);
+                const id = String(candidate.ID);
+                selectedCandidates.add(id);
                 const card = document.getElementById(`card-${candidate.ID}`);
                 if (card) {
                     card.classList.add('selected');
+                    card.style.borderColor = 'var(--masters-green)';
                     const checkbox = card.querySelector('input[type="checkbox"]');
                     if (checkbox) checkbox.checked = true;
                 }
@@ -1840,6 +2082,7 @@
             selectedCandidates.clear();
             document.querySelectorAll('.candidate-list-item').forEach(card => {
                 card.classList.remove('selected');
+                card.style.borderColor = '#e5e7eb';
                 const checkbox = card.querySelector('input[type="checkbox"]');
                 if (checkbox) checkbox.checked = false;
             });
@@ -1849,7 +2092,7 @@
         async function addToShortlist() {
             if (!currentCandidate) return;
             
-            const existing = shortlist.find(item => item.candidate_id === currentCandidate.ID);
+            const existing = shortlist.find(item => String(item.candidate_id) === String(currentCandidate.ID));
             if (existing) {
                 alert('Already in shortlist');
                 return;
@@ -1866,8 +2109,15 @@
             if (!error) {
                 alert('Added to shortlist!');
                 closeModal();
+                closeMobileProfile();
                 await refreshShortlist();
+            } else {
+                alert('Error adding to shortlist');
             }
+        }
+
+        async function addToShortlistFromModal() {
+            await addToShortlist();
         }
 
         async function bulkAddToShortlist() {
@@ -1878,7 +2128,7 @@
             
             let added = 0;
             for (const candidateId of selectedCandidates) {
-                const existing = shortlist.find(item => item.candidate_id === candidateId);
+                const existing = shortlist.find(item => String(item.candidate_id) === String(candidateId));
                 if (!existing) {
                     const { data } = await supabase
                         .from('shortlists')
@@ -1897,49 +2147,171 @@
             await refreshShortlist();
         }
 
-        // Other view functions (simplified for space)
+        // Shortlist view
         function loadShortlist() {
             const content = document.getElementById('shortlistContent');
+            const countElem = document.getElementById('shortlistCount');
+            
+            countElem.textContent = `${shortlist.length} candidate${shortlist.length !== 1 ? 's' : ''} saved`;
+            
             if (shortlist.length === 0) {
-                content.innerHTML = '<div class="section-box">No candidates saved yet</div>';
-            } else {
-                content.innerHTML = '<div class="candidates-grid">' + 
-                    shortlist.map(item => {
-                        const c = item.candidates;
-                        if (!c) return '';
-                        
-                        let rawJobTitle = c["Current Job Title"];
-                        if (typeof rawJobTitle === 'number' || !rawJobTitle) {
-                            rawJobTitle = c["Job Title"] || '';
-                        }
-                        const jobTitle = rawJobTitle ? toTitleCase(rawJobTitle) : `Candidate #${c.ID}`;
-                        
-                        return `
-                            <div class="candidate-card">
-                                <h3>${jobTitle}</h3>
-                                <p>${cleanAndFormatLocation(c["Town/City"], c.Country)}</p>
-                            </div>
-                        `;
-                    }).join('') + '</div>';
-            }
-        }
-
-        function loadMessages() {
-            document.getElementById('conversationsList').innerHTML = '<div class="section-box">No messages yet</div>';
-        }
-
-        function loadAccount() {
-            document.getElementById('accountName').textContent = userProfile?.name || '-';
-            document.getElementById('accountEmail').textContent = currentUser?.email || '-';
-            document.getElementById('accountCredits').textContent = userProfile?.credits || 0;
-        }
-
-        function loadAdmin() {
-            if (userProfile?.role !== 'admin') {
-                document.getElementById('adminContent').innerHTML = '<p>Access denied.</p>';
+                content.innerHTML = '<div class="empty-state"><h3>No candidates saved yet</h3><p>Browse talent pools and add candidates to your shortlist</p></div>';
                 return;
             }
-            document.getElementById('adminContent').innerHTML = '<div class="section-box">Admin Dashboard</div>';
+            
+            content.innerHTML = shortlist.map(item => {
+                const c = item.candidate;
+                if (!c) return '';
+                
+                let rawJobTitle = c["Current Job Title"];
+                if (typeof rawJobTitle === 'number' || !rawJobTitle) {
+                    rawJobTitle = c["Job Title"] || '';
+                }
+                const jobTitle = rawJobTitle ? toTitleCase(String(rawJobTitle)) : `Candidate #${c.ID}`;
+                
+                const location = cleanAndFormatLocation(c["Town/City"], c.Country);
+                const salary = formatSalaryExact(c["What are your salary expectations?"]);
+                const notice = formatNoticePeriod(c["Notice Period"]);
+                const isSelected = selectedShortlistItems.has(String(item.id));
+                const about = c["About You"] || '';
+                const summaryPreview = about.substring(0, 150) + (about.length > 150 ? '...' : '');
+                
+                return `
+                    <div class="candidate-card ${isSelected ? 'selected' : ''}" 
+                         id="shortlist-card-${item.id}"
+                         style="border: 2px solid ${isSelected ? 'var(--masters-green)' : '#e5e7eb'};"
+                         onclick='viewShortlistCandidate("${c.ID}")'>
+                        
+                        <input type="checkbox" 
+                               style="position: absolute; top: 1rem; left: 1rem; width: 20px; height: 20px; cursor: pointer; z-index: 10;"
+                               ${isSelected ? 'checked' : ''}
+                               onchange='toggleShortlistSelection("${item.id}")'
+                               onclick="event.stopPropagation()">
+                        
+                        <div style="padding-left: 2.5rem;">
+                            <h3 style="color: var(--augusta-green); margin-bottom: 0.5rem;">${jobTitle}</h3>
+                            <p style="color: var(--rough-gray); margin-bottom: 0.5rem;">${location}</p>
+                            ${summaryPreview ? `<p style="color: #555; font-size: 0.9rem; line-height: 1.5; margin-bottom: 1rem;">${summaryPreview}</p>` : ''}
+                            <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 1rem;">${salary} • ${notice}</p>
+                            <button class="btn btn-danger btn-small" onclick='event.stopPropagation(); removeFromShortlist("${item.id}")'>
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Show/hide bulk delete button
+            const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+            if (selectedShortlistItems.size > 0) {
+                bulkDeleteBtn.style.display = 'inline-block';
+            } else {
+                bulkDeleteBtn.style.display = 'none';
+            }
+        }
+
+        function viewShortlistCandidate(candidateId) {
+            // Find candidate in shortlist
+            const shortlistItem = shortlist.find(item => String(item.candidate?.ID) === String(candidateId));
+            if (shortlistItem && shortlistItem.candidate) {
+                // Add to allCandidates if not already there for viewCandidateProfile
+                if (!allCandidates.find(c => String(c.ID) === String(candidateId))) {
+                    allCandidates = [shortlistItem.candidate, ...allCandidates];
+                }
+                viewCandidateProfile(candidateId);
+            }
+        }
+
+        function toggleShortlistSelection(itemId) {
+            const id = String(itemId);
+            if (selectedShortlistItems.has(id)) {
+                selectedShortlistItems.delete(id);
+                const card = document.getElementById(`shortlist-card-${itemId}`);
+                if (card) {
+                    card.classList.remove('selected');
+                    card.style.borderColor = '#e5e7eb';
+                }
+            } else {
+                selectedShortlistItems.add(id);
+                const card = document.getElementById(`shortlist-card-${itemId}`);
+                if (card) {
+                    card.classList.add('selected');
+                    card.style.borderColor = 'var(--masters-green)';
+                }
+            }
+            
+            // Update bulk delete button visibility
+            const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+            if (selectedShortlistItems.size > 0) {
+                bulkDeleteBtn.style.display = 'inline-block';
+            } else {
+                bulkDeleteBtn.style.display = 'none';
+            }
+        }
+
+        function selectAllShortlist() {
+            shortlist.forEach(item => {
+                const id = String(item.id);
+                selectedShortlistItems.add(id);
+                const card = document.getElementById(`shortlist-card-${item.id}`);
+                if (card) {
+                    card.classList.add('selected');
+                    card.style.borderColor = 'var(--masters-green)';
+                    const checkbox = card.querySelector('input[type="checkbox"]');
+                    if (checkbox) checkbox.checked = true;
+                }
+            });
+            document.getElementById('bulkDeleteBtn').style.display = 'inline-block';
+        }
+
+        function deselectAllShortlist() {
+            selectedShortlistItems.clear();
+            document.querySelectorAll('[id^="shortlist-card-"]').forEach(card => {
+                card.classList.remove('selected');
+                card.style.borderColor = '#e5e7eb';
+                const checkbox = card.querySelector('input[type="checkbox"]');
+                if (checkbox) checkbox.checked = false;
+            });
+            document.getElementById('bulkDeleteBtn').style.display = 'none';
+        }
+
+        async function removeFromShortlist(itemId) {
+            if (!confirm('Remove this candidate from your shortlist?')) return;
+            
+            const { error } = await supabase
+                .from('shortlists')
+                .delete()
+                .eq('id', itemId);
+            
+            if (!error) {
+                await refreshShortlist();
+                loadShortlist();
+            } else {
+                alert('Error removing from shortlist');
+            }
+        }
+
+        async function bulkDeleteFromShortlist() {
+            if (selectedShortlistItems.size === 0) {
+                alert('Please select candidates first');
+                return;
+            }
+            
+            if (!confirm(`Remove ${selectedShortlistItems.size} candidates from your shortlist?`)) return;
+            
+            const ids = Array.from(selectedShortlistItems);
+            const { error } = await supabase
+                .from('shortlists')
+                .delete()
+                .in('id', ids);
+            
+            if (!error) {
+                selectedShortlistItems.clear();
+                await refreshShortlist();
+                loadShortlist();
+            } else {
+                alert('Error removing candidates');
+            }
         }
 
         function exportShortlist() {
@@ -1950,13 +2322,13 @@
             
             let csv = 'Job Title,Location,Salary,Notice Period\n';
             shortlist.forEach(item => {
-                const c = item.candidates;
+                const c = item.candidate;
                 if (c) {
                     let rawJobTitle = c["Current Job Title"];
                     if (typeof rawJobTitle === 'number' || !rawJobTitle) {
                         rawJobTitle = c["Job Title"] || '';
                     }
-                    const jobTitle = rawJobTitle ? toTitleCase(rawJobTitle) : `Candidate #${c.ID}`;
+                    const jobTitle = rawJobTitle ? toTitleCase(String(rawJobTitle)) : `Candidate #${c.ID}`;
                     const location = cleanAndFormatLocation(c["Town/City"], c.Country);
                     const salary = c["What are your salary expectations?"] || 'Negotiable';
                     const notice = c["Notice Period"] || 'Unknown';
@@ -1973,16 +2345,146 @@
             a.click();
         }
 
-        function saveNotes() {
-            if (!currentCandidate) return;
-            const notes = document.getElementById('candidateNotes').value;
-            candidateNotes[currentCandidate.ID] = notes;
-            localStorage.setItem('candidateNotes_' + currentUser.id, JSON.stringify(candidateNotes));
-            alert('Notes saved!');
+        // Messages view
+        function loadMessages() {
+            document.getElementById('conversationsList').innerHTML = '<div class="section-box">No messages yet</div>';
         }
 
-        function sendMessage() {
-            alert('Message functionality coming soon!');
+        // Account view
+        function loadAccount() {
+            document.getElementById('accountName').textContent = userProfile?.name || '-';
+            document.getElementById('accountEmail').textContent = currentUser?.email || '-';
+            document.getElementById('accountCredits').textContent = userProfile?.credits || 0;
+            document.getElementById('totalMessages').textContent = '0';
+        }
+
+        // Admin view
+        async function loadAdmin() {
+            if (userProfile?.role !== 'admin') {
+                document.getElementById('adminContent').innerHTML = '<p>Access denied.</p>';
+                return;
+            }
+            
+            const adminContent = document.getElementById('adminContent');
+            adminContent.innerHTML = '<div class="skeleton" style="height: 300px; border-radius: 16px;"></div>';
+            
+            try {
+                const { data: users, error: usersError } = await supabase
+                    .from('users')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                const { data: messages, error: msgsError } = await supabase
+                    .from('messages')
+                    .select('employer_id, employer_email, created_at, candidate_name');
+                
+                const { data: views, error: viewsError } = await supabase
+                    .from('profile_views')
+                    .select('candidate_id, candidate_name, viewed_at');
+                
+                const messagesByUser = (messages || []).reduce((acc, msg) => {
+                    acc[msg.employer_id] = (acc[msg.employer_id] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                const viewsByCandidate = (views || []).reduce((acc, view) => {
+                    const key = view.candidate_id;
+                    if (!acc[key]) acc[key] = { id: view.candidate_id, name: view.candidate_name, count: 0 };
+                    acc[key].count++;
+                    return acc;
+                }, {});
+                
+                const topViewedCandidates = Object.values(viewsByCandidate)
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 10);
+                
+                adminContent.innerHTML = `
+                    <div class="section-box">
+                        <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">User Management</h2>
+                        <div style="overflow-x: auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th style="text-align: center;">Credits</th>
+                                        <th style="text-align: center;">Messages Sent</th>
+                                        <th style="text-align: center;">Role</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(users || []).map(user => `
+                                        <tr>
+                                            <td>${user.name || '-'}</td>
+                                            <td>${user.email}</td>
+                                            <td style="text-align: center; font-weight: 600;">${user.credits || 0}</td>
+                                            <td style="text-align: center;">${messagesByUser[user.id] || 0}</td>
+                                            <td style="text-align: center;">
+                                                <span class="role-badge ${user.role === 'admin' ? 'admin' : 'employer'}">
+                                                    ${user.role || 'employer'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="section-box">
+                        <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">Most Viewed Candidates</h2>
+                        <div style="overflow-x: auto;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Candidate ID</th>
+                                        <th>Name</th>
+                                        <th style="text-align: center;">View Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${topViewedCandidates.map(candidate => `
+                                        <tr>
+                                            <td>${candidate.id}</td>
+                                            <td>${candidate.name || 'Unknown'}</td>
+                                            <td style="text-align: center; font-weight: 700; color: var(--augusta-green);">
+                                                ${candidate.count}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="section-box">
+                        <h2 style="color: var(--augusta-green); margin-bottom: 1rem;">System Stats</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px; text-align: center;">
+                                <div style="font-size: 2rem; font-weight: 700; color: var(--augusta-green); margin-bottom: 0.5rem;">
+                                    ${users?.length || 0}
+                                </div>
+                                <div style="color: var(--rough-gray); font-weight: 600;">Total Users</div>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px; text-align: center;">
+                                <div style="font-size: 2rem; font-weight: 700; color: var(--augusta-green); margin-bottom: 0.5rem;">
+                                    ${messages?.length || 0}
+                                </div>
+                                <div style="color: var(--rough-gray); font-weight: 600;">Messages Sent</div>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px; text-align: center;">
+                                <div style="font-size: 2rem; font-weight: 700; color: var(--augusta-green); margin-bottom: 0.5rem;">
+                                    ${views?.length || 0}
+                                </div>
+                                <div style="color: var(--rough-gray); font-weight: 600;">Profile Views</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                console.error('Admin load error:', err);
+                adminContent.innerHTML = '<div class="error-message">Failed to load admin data</div>';
+            }
         }
 
         function goHome() {

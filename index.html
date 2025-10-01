@@ -1013,7 +1013,20 @@
                         <button class="btn btn-small btn-secondary" onclick="deselectAllShortlist()">Clear Selection</button>
                     </div>
                 </div>
-                <div id="shortlistContent" class="candidates-grid"></div>
+                <div class="split-view-container">
+                    <div class="split-view-left">
+                        <div id="shortlistContent"></div>
+                    </div>
+                    <div class="split-view-right">
+                        <button class="mobile-back-btn" onclick="closeMobileProfile()">← Back to List</button>
+                        <div id="shortlistProfileView" style="background: white; border-radius: 16px; padding: 2rem; min-height: 100%;">
+                            <div style="text-align: center; color: var(--rough-gray); padding: 4rem 2rem;">
+                                <h3 style="margin-bottom: 1rem;">Select a candidate</h3>
+                                <p>Click on any candidate from your list to view their full profile</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div id="messagesView" class="view-section">
@@ -1063,6 +1076,30 @@
         </div>
     </div>
 
+    <div id="listSelectorModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <button class="modal-close" onclick="closeListSelectorModal()">×</button>
+            <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">Add to List</h2>
+            <div id="listSelectorContent">
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--pro-shop-navy);">Select existing list:</label>
+                    <select id="modalListSelector" style="width: 100%; padding: 0.875rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 1rem;">
+                        <option value="">Choose a list...</option>
+                    </select>
+                </div>
+                <div style="text-align: center; margin: 1.5rem 0; color: var(--rough-gray);">— or —</div>
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--pro-shop-navy);">Create new list:</label>
+                    <input type="text" id="newListNameInput" placeholder="e.g., Head Greenkeeper Roles" style="width: 100%; padding: 0.875rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 1rem;">
+                </div>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeListSelectorModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmListSelection()">Add to List</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const SUPABASE_URL = 'https://kbadedwbcjetxiertztv.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiYWRlZHdiY2pldHhpZXJ0enR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzMDAyNDMsImV4cCI6MjA3Mzg3NjI0M30.igm3XjM8l1OXfilQaAHtmJyCDe9eXILV_P9B3_sUzwg';
@@ -1087,6 +1124,7 @@
         const ALL_POOL_RELEVANCE_PAGE_SIZE = 150;
         let hasMoreCandidates = true;
         let currentMessageThread = null;
+        let pendingCandidatesForList = [];
 
         function showError(message, error = null) {
             console.error('Application Error:', error);
@@ -1336,7 +1374,7 @@
                 const isSelected = selectedShortlistItems.has(String(item.id));
                 const about = c["About You"] || '';
                 const summaryPreview = about.substring(0, 150) + (about.length > 150 ? '...' : '');
-                return `<div class="candidate-card ${isSelected ? 'selected' : ''}" id="shortlist-card-${item.id}" style="border: 2px solid ${isSelected ? 'var(--masters-green)' : '#e5e7eb'};" onclick='viewShortlistCandidate("${c.ID}")'><input type="checkbox" style="position: absolute; top: 1rem; left: 1rem; width: 20px; height: 20px; cursor: pointer; z-index: 10;" ${isSelected ? 'checked' : ''} onchange='toggleShortlistSelection("${item.id}")' onclick="event.stopPropagation()"><div style="padding-left: 2.5rem;"><h3 style="color: var(--augusta-green); margin-bottom: 0.5rem;">${jobTitle}</h3><p style="color: var(--rough-gray); margin-bottom: 0.5rem;">${location}</p>${summaryPreview ? `<p style="color: #555; font-size: 0.9rem; line-height: 1.5; margin-bottom: 1rem;">${summaryPreview}</p>` : ''}<p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 1rem;">${salary} • ${notice}</p>${item.notes ? `<p style="color: var(--masters-green); font-size: 0.85rem; font-style: italic; margin-bottom: 1rem;">Note: ${item.notes}</p>` : ''}<button class="btn btn-danger btn-small" onclick='event.stopPropagation(); removeFromShortlist("${item.id}")'>Remove</button></div></div>`;
+                return `<div class="candidate-list-item ${isSelected ? 'selected' : ''}" id="shortlist-card-${item.id}" style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border: 2px solid ${isSelected ? 'var(--masters-green)' : '#e5e7eb'}; cursor: pointer; transition: all 0.3s ease; position: relative;" onclick='viewShortlistCandidate("${c.ID}")'><input type="checkbox" style="position: absolute; top: 1rem; left: 1rem; width: 20px; height: 20px; cursor: pointer; z-index: 10;" ${isSelected ? 'checked' : ''} onchange='toggleShortlistSelection("${item.id}")' onclick="event.stopPropagation()"><div style="padding-left: 2.5rem;"><h3 style="color: var(--augusta-green); margin-bottom: 0.25rem; font-size: 1.2rem; font-weight: 600;">${jobTitle}</h3><p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 0.5rem;">${location}</p>${summaryPreview ? `<p style="color: #555; font-size: 0.85rem; line-height: 1.4; margin-bottom: 0.75rem;">${summaryPreview}</p>` : ''}<div style="display: flex; justify-content: space-between; align-items: center;"><span style="color: var(--rough-gray); font-size: 0.85rem;">${salary} • ${notice}</span><span style="color: var(--masters-green); font-weight: 600;">View →</span></div></div></div>`;
             }).join('');
             const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
             if (selectedShortlistItems.size > 0) {
@@ -1458,7 +1496,9 @@
         }
 
         function closeMobileProfile() {
-            document.querySelector('.split-view-right').classList.remove('mobile-active');
+            document.querySelectorAll('.split-view-right').forEach(panel => {
+                panel.classList.remove('mobile-active');
+            });
         }
 
         async function loadPools() {
@@ -1836,18 +1876,52 @@
             }
         }
 
-        function viewShortlistCandidate(candidateId) {
+        async function viewShortlistCandidate(candidateId) {
             const shortlistItem = shortlist.find(item => String(item.candidate?.ID) === String(candidateId));
-            if (shortlistItem && shortlistItem.candidate) {
-                if (!allCandidates.find(c => String(c.ID) === String(candidateId))) {
-                    allCandidates = [shortlistItem.candidate, ...allCandidates];
-                }
-                const isMobile = window.innerWidth <= 768;
-                if (isMobile) {
-                    openCandidate(candidateId);
-                } else {
-                    viewCandidateProfile(candidateId);
-                }
+            if (!shortlistItem || !shortlistItem.candidate) return;
+            
+            const candidate = shortlistItem.candidate;
+            
+            // Make sure candidate is in allCandidates array
+            if (!allCandidates.find(c => String(c.ID) === String(candidateId))) {
+                allCandidates = [candidate, ...allCandidates];
+            }
+            
+            // Set as current candidate
+            currentCandidate = candidate;
+            
+            // Build the profile HTML
+            let rawJobTitle = candidate["Current Job Title"];
+            if (typeof rawJobTitle === 'number' || !rawJobTitle || rawJobTitle === '') rawJobTitle = candidate["Job Title"] || '';
+            const jobTitle = rawJobTitle ? toTitleCase(String(rawJobTitle)) : `Candidate #${candidate.ID}`;
+            const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+            const about = candidate["About You"] || 'No summary provided';
+            const skills = candidate["Your Skills"] || '';
+            const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
+            const notice = formatNoticePeriod(candidate["Notice Period"]);
+            const activelyLooking = candidate["Actively looking for work"];
+            const activeStatus = (activelyLooking && activelyLooking.toUpperCase() === 'YES') ? 'Actively Looking For Work' : 'Not Actively Looking';
+            const profileScore = calculateProfileScore(candidate);
+            const isTopPick = profileScore >= 85;
+            const notes = await loadCandidateNotes(candidateId);
+            
+            const profileHTML = `<div style="margin-bottom: 2rem;"><h1 style="color: var(--augusta-green); margin-bottom: 0.5rem; font-size: 1.8rem;">${jobTitle}</h1>${isTopPick ? '<div class="top-pick-badge" style="position: relative; top: 0; right: auto; margin-top: 0.5rem; display: inline-flex;">⭐ TOP PICK</div>' : ''}<p style="color: var(--rough-gray); font-size: 1.1rem; margin-top: 0.5rem;">${location}</p></div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;"><div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;"><div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">Salary Expectations</div><div style="font-weight: 600; font-size: 1.1rem;">${salary}</div></div><div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;"><div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">Notice Period</div><div style="font-weight: 600; font-size: 1.1rem;">${notice}</div></div><div style="background: #f8f9fa; padding: 1rem; border-radius: 8px;"><div style="font-size: 0.8rem; color: var(--rough-gray); text-transform: uppercase; margin-bottom: 0.25rem;">Job Search Status</div><div style="font-weight: 600; font-size: 1.1rem;">${activeStatus}</div></div></div><div style="margin-bottom: 2rem;"><h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Professional Summary</h3><p style="line-height: 1.8; color: #333; white-space: pre-wrap;">${about}</p></div>${skills ? `<div style="margin-bottom: 2rem;"><h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Skills & Expertise</h3><p style="line-height: 1.6; color: #333; white-space: pre-wrap;">${skills}</p></div>` : ''}<div class="notes-section"><h3 style="color: var(--augusta-green); margin-bottom: 1rem;">Your Notes</h3><div style="margin-bottom: 1rem;"><textarea id="newNoteInput" placeholder="Add a note about this candidate..." style="width: 100%; padding: 0.75rem; border: 2px solid #e1e8e4; border-radius: 8px; font-family: inherit; resize: vertical; min-height: 80px;"></textarea><button class="btn btn-primary btn-small" onclick='saveNote("${candidateId}", document.getElementById("newNoteInput").value)' style="margin-top: 0.5rem;">Save Note</button></div>${notes.length > 0 ? `<div style="margin-top: 1.5rem;">${notes.map(note => `<div class="note-item"><div class="note-text">${note.note}</div><div class="note-meta"><span>${new Date(note.created_at).toLocaleDateString()}</span><div class="note-actions"><button class="btn btn-secondary btn-small" onclick='const newText = prompt("Edit note:", ${JSON.stringify(note.note)}); if (newText) editNote("${note.id}", newText);'>Edit</button><button class="btn btn-danger btn-small" onclick='deleteNote("${note.id}")'>Delete</button></div></div></div>`).join('')}</div>` : '<p style="color: var(--rough-gray); font-style: italic;">No notes yet. Add one above!</p>'}</div><div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;"><button class="btn btn-secondary btn-small" onclick="addToShortlist()">Add to Another List</button><button class="btn btn-primary btn-small" onclick='sendMessageToCandidate("${candidate.ID}")'>Send Message (1 Credit)</button><button class="btn btn-danger btn-small" onclick='removeFromShortlistByCandidate("${candidate.ID}")'>Remove from List</button></div>`;
+            
+            // Render into the shortlist profile view
+            document.getElementById('shortlistProfileView').innerHTML = profileHTML;
+            
+            // On mobile, show it as an overlay
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                const rightPanel = document.querySelector('#shortlistView .split-view-right');
+                if (rightPanel) rightPanel.classList.add('mobile-active');
+            }
+        }
+        
+        async function removeFromShortlistByCandidate(candidateId) {
+            const item = shortlist.find(i => String(i.candidate?.ID) === String(candidateId));
+            if (item) {
+                await removeFromShortlist(item.id);
             }
         }
 
@@ -1967,39 +2041,8 @@
 
         async function addToShortlist() {
             if (!currentCandidate) return;
-            if (userLists.length > 1) {
-                const listNames = userLists.map((list, index) => `${index + 1}. ${list.name}`).join('\n');
-                const listNumber = prompt(`Select list:\n${listNames}\n\nEnter list number:`);
-                if (!listNumber) return;
-                const index = parseInt(listNumber) - 1;
-                if (index >= 0 && index < userLists.length) {
-                    currentListId = userLists[index].id;
-                } else {
-                    alert('Invalid list number');
-                    return;
-                }
-            } else if (userLists.length === 1) {
-                currentListId = userLists[0].id;
-            } else {
-                const listName = prompt('Create a new list first. Enter list name:');
-                if (!listName) return;
-                await createNewList(listName.trim());
-                if (!currentListId) return;
-            }
-            const existing = shortlist.find(item => String(item.candidate_id) === String(currentCandidate.ID) && item.list_id === currentListId);
-            if (existing) {
-                alert('Already in this list');
-                return;
-            }
-            const { data, error } = await supabase.from('shortlists').insert({ user_id: currentUser.id, candidate_id: String(currentCandidate.ID), list_id: currentListId }).select();
-            if (!error) {
-                alert('Added to list!');
-                closeModal();
-                closeMobileProfile();
-                await loadShortlistForList(currentListId);
-            } else {
-                showError('Failed to add to list: ' + error.message, error);
-            }
+            pendingCandidatesForList = [String(currentCandidate.ID)];
+            showListSelectorModal();
         }
 
         async function addToShortlistFromModal() {
@@ -2011,36 +2054,111 @@
                 alert('Please select candidates first');
                 return;
             }
-            if (userLists.length > 1) {
-                const listNames = userLists.map((list, index) => `${index + 1}. ${list.name}`).join('\n');
-                const listNumber = prompt(`Select list:\n${listNames}\n\nEnter list number:`);
-                if (!listNumber) return;
-                const index = parseInt(listNumber) - 1;
-                if (index >= 0 && index < userLists.length) {
-                    currentListId = userLists[index].id;
-                } else {
-                    alert('Invalid list number');
+            pendingCandidatesForList = Array.from(selectedCandidates);
+            showListSelectorModal();
+        }
+
+        function showListSelectorModal() {
+            // Populate the existing lists dropdown
+            const modalListSelector = document.getElementById('modalListSelector');
+            modalListSelector.innerHTML = '<option value="">Choose a list...</option>';
+            userLists.forEach(list => {
+                const option = document.createElement('option');
+                option.value = list.id;
+                option.textContent = list.name;
+                modalListSelector.appendChild(option);
+            });
+            
+            // Clear the new list name input
+            document.getElementById('newListNameInput').value = '';
+            
+            // Show the modal
+            document.getElementById('listSelectorModal').classList.add('active');
+        }
+
+        function closeListSelectorModal() {
+            document.getElementById('listSelectorModal').classList.remove('active');
+            pendingCandidatesForList = [];
+        }
+
+        async function confirmListSelection() {
+            const selectedListId = document.getElementById('modalListSelector').value;
+            const newListName = document.getElementById('newListNameInput').value.trim();
+            
+            let targetListId = null;
+            
+            // User wants to create a new list
+            if (newListName) {
+                try {
+                    const { data, error } = await supabase.from('user_lists').insert({ 
+                        user_id: currentUser.id, 
+                        name: newListName 
+                    }).select().single();
+                    if (error) throw error;
+                    targetListId = data.id;
+                    await loadUserLists();
+                } catch (err) {
+                    showError('Failed to create list: ' + err.message, err);
                     return;
                 }
-            } else if (userLists.length === 1) {
-                currentListId = userLists[0].id;
-            } else {
-                const listName = prompt('Create a new list first. Enter list name:');
-                if (!listName) return;
-                await createNewList(listName.trim());
-                if (!currentListId) return;
             }
+            // User selected an existing list
+            else if (selectedListId) {
+                targetListId = selectedListId;
+            }
+            // No selection made
+            else {
+                alert('Please select a list or create a new one');
+                return;
+            }
+            
+            // Add candidates to the selected/created list
             let added = 0;
-            for (const candidateId of selectedCandidates) {
-                const existing = shortlist.find(item => String(item.candidate_id) === String(candidateId) && item.list_id === currentListId);
+            let skipped = 0;
+            
+            for (const candidateId of pendingCandidatesForList) {
+                // Check if already in this list
+                const { data: existing } = await supabase
+                    .from('shortlists')
+                    .select('id')
+                    .eq('user_id', currentUser.id)
+                    .eq('candidate_id', String(candidateId))
+                    .eq('list_id', targetListId)
+                    .single();
+                
                 if (!existing) {
-                    const { data } = await supabase.from('shortlists').insert({ user_id: currentUser.id, candidate_id: String(candidateId), list_id: currentListId }).select();
-                    if (data) added++;
+                    const { error } = await supabase.from('shortlists').insert({ 
+                        user_id: currentUser.id, 
+                        candidate_id: String(candidateId), 
+                        list_id: targetListId 
+                    });
+                    if (!error) added++;
+                } else {
+                    skipped++;
                 }
             }
-            alert(`Added ${added} candidates to list`);
+            
+            // Close modal and show success message
+            closeListSelectorModal();
+            
+            if (added > 0) {
+                const listName = userLists.find(l => l.id === targetListId)?.name || 'list';
+                alert(`Added ${added} candidate${added !== 1 ? 's' : ''} to "${listName}"${skipped > 0 ? ` (${skipped} already in list)` : ''}`);
+            } else if (skipped > 0) {
+                alert('All selected candidates are already in this list');
+            }
+            
+            // Clear selections and reload
             deselectAll();
-            await loadShortlistForList(currentListId);
+            closeModal();
+            closeMobileProfile();
+            
+            // If we're on the shortlist view, reload it
+            if (document.getElementById('shortlistView').classList.contains('active')) {
+                currentListId = targetListId;
+                document.getElementById('listSelector').value = targetListId;
+                await loadShortlistForList(targetListId);
+            }
         }
 
         function loadShortlist() {

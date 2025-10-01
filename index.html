@@ -997,14 +997,20 @@
 
             <div id="shortlistView" class="view-section">
                 <h1 style="font-size: 2.5rem; color: var(--augusta-green); margin-bottom: 1rem;">Your Lists</h1>
-                <div style="margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
-                    <select id="listSelector" onchange="switchList()" style="padding: 0.875rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 1rem; min-width: 200px;">
-                        <option value="">Select a list...</option>
-                    </select>
-                    <button class="btn btn-primary" onclick="showCreateListModal()">+ New List</button>
-                    <button class="btn btn-secondary" onclick="showManageListsModal()">Manage Lists</button>
-                    <button class="btn btn-primary" onclick="exportShortlist()">Export List</button>
-                    <button class="btn btn-danger" onclick="bulkDeleteFromShortlist()" id="bulkDeleteBtn" style="display: none;">Delete Selected</button>
+                <div style="margin-bottom: 2rem;">
+                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+                        <div style="flex: 1; position: relative;">
+                            <select id="listSelector" onchange="switchList()" style="width: 100%; padding: 0.875rem 3rem 0.875rem 1rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 1rem; appearance: none; background: white;">
+                                <option value="">Select a list...</option>
+                            </select>
+                            <button id="deleteCurrentListBtn" onclick="deleteCurrentList()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--hazard-red); cursor: pointer; font-size: 1.25rem; padding: 0.5rem; display: none;" title="Delete this list">×</button>
+                        </div>
+                        <button class="btn btn-primary" onclick="showCreateListModal()">+ New List</button>
+                    </div>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button class="btn btn-secondary btn-small" onclick="exportShortlist()">Export List</button>
+                        <button class="btn btn-danger btn-small" onclick="bulkDeleteFromShortlist()" id="bulkDeleteBtn" style="display: none;">Delete Selected</button>
+                    </div>
                 </div>
                 <div class="sorting-bar" style="margin-bottom: 1rem;">
                     <div style="color: var(--rough-gray);" id="shortlistCount">Select a list to view candidates</div>
@@ -1096,6 +1102,22 @@
             <div style="display: flex; gap: 1rem; justify-content: flex-end;">
                 <button class="btn btn-secondary" onclick="closeListSelectorModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="confirmListSelection()">Add to List</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="createListModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <button class="modal-close" onclick="closeCreateListModal()">×</button>
+            <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">Create New List</h2>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--pro-shop-navy);">List Name:</label>
+                <input type="text" id="createListNameInput" placeholder="e.g., Head Greenkeeper Roles, Manchester Positions" style="width: 100%; padding: 0.875rem; border: 2px solid #e1e8e4; border-radius: 8px; font-size: 1rem;">
+                <p style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--rough-gray);">Give your list a descriptive name to help organize candidates</p>
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeCreateListModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmCreateList()">Create List</button>
             </div>
         </div>
     </div>
@@ -1319,13 +1341,17 @@
 
         async function switchList() {
             const listId = document.getElementById('listSelector').value;
+            const deleteBtn = document.getElementById('deleteCurrentListBtn');
+            
             if (listId) {
                 currentListId = listId;
                 await loadShortlistForList(listId);
+                deleteBtn.style.display = 'block';
             } else {
                 currentListId = null;
                 shortlist = [];
                 displayShortlistContent();
+                deleteBtn.style.display = 'none';
             }
         }
 
@@ -1385,46 +1411,58 @@
         }
 
         function showCreateListModal() {
-            const listName = prompt('Enter list name (e.g., "Head Greenkeeper Roles", "Manchester Positions"):');
-            if (listName && listName.trim()) createNewList(listName.trim());
+            document.getElementById('createListNameInput').value = '';
+            document.getElementById('createListModal').classList.add('active');
         }
 
-        async function createNewList(name) {
+        function closeCreateListModal() {
+            document.getElementById('createListModal').classList.remove('active');
+        }
+
+        async function confirmCreateList() {
+            const listName = document.getElementById('createListNameInput').value.trim();
+            if (!listName) {
+                alert('Please enter a list name');
+                return;
+            }
+            await createNewList(listName);
+            closeCreateListModal();
+        }
+
+        async function deleteCurrentList() {
+            if (!currentListId) return;
+            
+            const listName = userLists.find(l => l.id === currentListId)?.name || 'this list';
+            if (!confirm(`Delete "${listName}" and all its candidates?\n\nThis cannot be undone.`)) return;
+            
             try {
-                const { data, error } = await supabase.from('user_lists').insert({ user_id: currentUser.id, name: name }).select().single();
+                const { error } = await supabase.from('user_lists').delete().eq('id', currentListId);
                 if (error) throw error;
+                
+                const deletedListId = currentListId;
+                currentListId = null;
+                
                 await loadUserLists();
-                currentListId = data.id;
-                document.getElementById('listSelector').value = currentListId;
-                await loadShortlistForList(currentListId);
+                
+                // If there are other lists, select the first one
+                if (userLists.length > 0) {
+                    currentListId = userLists[0].id;
+                    document.getElementById('listSelector').value = currentListId;
+                    await loadShortlistForList(currentListId);
+                } else {
+                    // No lists left
+                    document.getElementById('listSelector').value = '';
+                    shortlist = [];
+                    displayShortlistContent();
+                    document.getElementById('deleteCurrentListBtn').style.display = 'none';
+                }
             } catch (err) {
-                showError('Failed to create list: ' + err.message, err);
+                showError('Failed to delete list: ' + err.message, err);
             }
         }
 
         function showManageListsModal() {
-            if (userLists.length === 0) {
-                alert('No lists to manage. Create one first!');
-                return;
-            }
-            const listNames = userLists.map((list, index) => `${index + 1}. ${list.name}`).join('\n');
-            const listNumber = prompt(`Your lists:\n${listNames}\n\nEnter the number of the list to delete (or cancel):`);
-            if (listNumber) {
-                const index = parseInt(listNumber) - 1;
-                if (index >= 0 && index < userLists.length) deleteList(userLists[index].id);
-            }
-        }
-
-        async function deleteList(listId) {
-            if (!confirm('Delete this list and all its candidates? This cannot be undone.')) return;
-            try {
-                const { error } = await supabase.from('user_lists').delete().eq('id', listId);
-                if (error) throw error;
-                if (currentListId === listId) currentListId = null;
-                await loadUserLists();
-            } catch (err) {
-                showError('Failed to delete list: ' + err.message, err);
-            }
+            // Deprecated - no longer used
         }
 
         function updateShortlistBadge() {

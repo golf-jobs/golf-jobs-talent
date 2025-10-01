@@ -355,6 +355,7 @@
             border-radius: 20px;
             font-size: 0.875rem;
             font-weight: 700;
+            z-index: 10;
         }
         .pool-stats { padding: 2rem; }
         .pool-stat {
@@ -397,20 +398,21 @@
         
         .top-pick-badge {
             position: absolute;
-            top: -10px;
+            top: -12px;
             right: 15px;
             background: linear-gradient(135deg, var(--club-gold) 0%, var(--trophy-gold) 100%);
             color: var(--augusta-green);
-            padding: 0.3rem 0.8rem;
+            padding: 0.4rem 0.9rem;
             border-radius: 20px;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
             display: inline-flex;
             align-items: center;
-            gap: 0.25rem;
+            gap: 0.3rem;
+            z-index: 5;
         }
         
         .breadcrumb {
@@ -1081,6 +1083,7 @@
         let currentFilters = { search: '', location: '', category: '', salary: '', notice: '', looking: '' };
         let currentSort = 'relevance';
         const PAGE_SIZE = 50;
+        const ALL_POOL_RELEVANCE_PAGE_SIZE = 150; // Larger page size for ALL pool when sorting by relevance
         let hasMoreCandidates = true;
         let currentMessageThread = null;
 
@@ -1146,19 +1149,51 @@
         function calculateProfileScore(candidate) {
             let score = 0;
             const aboutYou = candidate["About You"] || '';
+            const skills = candidate["Your Skills"] || '';
+            const jobTitle = (candidate["Current Job Title"] || candidate["Job Title"] || '').toLowerCase();
+            const combinedText = (aboutYou + ' ' + skills + ' ' + jobTitle).toLowerCase();
+            
+            // CRITICAL: Golf industry-specific terms boost (40 points max)
+            const golfIndustryTerms = [
+                'golf club', 'golf course', 'country club', 'golf resort',
+                'greenkeeper', 'head greenkeeper', 'greens superintendent', 'course manager',
+                'pga professional', 'pga', 'golf professional', 'teaching professional',
+                'club manager', 'general manager', 'golf operations', 'club operations',
+                'turf management', 'agronomy', 'irrigation', 'course maintenance',
+                'golf retail', 'pro shop', 'golf merchandising',
+                'golf events', 'tournament director', 'golf tournament',
+                'golf hospitality', 'clubhouse manager', 'f&b manager',
+                'golf marketing', 'golf sales', 'membership sales',
+                'titleist', 'taylormade', 'callaway', 'ping', 'mizuno', 'cobra', 'cleveland',
+                'golf digest', 'golf monthly', 'usga', 'r&a', 'european tour', 'pga tour',
+                'handicap system', 'golf instruction', 'golf coaching',
+                'links course', 'parkland course', 'championship course'
+            ];
+            
+            let golfTermMatches = 0;
+            golfIndustryTerms.forEach(term => {
+                if (combinedText.includes(term)) golfTermMatches++;
+            });
+            score += Math.min(golfTermMatches * 8, 40); // 8 points per term, max 40
+            
+            // About You length (30 points max)
             if (aboutYou.length > 200) score += 30;
             else if (aboutYou.length > 100) score += 20;
             else if (aboutYou.length > 50) score += 10;
-            const skills = candidate["Your Skills"] || '';
+            
+            // Skills length (20 points max)
             if (skills.length > 100) score += 20;
             else if (skills.length > 50) score += 15;
             else if (skills.length > 20) score += 10;
-            let jobTitle = candidate["Current Job Title"] || candidate["Job Title"];
-            if (typeof jobTitle === 'string' && jobTitle.trim()) score += 10;
+            
+            let jobTitleField = candidate["Current Job Title"] || candidate["Job Title"];
+            if (typeof jobTitleField === 'string' && jobTitleField.trim()) score += 10;
+            
             if (candidate["What are your salary expectations?"]) score += 10;
             if (candidate["Notice Period"]) score += 10;
             if (candidate["Town/City"]) score += 10;
             if (candidate["Actively looking for work"]) score += 10;
+            
             return score;
         }
 
@@ -1513,7 +1548,7 @@
                     const { data: poolCandidates } = await supabase.from('candidate_pools').select('candidate_id').eq('pool_slug', currentPool.slug);
                     if (poolCandidates && poolCandidates.length > 0) {
                         const candidateIds = poolCandidates.map(pc => String(pc.candidate_id));
-                        query = query.in('ID', candidateIds);
+                        query = query.in('id', candidateIds); // Use lowercase 'id' to match database column
                     } else {
                         return;
                     }
@@ -1547,8 +1582,9 @@
                         document.getElementById('loadMoreContainer').style.display = 'none';
                         return;
                     }
-                    // Both are TEXT type, so compare as strings
+                    // Both candidate_id and ID are TEXT type - compare as strings
                     const candidateIds = poolCandidates.map(pc => String(pc.candidate_id));
+                    console.log(`Filtering ${currentPool.slug} pool with ${candidateIds.length} candidate IDs`);
                     query = query.in('ID', candidateIds);
                 }
                 
@@ -1570,6 +1606,9 @@
                 if (currentFilters.notice) query = query.ilike('Notice Period', `%${currentFilters.notice}%`);
                 if (currentFilters.looking) query = query.eq('Actively looking for work', currentFilters.looking);
                 
+                // CRITICAL FIX: Use larger page size for ALL pool with relevance sort to get more Top Picks
+                const pageSize = (currentPool.slug === 'all' && currentSort === 'relevance') ? ALL_POOL_RELEVANCE_PAGE_SIZE : PAGE_SIZE;
+                
                 if (currentSort !== 'relevance') {
                     switch (currentSort) {
                         case 'newest':
@@ -1584,8 +1623,8 @@
                     }
                 }
                 
-                const from = currentPage * PAGE_SIZE;
-                const to = from + PAGE_SIZE - 1;
+                const from = currentPage * pageSize;
+                const to = from + pageSize - 1;
                 query = query.range(from, to);
                 
                 const { data: candidates, error } = await query;
@@ -1612,7 +1651,7 @@
                     allCandidates = [...allCandidates, ...candidates];
                 }
                 
-                hasMoreCandidates = candidates.length === PAGE_SIZE;
+                hasMoreCandidates = candidates.length === pageSize;
                 
                 if (resetList) {
                     displayCandidates(displayedCandidates);
@@ -1741,7 +1780,8 @@
             const skills = candidate["Your Skills"] || '';
             const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
             const notice = formatNoticePeriod(candidate["Notice Period"]);
-            const activelyLooking = candidate["Actively looking for work"] || 'Not specified';
+            const activelyLooking = candidate["Actively looking for work"];
+            const activeStatus = activelyLooking && activelyLooking.toUpperCase() === 'YES' ? 'Actively Looking For Work' : 'Not Actively Looking';
             const profileScore = calculateProfileScore(candidate);
             const isTopPick = profileScore >= 85;
             const notes = await loadCandidateNotes(candidateId);

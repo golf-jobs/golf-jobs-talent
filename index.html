@@ -1201,12 +1201,21 @@
         let currentListId = null;
         let shortlist = [];
         let allCandidates = [];
-        let filteredCandidates = [];
         let displayedCandidates = [];
         let selectedCandidates = new Set();
         let selectedShortlistItems = new Set();
         let currentPage = 0;
-        const candidatesPerPage = 20;
+        let currentFilters = {
+            search: '',
+            location: '',
+            category: '',
+            salary: '',
+            notice: '',
+            looking: ''
+        };
+        let currentSort = 'relevance';
+        const PAGE_SIZE = 20;
+        let hasMoreCandidates = true;
 
         // Utility functions
         function toTitleCase(str) {
@@ -1290,7 +1299,6 @@
                 document.getElementById('loginScreen').style.display = 'flex';
             }
             
-            // Setup history handling
             setupHistoryHandling();
         }
 
@@ -1374,7 +1382,6 @@
                 
                 userLists = lists || [];
                 
-                // Populate list selector
                 const listSelector = document.getElementById('listSelector');
                 listSelector.innerHTML = '<option value="">Select a list...</option>';
                 
@@ -1385,7 +1392,6 @@
                     listSelector.appendChild(option);
                 });
                 
-                // Auto-select first list if exists
                 if (userLists.length > 0 && !currentListId) {
                     currentListId = userLists[0].id;
                     listSelector.value = currentListId;
@@ -1582,13 +1588,6 @@
             const badge = document.getElementById('shortlistBadge');
             const mobileBadge = document.getElementById('mobileShortlistBadge');
             
-            // Count total across all lists
-            let totalCount = 0;
-            userLists.forEach(list => {
-                // Would need to query each list, for now just show list count
-                totalCount = userLists.length;
-            });
-            
             if (userLists.length > 0) {
                 badge.style.display = 'inline';
                 badge.textContent = userLists.length;
@@ -1600,20 +1599,17 @@
             }
         }
 
-        // Show app
         function showApp() {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainApp').classList.add('active');
             loadPools();
         }
 
-        // Logout
         async function handleLogout() {
             await supabase.auth.signOut();
             location.reload();
         }
 
-        // History handling
         function setupHistoryHandling() {
             window.addEventListener('popstate', function(event) {
                 if (event.state && event.state.view) {
@@ -1632,7 +1628,6 @@
             }
         }
 
-        // Switch views with history
         function switchView(view, skipHistory = false) {
             document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.view-section').forEach(section => section.classList.remove('active'));
@@ -1658,7 +1653,6 @@
             else if (view === 'admin' && userProfile?.role === 'admin') loadAdmin();
         }
 
-        // Mobile menu
         function toggleMobileMenu() {
             const overlay = document.getElementById('mobileNavOverlay');
             const menu = document.getElementById('mobileNavMenu');
@@ -1675,7 +1669,7 @@
             document.querySelector('.split-view-right').classList.remove('mobile-active');
         }
 
-        // Load pools
+        // Load pools with optimized queries
         async function loadPools() {
             const poolsGrid = document.getElementById('poolsGrid');
             poolsGrid.innerHTML = `
@@ -1701,25 +1695,32 @@
                     return;
                 }
                 
-                for (let pool of pools) {
-                    try {
-                        if (pool.slug === 'all') {
-                            const { count } = await supabase
-                                .from('candidates')
-                                .select('*', { count: 'exact', head: true });
-                            pool.total_candidates = count || 0;
-                        } else {
-                            const { count } = await supabase
-                                .from('candidate_pools')
-                                .select('*', { count: 'exact', head: true })
-                                .eq('pool_slug', pool.slug);
-                            pool.total_candidates = count || 0;
-                        }
-                    } catch (err) {
-                        console.warn(`Error counting for pool ${pool.slug}:`, err);
-                        pool.total_candidates = 0;
+                // Get counts for all pools in a single query
+                const { data: poolCounts, error: countsError } = await supabase
+                    .from('candidate_pools')
+                    .select('pool_slug')
+                    .then(result => {
+                        if (result.error) return { data: null, error: result.error };
+                        
+                        const counts = {};
+                        (result.data || []).forEach(item => {
+                            counts[item.pool_slug] = (counts[item.pool_slug] || 0) + 1;
+                        });
+                        
+                        return { data: counts, error: null };
+                    });
+                
+                const { count: totalCount } = await supabase
+                    .from('candidates')
+                    .select('*', { count: 'exact', head: true });
+                
+                pools.forEach(pool => {
+                    if (pool.slug === 'all') {
+                        pool.total_candidates = totalCount || 0;
+                    } else {
+                        pool.total_candidates = (poolCounts && poolCounts[pool.slug]) || 0;
                     }
-                }
+                });
                 
                 poolsGrid.innerHTML = '';
                 for (const pool of pools) {
@@ -1757,12 +1758,33 @@
             }
         }
 
-        // Open pool
+        // Open pool with server-side pagination
         async function openPool(pool) {
             currentPool = pool;
             currentPage = 0;
             selectedCandidates.clear();
+            hasMoreCandidates = true;
+            allCandidates = [];
+            displayedCandidates = [];
+            
+            currentFilters = {
+                search: '',
+                location: '',
+                category: '',
+                salary: '',
+                notice: '',
+                looking: ''
+            };
+            currentSort = 'relevance';
+            
             document.getElementById('currentPoolName').textContent = pool.label;
+            document.getElementById('searchInput').value = '';
+            document.getElementById('locationFilter').value = '';
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('salaryFilter').value = '';
+            document.getElementById('noticeFilter').value = '';
+            document.getElementById('lookingFilter').value = '';
+            document.getElementById('sortSelect').value = 'relevance';
             
             const candidatesListView = document.getElementById('candidatesListView');
             candidatesListView.innerHTML = `
@@ -1772,57 +1794,8 @@
             `;
             
             try {
-                let candidates, error;
-                
-                if (pool.slug === 'all') {
-                    const result = await supabase
-                        .from('candidates')
-                        .select('*');
-                    candidates = result.data;
-                    error = result.error;
-                } else {
-                    const { data: poolCandidates, error: poolError } = await supabase
-                        .from('candidate_pools')
-                        .select('candidate_id')
-                        .eq('pool_slug', pool.slug);
-                    
-                    if (poolError) {
-                        console.error('Error loading pool candidates:', poolError);
-                        candidatesListView.innerHTML = `<div class="error-message">Error loading candidates</div>`;
-                        return;
-                    }
-                    
-                    if (poolCandidates && poolCandidates.length > 0) {
-                        const candidateIds = poolCandidates.map(pc => String(pc.candidate_id));
-                        const result = await supabase
-                            .from('candidates')
-                            .select('*')
-                            .in('ID', candidateIds);
-                        candidates = result.data;
-                        error = result.error;
-                    } else {
-                        candidates = [];
-                    }
-                }
-                
-                if (error) {
-                    console.error('Error loading candidates:', error);
-                    candidatesListView.innerHTML = `<div class="error-message">Error loading candidates</div>`;
-                    return;
-                }
-                
-                allCandidates = (candidates || []).sort((a, b) => {
-                    const scoreA = calculateProfileScore(a);
-                    const scoreB = calculateProfileScore(b);
-                    return scoreB - scoreA;
-                });
-                
-                populateLocationFilter(allCandidates);
-                categorizeCandidates(allCandidates);
-                
-                filteredCandidates = [...allCandidates];
-                displayCandidatesPage();
-                
+                await loadCandidatesForLocationFilter();
+                await loadCandidatesPage(true);
             } catch (err) {
                 console.error('Error in openPool:', err);
                 candidatesListView.innerHTML = `<div class="error-message">Error loading candidates</div>`;
@@ -1830,6 +1803,245 @@
             
             document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
             document.getElementById('poolDetailView').classList.add('active');
+        }
+
+        async function loadCandidatesForLocationFilter() {
+            try {
+                let query = supabase.from('candidates').select('Town/City, Country');
+                
+                if (currentPool.slug !== 'all') {
+                    const { data: poolCandidates } = await supabase
+                        .from('candidate_pools')
+                        .select('candidate_id')
+                        .eq('pool_slug', currentPool.slug);
+                    
+                    if (poolCandidates && poolCandidates.length > 0) {
+                        const candidateIds = poolCandidates.map(pc => String(pc.candidate_id));
+                        query = query.in('ID', candidateIds);
+                    } else {
+                        return;
+                    }
+                }
+                
+                const { data: candidates } = await query;
+                
+                if (candidates) {
+                    populateLocationFilter(candidates);
+                }
+            } catch (err) {
+                console.error('Error loading location data:', err);
+            }
+        }
+
+        async function loadCandidatesPage(resetList = false) {
+            if (resetList) {
+                currentPage = 0;
+                displayedCandidates = [];
+                hasMoreCandidates = true;
+            }
+            
+            const candidatesListView = document.getElementById('candidatesListView');
+            
+            if (resetList) {
+                candidatesListView.innerHTML = '<div style="text-align: center; padding: 2rem;">Loading...</div>';
+            }
+            
+            try {
+                let query = supabase.from('candidates').select('*');
+                
+                if (currentPool.slug !== 'all') {
+                    const { data: poolCandidates } = await supabase
+                        .from('candidate_pools')
+                        .select('candidate_id')
+                        .eq('pool_slug', currentPool.slug);
+                    
+                    if (!poolCandidates || poolCandidates.length === 0) {
+                        if (resetList) {
+                            candidatesListView.innerHTML = '<div class="empty-state"><h3>No candidates in this pool</h3></div>';
+                        }
+                        hasMoreCandidates = false;
+                        document.getElementById('loadMoreContainer').style.display = 'none';
+                        return;
+                    }
+                    
+                    const candidateIds = poolCandidates.map(pc => String(pc.candidate_id));
+                    query = query.in('ID', candidateIds);
+                }
+                
+                if (currentFilters.search) {
+                    query = query.or(
+                        `Current Job Title.ilike.%${currentFilters.search}%,` +
+                        `Town/City.ilike.%${currentFilters.search}%,` +
+                        `Your Skills.ilike.%${currentFilters.search}%,` +
+                        `About You.ilike.%${currentFilters.search}%`
+                    );
+                }
+                
+                if (currentFilters.location && currentFilters.location !== 'Location Not Specified') {
+                    query = query.ilike('Town/City', `%${currentFilters.location}%`);
+                }
+                
+                if (currentFilters.salary) {
+                    if (currentFilters.salary === '70000+') {
+                        query = query.gte('What are your salary expectations?', 70000);
+                    } else {
+                        const [min, max] = currentFilters.salary.split('-').map(Number);
+                        query = query.gte('What are your salary expectations?', min)
+                                    .lte('What are your salary expectations?', max);
+                    }
+                }
+                
+                if (currentFilters.notice) {
+                    query = query.ilike('Notice Period', `%${currentFilters.notice}%`);
+                }
+                
+                if (currentFilters.looking) {
+                    query = query.eq('Actively looking for work', currentFilters.looking);
+                }
+                
+                switch (currentSort) {
+                    case 'newest':
+                        query = query.order('created_at', { ascending: false, nullsFirst: false });
+                        break;
+                    case 'salary-high':
+                        query = query.order('What are your salary expectations?', { ascending: false, nullsFirst: false });
+                        break;
+                    case 'salary-low':
+                        query = query.order('What are your salary expectations?', { ascending: true, nullsFirst: false });
+                        break;
+                    default:
+                        query = query.order('created_at', { ascending: false, nullsFirst: false });
+                }
+                
+                const from = currentPage * PAGE_SIZE;
+                const to = from + PAGE_SIZE - 1;
+                query = query.range(from, to);
+                
+                const { data: candidates, error } = await query;
+                
+                if (error) {
+                    console.error('Error loading candidates:', error);
+                    if (resetList) {
+                        candidatesListView.innerHTML = `<div class="error-message">Error loading candidates</div>`;
+                    }
+                    return;
+                }
+                
+                if (!candidates || candidates.length === 0) {
+                    hasMoreCandidates = false;
+                    if (resetList) {
+                        candidatesListView.innerHTML = `
+                            <div class="empty-state">
+                                <h3>No candidates match your criteria</h3>
+                                <p>Try adjusting your filters</p>
+                                <button class="btn btn-primary" onclick="clearFilters()">Clear Filters</button>
+                            </div>
+                        `;
+                    }
+                    document.getElementById('loadMoreContainer').style.display = 'none';
+                    return;
+                }
+                
+                categorizeCandidates(candidates);
+                
+                let filteredResults = candidates;
+                if (currentFilters.category) {
+                    filteredResults = candidates.filter(c => c.category === currentFilters.category);
+                }
+                
+                if (currentSort === 'relevance') {
+                    filteredResults.sort((a, b) => calculateProfileScore(b) - calculateProfileScore(a));
+                }
+                
+                if (resetList) {
+                    displayedCandidates = filteredResults;
+                    allCandidates = filteredResults;
+                } else {
+                    displayedCandidates = [...displayedCandidates, ...filteredResults];
+                    allCandidates = [...allCandidates, ...filteredResults];
+                }
+                
+                hasMoreCandidates = candidates.length === PAGE_SIZE;
+                
+                if (resetList) {
+                    displayCandidates(displayedCandidates);
+                } else {
+                    const newHtml = filteredResults.map(candidate => generateCandidateCardHTML(candidate)).join('');
+                    candidatesListView.insertAdjacentHTML('beforeend', newHtml);
+                }
+                
+                document.getElementById('candidateCount').textContent = `Showing ${displayedCandidates.length} candidates`;
+                
+                const loadMoreContainer = document.getElementById('loadMoreContainer');
+                if (hasMoreCandidates) {
+                    loadMoreContainer.style.display = 'block';
+                } else {
+                    loadMoreContainer.style.display = 'none';
+                }
+                
+            } catch (err) {
+                console.error('Error in loadCandidatesPage:', err);
+                if (resetList) {
+                    candidatesListView.innerHTML = `<div class="error-message">Error loading candidates</div>`;
+                }
+            }
+        }
+
+        function generateCandidateCardHTML(candidate) {
+            let rawJobTitle = candidate["Current Job Title"];
+            if (typeof rawJobTitle === 'number' || !rawJobTitle || rawJobTitle === '') {
+                rawJobTitle = candidate["Job Title"] || '';
+            }
+            const jobTitle = rawJobTitle ? toTitleCase(String(rawJobTitle)) : `Candidate #${candidate.ID}`;
+            
+            const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
+            const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
+            const notice = formatNoticePeriod(candidate["Notice Period"]);
+            const profileScore = calculateProfileScore(candidate);
+            const isTopPick = profileScore >= 85;
+            const isSelected = selectedCandidates.has(String(candidate.ID));
+            const activelyLooking = (candidate["Actively looking for work"] || '').toUpperCase() === 'YES';
+            
+            const about = candidate["About You"] || '';
+            const summaryPreview = about.substring(0, 150) + (about.length > 150 ? '...' : '');
+            
+            return `
+                <div class="candidate-list-item ${isSelected ? 'selected' : ''}" 
+                     id="card-${candidate.ID}"
+                     style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; 
+                            border: 2px solid ${isSelected ? 'var(--masters-green)' : '#e5e7eb'}; 
+                            cursor: pointer; transition: all 0.3s ease; position: relative;"
+                     onclick='viewCandidateProfile("${candidate.ID}")'>
+                    
+                    <input type="checkbox" 
+                           style="position: absolute; top: 1rem; left: 1rem; width: 20px; height: 20px; cursor: pointer; z-index: 10;"
+                           ${isSelected ? 'checked' : ''}
+                           onchange='toggleCandidateSelection("${candidate.ID}")'
+                           onclick="event.stopPropagation()">
+                    
+                    ${isTopPick ? '<div class="top-pick-badge">⭐ TOP PICK</div>' : ''}
+                    
+                    <div style="padding-left: 2.5rem;">
+                        <h3 style="color: var(--augusta-green); margin-bottom: 0.25rem; font-size: 1.2rem; font-weight: 600;">
+                            ${jobTitle}
+                        </h3>
+                        <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 0.5rem;">${location}</p>
+                        
+                        ${summaryPreview ? `
+                            <p style="color: #555; font-size: 0.85rem; line-height: 1.4; margin-bottom: 0.75rem;">
+                                ${summaryPreview}
+                            </p>
+                        ` : ''}
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--rough-gray); font-size: 0.85rem;">
+                                ${salary} • ${notice}${activelyLooking ? ' • Actively looking' : ''}
+                            </span>
+                            <span style="color: var(--masters-green); font-weight: 600;">View →</span>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         function populateLocationFilter(candidates) {
@@ -1891,21 +2103,6 @@
             });
         }
 
-        function displayCandidatesPage() {
-            const startIdx = currentPage * candidatesPerPage;
-            const endIdx = startIdx + candidatesPerPage;
-            displayedCandidates = filteredCandidates.slice(0, endIdx);
-            
-            displayCandidates(displayedCandidates);
-            
-            const loadMoreContainer = document.getElementById('loadMoreContainer');
-            if (endIdx < filteredCandidates.length) {
-                loadMoreContainer.style.display = 'block';
-            } else {
-                loadMoreContainer.style.display = 'none';
-            }
-        }
-
         function displayCandidates(candidates) {
             const candidatesListView = document.getElementById('candidatesListView');
             
@@ -1920,64 +2117,7 @@
                 return;
             }
             
-            document.getElementById('candidateCount').textContent = `Showing ${displayedCandidates.length} of ${filteredCandidates.length} candidates`;
-            
-            candidatesListView.innerHTML = candidates.map(candidate => {
-                let rawJobTitle = candidate["Current Job Title"];
-                if (typeof rawJobTitle === 'number' || !rawJobTitle || rawJobTitle === '') {
-                    rawJobTitle = candidate["Job Title"] || '';
-                }
-                const jobTitle = rawJobTitle ? toTitleCase(String(rawJobTitle)) : `Candidate #${candidate.ID}`;
-                
-                const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
-                const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
-                const notice = formatNoticePeriod(candidate["Notice Period"]);
-                const profileScore = calculateProfileScore(candidate);
-                const isTopPick = profileScore >= 85;
-                const isSelected = selectedCandidates.has(String(candidate.ID));
-                const activelyLooking = (candidate["Actively looking for work"] || '').toUpperCase() === 'YES';
-                
-                const about = candidate["About You"] || '';
-                const summaryPreview = about.substring(0, 150) + (about.length > 150 ? '...' : '');
-                
-                return `
-                    <div class="candidate-list-item ${isSelected ? 'selected' : ''}" 
-                         id="card-${candidate.ID}"
-                         style="background: white; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; 
-                                border: 2px solid ${isSelected ? 'var(--masters-green)' : '#e5e7eb'}; 
-                                cursor: pointer; transition: all 0.3s ease; position: relative;"
-                         onclick='viewCandidateProfile("${candidate.ID}")'>
-                        
-                        <input type="checkbox" 
-                               style="position: absolute; top: 1rem; left: 1rem; width: 20px; height: 20px; cursor: pointer; z-index: 10;"
-                               ${isSelected ? 'checked' : ''}
-                               onchange='toggleCandidateSelection("${candidate.ID}")'
-                               onclick="event.stopPropagation()">
-                        
-                        ${isTopPick ? '<div class="top-pick-badge">⭐ TOP PICK</div>' : ''}
-                        
-                        <div style="padding-left: 2.5rem;">
-                            <h3 style="color: var(--augusta-green); margin-bottom: 0.25rem; font-size: 1.2rem; font-weight: 600;">
-                                ${jobTitle}
-                            </h3>
-                            <p style="color: var(--rough-gray); font-size: 0.9rem; margin-bottom: 0.5rem;">${location}</p>
-                            
-                            ${summaryPreview ? `
-                                <p style="color: #555; font-size: 0.85rem; line-height: 1.4; margin-bottom: 0.75rem;">
-                                    ${summaryPreview}
-                                </p>
-                            ` : ''}
-                            
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="color: var(--rough-gray); font-size: 0.85rem;">
-                                    ${salary} • ${notice}${activelyLooking ? ' • Actively looking' : ''}
-                                </span>
-                                <span style="color: var(--masters-green); font-weight: 600;">View →</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            candidatesListView.innerHTML = candidates.map(candidate => generateCandidateCardHTML(candidate)).join('');
         }
 
         function viewCandidateProfile(candidateId) {
@@ -2053,7 +2193,6 @@
                 </div>
             `;
             
-            // Mobile handling
             const isMobile = window.innerWidth <= 768;
             if (isMobile) {
                 document.querySelector('.split-view-right').classList.add('mobile-active');
@@ -2067,7 +2206,6 @@
                     allCandidates = [shortlistItem.candidate, ...allCandidates];
                 }
                 
-                // On mobile, use modal instead of split view
                 const isMobile = window.innerWidth <= 768;
                 if (isMobile) {
                     openCandidate(candidateId);
@@ -2136,10 +2274,10 @@
 
         function loadMore() {
             currentPage++;
-            displayCandidatesPage();
+            loadCandidatesPage(false);
         }
 
-        // Filters
+        // Filter event listeners
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('searchInput');
             if (searchInput) {
@@ -2163,97 +2301,19 @@
         }
 
         function applyFilters() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const locationFilter = document.getElementById('locationFilter').value;
-            const categoryFilter = document.getElementById('categoryFilter').value;
-            const salaryFilter = document.getElementById('salaryFilter').value;
-            const noticeFilter = document.getElementById('noticeFilter').value;
-            const lookingFilter = document.getElementById('lookingFilter').value;
+            currentFilters.search = document.getElementById('searchInput').value.toLowerCase();
+            currentFilters.location = document.getElementById('locationFilter').value;
+            currentFilters.category = document.getElementById('categoryFilter').value;
+            currentFilters.salary = document.getElementById('salaryFilter').value;
+            currentFilters.notice = document.getElementById('noticeFilter').value;
+            currentFilters.looking = document.getElementById('lookingFilter').value;
             
-            let filtered = [...allCandidates];
-            
-            if (searchTerm) {
-                filtered = filtered.filter(c => {
-                    const jobTitle = typeof c["Current Job Title"] === 'string' ? c["Current Job Title"] : '';
-                    return (
-                        jobTitle.toLowerCase().includes(searchTerm) ||
-                        (c["Town/City"] || '').toLowerCase().includes(searchTerm) ||
-                        (c["Your Skills"] || '').toLowerCase().includes(searchTerm) ||
-                        (c["About You"] || '').toLowerCase().includes(searchTerm)
-                    );
-                });
-            }
-            
-            if (locationFilter) {
-                filtered = filtered.filter(c => {
-                    const location = cleanAndFormatLocation(c["Town/City"], c.Country);
-                    return location === locationFilter;
-                });
-            }
-            
-            if (categoryFilter) {
-                filtered = filtered.filter(c => c.category === categoryFilter);
-            }
-            
-            if (salaryFilter) {
-                filtered = filtered.filter(c => {
-                    const salary = parseFloat(c["What are your salary expectations?"]) || 0;
-                    if (salaryFilter === '70000+') return salary >= 70000;
-                    const [min, max] = salaryFilter.split('-').map(Number);
-                    return salary >= min && salary <= max;
-                });
-            }
-            
-            if (noticeFilter) {
-                filtered = filtered.filter(c => {
-                    const notice = (c["Notice Period"] || '').toLowerCase();
-                    return notice.includes(noticeFilter.toLowerCase());
-                });
-            }
-            
-            if (lookingFilter) {
-                filtered = filtered.filter(c => 
-                    (c["Actively looking for work"] || '').toUpperCase() === lookingFilter
-                );
-            }
-            
-            filteredCandidates = filtered;
-            currentPage = 0;
-            displayCandidatesPage();
+            loadCandidatesPage(true);
         }
 
         function applySort() {
-            const sortValue = document.getElementById('sortSelect').value;
-            
-            switch (sortValue) {
-                case 'relevance':
-                    filteredCandidates.sort((a, b) => calculateProfileScore(b) - calculateProfileScore(a));
-                    break;
-                case 'newest':
-                    filteredCandidates.sort((a, b) => {
-                        const dateA = new Date(a.created_at || 0);
-                        const dateB = new Date(b.created_at || 0);
-                        return dateB - dateA;
-                    });
-                    break;
-                case 'salary-high':
-                    filteredCandidates.sort((a, b) => {
-                        const salaryA = parseFloat(a["What are your salary expectations?"]) || 0;
-                        const salaryB = parseFloat(b["What are your salary expectations?"]) || 0;
-                        return salaryB - salaryA;
-                    });
-                    break;
-                case 'salary-low':
-                    filteredCandidates.sort((a, b) => {
-                        const salaryA = parseFloat(a["What are your salary expectations?"]) || 0;
-                        const salaryB = parseFloat(b["What are your salary expectations?"]) || 0;
-                        return salaryA - salaryB;
-                    });
-                    break;
-            }
-            
-            currentPage = 0;
-            displayCandidatesPage();
+            currentSort = document.getElementById('sortSelect').value;
+            loadCandidatesPage(true);
         }
 
         function clearFilters() {
@@ -2263,9 +2323,19 @@
             document.getElementById('salaryFilter').value = '';
             document.getElementById('noticeFilter').value = '';
             document.getElementById('lookingFilter').value = '';
-            filteredCandidates = [...allCandidates];
-            currentPage = 0;
-            displayCandidatesPage();
+            document.getElementById('sortSelect').value = 'relevance';
+            
+            currentFilters = {
+                search: '',
+                location: '',
+                category: '',
+                salary: '',
+                notice: '',
+                looking: ''
+            };
+            currentSort = 'relevance';
+            
+            loadCandidatesPage(true);
         }
 
         // Selection functions
@@ -2316,7 +2386,6 @@
         async function addToShortlist() {
             if (!currentCandidate) return;
             
-            // If user has multiple lists, let them choose
             if (userLists.length > 1) {
                 const listNames = userLists.map((list, index) => `${index + 1}. ${list.name}`).join('\n');
                 const listNumber = prompt(`Select list:\n${listNames}\n\nEnter list number:`);
@@ -2378,7 +2447,6 @@
                 return;
             }
             
-            // If multiple lists exist, let user choose
             if (userLists.length > 1) {
                 const listNames = userLists.map((list, index) => `${index + 1}. ${list.name}`).join('\n');
                 const listNumber = prompt(`Select list:\n${listNames}\n\nEnter list number:`);
@@ -2427,7 +2495,6 @@
             await loadShortlistForList(currentListId);
         }
 
-        // Shortlist view
         function loadShortlist() {
             loadUserLists();
         }
@@ -2450,7 +2517,6 @@
                 }
             }
             
-            // Update bulk delete button visibility
             const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
             if (selectedShortlistItems.size > 0) {
                 bulkDeleteBtn.style.display = 'inline-block';
@@ -2555,12 +2621,10 @@
             a.click();
         }
 
-        // Messages view
         function loadMessages() {
             document.getElementById('conversationsList').innerHTML = '<div class="section-box">No messages yet</div>';
         }
 
-        // Account view
         function loadAccount() {
             document.getElementById('accountName').textContent = userProfile?.name || '-';
             document.getElementById('accountEmail').textContent = currentUser?.email || '-';
@@ -2568,7 +2632,6 @@
             document.getElementById('totalMessages').textContent = '0';
         }
 
-        // Admin view
         async function loadAdmin() {
             if (userProfile?.role !== 'admin') {
                 document.getElementById('adminContent').innerHTML = '<p>Access denied.</p>';
@@ -2579,16 +2642,16 @@
             adminContent.innerHTML = '<div class="skeleton" style="height: 300px; border-radius: 16px;"></div>';
             
             try {
-                const { data: users, error: usersError } = await supabase
+                const { data: users } = await supabase
                     .from('users')
                     .select('*')
                     .order('created_at', { ascending: false });
                 
-                const { data: messages, error: msgsError } = await supabase
+                const { data: messages } = await supabase
                     .from('messages')
                     .select('employer_id, employer_email, created_at, candidate_name');
                 
-                const { data: views, error: viewsError } = await supabase
+                const { data: views } = await supabase
                     .from('profile_views')
                     .select('candidate_id, candidate_name, viewed_at');
                 

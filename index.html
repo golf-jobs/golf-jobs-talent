@@ -3944,7 +3944,7 @@ function bulkArchiveMessages() {
                 
                 const { data: messages } = await supabase
                     .from('messages')
-                    .select('employer_id, employer_email, created_at, candidate_name, message');
+                    .select('employer_id, employer_email, created_at, candidate_name, message_text');
                 
                 const { data: views } = await supabase
                     .from('profile_views')

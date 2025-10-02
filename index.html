@@ -2600,6 +2600,16 @@ function closeMessageWarningModal() {
     document.getElementById('agreeToTerms').checked = false;
 }
 
+function closeMessageWarningModal() {
+    document.getElementById('messageCreditWarningModal').classList.remove('active');
+    document.getElementById('agreeToTerms').checked = false;
+}
+
+function closeSuccessAndRedirect() {
+    document.getElementById('messageCreditWarningModal').classList.remove('active');
+    backToConversations();
+}
+        
 async function confirmSendMessage() {
     if (!document.getElementById('agreeToTerms').checked) return;
     
@@ -2716,16 +2726,21 @@ async function actuallySendMessage(messageContent) {
             }
         }
         
-        // Show success message
-        if (isFirstMessageToCandidate) {
-            alert('Message sent successfully! 1 credit deducted. The candidate will receive your message via email.');
-        } else {
-            // Just show a brief success indicator
-            const successMsg = document.createElement('div');
-            successMsg.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: var(--masters-green); color: white; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000;';
-            successMsg.textContent = 'Message sent!';
-            document.body.appendChild(successMsg);
-            setTimeout(() => successMsg.remove(), 3000);
+        // Show success message in the existing modal style
+        const modal = document.getElementById('messageCreditWarningModal');
+        modal.querySelector('h2').textContent = 'Message Sent Successfully!';
+        modal.querySelector('.modal-content > div:nth-child(2)').innerHTML = `
+            <div style="text-align: center; padding: 2rem;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+                <p style="font-size: 1.1rem; margin-bottom: 1rem;">Your message has been sent to the candidate.</p>
+                ${isFirstMessageToCandidate ? '<p style="color: var(--rough-gray);">1 credit has been deducted from your balance.</p>' : ''}
+                <p style="color: var(--rough-gray); margin-top: 1rem;">The candidate will receive your message via email.</p>
+            </div>
+        `;
+        modal.querySelector('.modal-content > div:last-child').innerHTML = `
+            <button class="btn btn-primary" onclick="closeSuccessAndRedirect()" style="width: 100%;">Back to Messages</button>
+        `;
+        modal.classList.add('active');
         }
         
         isFirstMessageToCandidate = false;

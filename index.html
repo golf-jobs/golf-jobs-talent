@@ -1723,22 +1723,23 @@
                     query = query.eq('"Actively looking for work"', currentFilters.looking);
                 }
                 
-                // Sorting (except relevance which is done client-side)
-                const pageSize = (currentPool.slug === 'all' && currentSort === 'relevance') 
-                    ? CONFIG.ALL_POOL_PAGE_SIZE 
-                    : CONFIG.PAGE_SIZE;
-                
-                if (currentSort !== 'relevance') {
-                    switch (currentSort) {
-                        case 'newest':
-                            query = query.order('"Created At"', { ascending: false, nullsFirst: false });
-                            break;
-                        case 'salary-high':
-                            query = query.order('"What are your salary expectations?"', { ascending: false, nullsFirst: false });
-                            break;
-                        case 'salary-low':
-                            query = query.order('"What are your salary expectations?"', { ascending: true, nullsFirst: false });
-                            break;
+                // Sorting (except relevance which is done client-side)                            
+                const pageSize = CONFIG.PAGE_SIZE;
+
+                // Sort based on selected option - database handles all sorting now
+switch (currentSort) {
+    case 'relevance':
+        query = query.order('profile_score', { ascending: false, nullsFirst: false });
+        break;
+    case 'newest':
+        query = query.order('"Created At"', { ascending: false, nullsFirst: false });
+        break;
+    case 'salary-high':
+        query = query.order('"What are your salary expectations?"', { ascending: false, nullsFirst: false });
+        break;
+    case 'salary-low':
+        query = query.order('"What are your salary expectations?"', { ascending: true, nullsFirst: false });
+        break;
                     }
                 }
                 
@@ -1760,11 +1761,7 @@
                 }
                 
                 // Apply relevance scoring if needed
-                if (currentSort === 'relevance') {
-                    candidates.forEach(c => c._score = calculateProfileScore(c));
-                    candidates.sort((a, b) => b._score - a._score);
-                }
-                
+                                
                 if (resetList) {
                     displayedCandidates = candidates;
                     allCandidates = candidates;
@@ -1813,7 +1810,7 @@
             const location = cleanAndFormatLocation(candidate["Town/City"], candidate.Country);
             const salary = formatSalaryExact(candidate["What are your salary expectations?"]);
             const notice = formatNoticePeriod(candidate["Notice Period"]);
-            const profileScore = calculateProfileScore(candidate);
+            const profileScore = candidate.profile_score || 0;
             const isTopPick = profileScore >= CONFIG.TOP_PICK_THRESHOLD;
             const isSelected = selectedCandidates.has(String(candidate.ID));
             const activelyLooking = (candidate["Actively looking for work"] || '').toUpperCase() === 'YES';

@@ -1456,6 +1456,15 @@
     </div>
 </div>
 
+<div id="adminMessageThreadModal" class="modal">
+    <div class="modal-content" style="max-width: 900px;">
+        <button class="modal-close" onclick="closeAdminThreadModal()">×</button>
+        <h2 id="adminThreadTitle" style="color: var(--augusta-green); margin-bottom: 1rem;"></h2>
+        <p id="adminThreadSubtitle" style="color: var(--rough-gray); margin-bottom: 1.5rem;"></p>
+        <div id="adminMessageConversation" class="message-conversation" style="max-height: 600px;"></div>
+    </div>
+</div>    
+
     <script>
         // ============================================================================
         // CONFIGURATION & INITIALIZATION
@@ -3927,136 +3936,203 @@ function bulkArchiveMessages() {
         // ============================================================================
         
         async function loadAdmin() {
-            if (userProfile?.role !== 'admin') {
-                document.getElementById('adminContent').innerHTML = '<p>Access denied.</p>';
-                return;
+    if (userProfile?.role !== 'admin') {
+        document.getElementById('adminContent').innerHTML = '<p>Access denied.</p>';
+        return;
+    }
+    
+    const adminContent = document.getElementById('adminContent');
+    adminContent.innerHTML = '<div class="skeleton" style="height: 300px; border-radius: 16px;"></div>';
+    
+    try {
+        const { data: users } = await supabase
+            .from('users')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        const { data: messages } = await supabase
+            .from('messages')
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        const { data: views } = await supabase
+            .from('profile_views')
+            .select('candidate_id, candidate_name, viewed_at');
+        
+        const messagesByUser = (messages || []).reduce((acc, msg) => {
+            acc[msg.employer_id] = (acc[msg.employer_id] || 0) + 1;
+            return acc;
+        }, {});
+        
+        const viewsByCandidate = (views || []).reduce((acc, view) => {
+            const key = view.candidate_id;
+            if (!acc[key]) {
+                acc[key] = { id: view.candidate_id, name: view.candidate_name, count: 0 };
             }
-            
-            const adminContent = document.getElementById('adminContent');
-            adminContent.innerHTML = '<div class="skeleton" style="height: 300px; border-radius: 16px;"></div>';
-            
-            try {
-                const { data: users } = await supabase
-                    .from('users')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-                
-                const { data: messages } = await supabase
-                    .from('messages')
-                    .select('employer_id, employer_email, created_at, candidate_name, message_text');
-                
-                const { data: views } = await supabase
-                    .from('profile_views')
-                    .select('candidate_id, candidate_name, viewed_at');
-                
-                const messagesByUser = (messages || []).reduce((acc, msg) => {
-                    acc[msg.employer_id] = (acc[msg.employer_id] || 0) + 1;
-                    return acc;
-                }, {});
-                
-                const viewsByCandidate = (views || []).reduce((acc, view) => {
-                    const key = view.candidate_id;
-                    if (!acc[key]) {
-                        acc[key] = { id: view.candidate_id, name: view.candidate_name, count: 0 };
-                    }
-                    acc[key].count++;
-                    return acc;
-                }, {});
-                
-                const topViewedCandidates = Object.values(viewsByCandidate)
-                    .sort((a, b) => b.count - a.count)
-                    .slice(0, 10);
-                
-                adminContent.innerHTML = `
-                    <div class="section-box">
-                        <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">User Management</h2>
-                        <div style="overflow-x: auto;">
-                            <table class="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th style="text-align: center;">Credits</th>
-                                        <th style="text-align: center;">Messages Sent</th>
-                                        <th style="text-align: center;">Role</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${(users || []).map(user => `
-                                        <tr>
-                                            <td>${user.name || '-'}</td>
-                                            <td>${user.email}</td>
-                                            <td style="text-align: center; font-weight: 600;">${user.credits || 0}</td>
-                                            <td style="text-align: center;">${messagesByUser[user.id] || 0}</td>
-                                            <td style="text-align: center;">
-                                                <span class="role-badge ${user.role === 'admin' ? 'admin' : 'employer'}">
-                                                    ${user.role || 'employer'}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="section-box">
-                        <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">Most Viewed Candidates</h2>
-                        <div style="overflow-x: auto;">
-                            <table class="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>Candidate ID</th>
-                                        <th>Name</th>
-                                        <th style="text-align: center;">View Count</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${topViewedCandidates.map(candidate => `
-                                        <tr>
-                                            <td>${candidate.id}</td>
-                                            <td>${candidate.name || 'Unknown'}</td>
-                                            <td style="text-align: center; font-weight: 700; color: var(--augusta-green);">
-                                                ${candidate.count}
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="section-box">
-                        <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">All Messages</h2>
-                        <div style="overflow-x: auto;">
-                            <table class="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>From</th>
-                                        <th>To Candidate</th>
-                                        <th>Message Preview</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${(messages || []).map(msg => `
-                                        <tr>
-                                            <td>${new Date(msg.created_at).toLocaleString()}</td>
-                                            <td>${msg.employer_email}</td>
-                                            <td>${msg.candidate_name}</td>
-                                            <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                                ${msg.message_text}
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                `;
-            } catch (err) {
-                showError('Failed to load admin data', err);
-                adminContent.innerHTML = '<div class="error-message">Failed to load admin data</div>';
+            acc[key].count++;
+            return acc;
+        }, {});
+        
+        const topViewedCandidates = Object.values(viewsByCandidate)
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 10);
+        
+        // Group messages into threads
+        const threadMap = new Map();
+        (messages || []).forEach(msg => {
+            const key = `${msg.employer_id}-${msg.candidate_id}`;
+            if (!threadMap.has(key)) {
+                threadMap.set(key, {
+                    employer_id: msg.employer_id,
+                    employer_email: msg.employer_email,
+                    employer_name: msg.employer_name,
+                    candidate_id: msg.candidate_id,
+                    candidate_name: msg.candidate_name,
+                    messages: [],
+                    last_message: msg.created_at,
+                    last_message_text: msg.message_text
+                });
             }
-        }
+            threadMap.get(key).messages.push(msg);
+        });
+        
+        const messageThreads = Array.from(threadMap.values())
+            .sort((a, b) => new Date(b.last_message) - new Date(a.last_message));
+        
+        adminContent.innerHTML = `
+            <div class="section-box">
+                <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">User Management</h2>
+                <div style="overflow-x: auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th style="text-align: center;">Credits</th>
+                                <th style="text-align: center;">Messages Sent</th>
+                                <th style="text-align: center;">Role</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${(users || []).map(user => `
+                                <tr>
+                                    <td>${user.name || '-'}</td>
+                                    <td>${user.email}</td>
+                                    <td style="text-align: center; font-weight: 600;">${user.credits || 0}</td>
+                                    <td style="text-align: center;">${messagesByUser[user.id] || 0}</td>
+                                    <td style="text-align: center;">
+                                        <span class="role-badge ${user.role === 'admin' ? 'admin' : 'employer'}">
+                                            ${user.role || 'employer'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="section-box">
+                <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">Most Viewed Candidates</h2>
+                <div style="overflow-x: auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Candidate ID</th>
+                                <th>Name</th>
+                                <th style="text-align: center;">View Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${topViewedCandidates.map(candidate => `
+                                <tr>
+                                    <td>${candidate.id}</td>
+                                    <td>${candidate.name || 'Unknown'}</td>
+                                    <td style="text-align: center; font-weight: 700; color: var(--augusta-green);">
+                                        ${candidate.count}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="section-box">
+                <h2 style="color: var(--augusta-green); margin-bottom: 1.5rem;">All Message Threads</h2>
+                <div style="overflow-x: auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Last Activity</th>
+                                <th>From</th>
+                                <th>To Candidate</th>
+                                <th style="text-align: center;">Messages</th>
+                                <th>Last Message Preview</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${messageThreads.map((thread, index) => `
+                                <tr onclick='openAdminMessageThread(${JSON.stringify(thread).replace(/'/g, "&apos;")})' style="cursor: pointer;">
+                                    <td>${new Date(thread.last_message).toLocaleString()}</td>
+                                    <td>${thread.employer_name || thread.employer_email}</td>
+                                    <td>${thread.candidate_name}</td>
+                                    <td style="text-align: center; font-weight: 600;">${thread.messages.length}</td>
+                                    <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        ${thread.last_message_text.replace(/<[^>]*>/g, '').substring(0, 100)}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    } catch (err) {
+        showError('Failed to load admin data', err);
+        adminContent.innerHTML = '<div class="error-message">Failed to load admin data</div>';
+    }
+}
+        function openAdminMessageThread(thread) {
+    document.getElementById('adminThreadTitle').textContent = 
+        `${thread.employer_name || thread.employer_email} → ${thread.candidate_name}`;
+    document.getElementById('adminThreadSubtitle').textContent = 
+        `${thread.messages.length} messages in this conversation`;
+    
+    const messageConversation = document.getElementById('adminMessageConversation');
+    const sortedMessages = thread.messages.sort((a, b) => 
+        new Date(a.created_at) - new Date(b.created_at)
+    );
+    
+    messageConversation.innerHTML = sortedMessages.map(msg => {
+        const isSent = msg.sender_type === 'employer';
+        const attachments = msg.attachments ? JSON.parse(msg.attachments) : [];
+        
+        return `
+            <div class="message-bubble ${isSent ? 'sent' : 'received'}">
+                <div style="margin-bottom: 0.5rem;">${msg.message_text}</div>
+                ${attachments.length > 0 ? `
+                    <div>
+                        ${attachments.map(att => `
+                            <div class="message-attachment" onclick="downloadAttachment('${att.url}', '${att.name}')">
+                                📎 ${att.name}
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                <div class="message-time">
+                    ${new Date(msg.created_at).toLocaleString()}
+                    ${isSent ? ' • ' + (msg.employer_name || msg.employer_email) : ' • ' + (msg.sender_name || 'Candidate')}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    messageConversation.scrollTop = messageConversation.scrollHeight;
+    document.getElementById('adminMessageThreadModal').classList.add('active');
+}
+
+function closeAdminThreadModal() {
+    document.getElementById('adminMessageThreadModal').classList.remove('active');
+}
     </script>
 </body>
 </html>

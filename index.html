@@ -2662,7 +2662,7 @@ async function actuallySendMessage(messageContent) {
             employer_name: userProfile.name || currentUser.email.split('@')[0],
             candidate_id: String(candidateId),
             candidate_name: currentMessageThread.candidate_name,
-            message: messageContent,
+            message_text: messageContent,
             sender_type: 'employer',
             has_attachments: messageAttachments.length > 0,
             attachments: messageAttachments.length > 0 ? JSON.stringify(messageAttachments) : null,
@@ -2789,7 +2789,7 @@ async function loadMessages() {
                     candidate_name: msg.candidate_name,
                     messages: [],
                     last_message: msg.created_at,
-                    last_message_text: msg.message
+                    last_message_text: msg.message_text
                 });
             }
             threadMap.get(key).messages.push(msg);
@@ -3012,7 +3012,7 @@ function displayMessageThread(messages) {
         
         return `
             <div class="message-bubble ${isSent ? 'sent' : 'received'}">
-                <div style="margin-bottom: 0.5rem;">${msg.message}</div>
+                <div style="margin-bottom: 0.5rem;">${msg.message_text}</div>
                 ${attachments.length > 0 ? `
                     <div>
                         ${attachments.map(att => `
@@ -3041,7 +3041,7 @@ function searchWithinConversation() {
     }
     
     const filtered = currentMessageThread.messages.filter(msg => 
-        msg.message.toLowerCase().includes(searchTerm) ||
+        msg.message_text.toLowerCase().includes(searchTerm) ||
         msg.sender_name?.toLowerCase().includes(searchTerm)
     );
     
@@ -4049,7 +4049,7 @@ function bulkArchiveMessages() {
                                             <td>${msg.employer_email}</td>
                                             <td>${msg.candidate_name}</td>
                                             <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                                ${msg.message}
+                                                ${msg.message_text}
                                             </td>
                                         </tr>
                                     `).join('')}

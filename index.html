@@ -1121,7 +1121,7 @@
         const CONFIG = {
             PAGE_SIZE: 50,
             ALL_POOL_PAGE_SIZE: 150,
-            TOP_PICK_THRESHOLD: 85,
+            TOP_PICK_THRESHOLD: 90,
             DEBOUNCE_DELAY: 300
         };
 
@@ -1217,48 +1217,67 @@
         }
 
         function calculateProfileScore(candidate) {
-            let score = 0;
-            const aboutYou = candidate["About You"] || '';
-            const skills = candidate["Your Skills"] || '';
-            const jobTitle = (candidate["Current Job Title"] || candidate["Job Title"] || '').toLowerCase();
-            const combinedText = (aboutYou + ' ' + skills + ' ' + jobTitle).toLowerCase();
-            
-            const golfIndustryTerms = [
-                'golf club', 'golf course', 'country club', 'golf resort',
-                'greenkeeper', 'head greenkeeper', 'greens superintendent', 'course manager',
-                'pga professional', 'pga', 'golf professional', 'teaching professional',
-                'club manager', 'general manager', 'golf operations', 'club operations',
-                'turf management', 'agronomy', 'irrigation', 'course maintenance',
-                'golf retail', 'pro shop', 'golf merchandising',
-                'golf events', 'tournament director', 'golf tournament',
-                'golf hospitality', 'clubhouse manager', 'f&b manager',
-                'golf marketing', 'golf sales', 'membership sales'
-            ];
-            
-            let golfTermMatches = 0;
-            golfIndustryTerms.forEach(term => {
-                if (combinedText.includes(term)) golfTermMatches++;
-            });
-            score += Math.min(golfTermMatches * 8, 40);
-            
-            if (aboutYou.length > 200) score += 30;
-            else if (aboutYou.length > 100) score += 20;
-            else if (aboutYou.length > 50) score += 10;
-            
-            if (skills.length > 100) score += 20;
-            else if (skills.length > 50) score += 15;
-            else if (skills.length > 20) score += 10;
-            
-            let jobTitleField = candidate["Current Job Title"] || candidate["Job Title"];
-            if (typeof jobTitleField === 'string' && jobTitleField.trim()) score += 10;
-            
-            if (candidate["What are your salary expectations?"]) score += 10;
-            if (candidate["Notice Period"]) score += 10;
-            if (candidate["Town/City"]) score += 10;
-            if (candidate["Actively looking for work"]) score += 10;
-            
-            return score;
-        }
+    let score = 0;
+    const aboutYou = candidate["About You"] || '';
+    const skills = candidate["Your Skills"] || '';
+    let jobTitle = candidate["Current Job Title"] || candidate["Job Title"] || '';
+    if (typeof jobTitle === 'number') jobTitle = '';
+    jobTitle = String(jobTitle).toLowerCase();
+    
+    const combinedText = (aboutYou + ' ' + skills + ' ' + jobTitle).toLowerCase();
+    
+    // CRITICAL: Golf industry terms - this is the most important factor
+    const golfIndustryTerms = [
+        'golf club', 'golf course', 'country club', 'golf resort',
+        'greenkeeper', 'head greenkeeper', 'greens superintendent', 'course manager',
+        'pga professional', 'pga', 'golf professional', 'teaching professional',
+        'club manager', 'general manager', 'golf operations', 'club operations',
+        'turf management', 'agronomy', 'irrigation', 'course maintenance',
+        'golf retail', 'pro shop', 'golf merchandising',
+        'golf events', 'tournament director', 'golf tournament',
+        'golf hospitality', 'clubhouse manager', 'f&b manager',
+        'golf marketing', 'golf sales', 'membership sales',
+        'assistant greenkeeper', 'mechanic golf', 'golf course superintendent',
+        'toro', 'jacobsen', 'john deere', 'turfgrass', 'greens management'
+    ];
+    
+    let golfTermMatches = 0;
+    golfIndustryTerms.forEach(term => {
+        if (combinedText.includes(term)) golfTermMatches++;
+    });
+    
+    // MAJOR CHANGE: Golf terms are now worth MUCH more (up to 100 points instead of 40)
+    // This ensures golf professionals always score higher
+    score += Math.min(golfTermMatches * 12, 100);
+    
+    // Check if job title itself contains golf terms - extra bonus
+    const jobTitleIsGolfRelated = golfIndustryTerms.some(term => jobTitle.includes(term));
+    if (jobTitleIsGolfRelated) {
+        score += 30; // Huge bonus for golf-related job title
+    }
+    
+    // REDUCED: Profile completeness is now worth less
+    // About You section - now capped at 20 points instead of 30
+    if (aboutYou.length > 300) score += 20;
+    else if (aboutYou.length > 200) score += 15;
+    else if (aboutYou.length > 100) score += 10;
+    else if (aboutYou.length > 50) score += 5;
+    
+    // Skills section - now capped at 15 points instead of 20
+    if (skills.length > 150) score += 15;
+    else if (skills.length > 100) score += 12;
+    else if (skills.length > 50) score += 8;
+    else if (skills.length > 20) score += 5;
+    
+    // Basic profile completion - reduced points
+    if (jobTitle && jobTitle.trim()) score += 5; // Was 10
+    if (candidate["What are your salary expectations?"]) score += 3; // Was 10
+    if (candidate["Notice Period"]) score += 3; // Was 10
+    if (candidate["Town/City"]) score += 3; // Was 10
+    if (candidate["Actively looking for work"]) score += 3; // Was 10
+    
+    return score;
+}
 
         function debounce(func, delay) {
             let timeout;

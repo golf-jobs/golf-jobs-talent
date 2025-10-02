@@ -1356,8 +1356,7 @@
                     <div class="attachment-list" id="attachmentList"></div>
                     <div class="char-count" id="charCount">0 / 5000 characters</div>
                 </div>
-                <div class="message-actions">
-                    <button class="btn btn-secondary" onclick="saveDraft()">Save Draft</button>
+                <div class="message-actions">                    
                     <button class="btn btn-primary" onclick="sendReplyMessage()">Send Message</button>
                 </div>
             </div>
@@ -1492,8 +1491,7 @@
         let hasMoreCandidates = true;
         let currentMessageThread = null;
         let pendingCandidatesForList = [];
-        let messageAttachments = [];
-        let messageDraft = '';
+        let messageAttachments = [];        
         let allConversations = [];
         let filteredConversations = [];
         let conversationMetadata = new Map();
@@ -3302,24 +3300,6 @@ function updateCharCount() {
     } else {
         charCount.classList.remove('warning');
     }
-}
-
-function saveDraft() {
-    const messageInput = document.getElementById('messageInput');
-    messageDraft = messageInput.innerHTML;
-    
-    if (currentMessageThread) {
-        localStorage.setItem(
-            `draft_${currentUser.id}_${currentMessageThread.candidate_id}`, 
-            messageDraft
-        );
-    }
-    
-    const successMsg = document.createElement('div');
-    successMsg.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: var(--masters-green); color: white; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000;';
-    successMsg.textContent = 'Draft saved!';
-    document.body.appendChild(successMsg);
-    setTimeout(() => successMsg.remove(), 2000);
 }
 
 function bulkArchiveMessages() {
